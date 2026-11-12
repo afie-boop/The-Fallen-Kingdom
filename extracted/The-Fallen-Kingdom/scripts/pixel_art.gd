@@ -228,21 +228,31 @@ static func _fallback() -> Image:
 # --- sprites ---------------------------------------------------------------
 
 static func _ground() -> Image:
+    # Rich emerald forest floor with restrained enchanted details. The small
+    # accents stay subtle so the terrain remains readable during combat.
     var img := _new(32, 32)
-    var base := Color(0.27, 0.48, 0.24)
+    var base := Color(0.20, 0.39, 0.25)
     img.fill(base)
     var rng := RandomNumberGenerator.new()
     rng.seed = 1234
-    for i in 100:
-        var shade: float = rng.randf_range(-0.05, 0.06)
-        _px(img, rng.randi() % 32, rng.randi() % 32, Color(base.r + shade, base.g + shade * 1.4, base.b + shade))
-    for i in 14:
+    for i in 115:
+        var shade: float = rng.randf_range(-0.045, 0.055)
+        _px(img, rng.randi() % 32, rng.randi() % 32, Color(base.r + shade, base.g + shade * 1.25, base.b + shade * 0.8))
+    for i in 18:
         var x: int = rng.randi() % 32
         var y: int = 1 + rng.randi() % 30
-        _px(img, x, y, Color(0.2, 0.38, 0.19))
-        _px(img, x, y - 1, Color(0.33, 0.56, 0.28))
-    for i in 3:
-        _px(img, rng.randi() % 32, rng.randi() % 32, Color(0.95, 0.9, 0.4))
+        _px(img, x, y, Color(0.12, 0.29, 0.19))
+        _px(img, x, y - 1, Color(0.29, 0.49, 0.29))
+    # Mossy patches and tiny moonlit flowers add a gentle fantasy atmosphere.
+    for p in [Vector2i(4, 7), Vector2i(24, 20), Vector2i(13, 28)]:
+        _px(img, p.x, p.y, Color(0.32, 0.48, 0.29))
+        _px(img, p.x + 1, p.y, Color(0.27, 0.44, 0.27))
+    for p in [Vector2i(8, 18), Vector2i(27, 6), Vector2i(18, 25)]:
+        _px(img, p.x, p.y, Color(0.63, 0.76, 0.67))
+        _px(img, p.x + 1, p.y, Color(0.43, 0.68, 0.63))
+        _px(img, p.x, p.y - 1, Color(0.72, 0.65, 0.88))
+    for i in 2:
+        _px(img, rng.randi() % 32, rng.randi() % 32, Color(0.82, 0.76, 0.96))
     return img
 
 
