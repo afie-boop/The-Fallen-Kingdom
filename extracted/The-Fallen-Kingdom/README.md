@@ -50,8 +50,8 @@ Touch-screen laptops show the touch controls as well.
 
 - Zombies only appear **at night**. They crawl out of **8 small nests** scattered over the island and out of the big
   **Zombie Castle** (which spawns more). At dawn they fade away. Each zombie uses one of 11 zombie sprites.
-- **5-6 poor people's camps** are placed at random for each new world (stored via the world seed). Every camp has exactly
-  **2 tents** at random positions, a campfire and **1-2 beggars**.
+- **5-6 poor people's camps** are placed deep inside dense jungle groves, away from the kingdom, for each new world (stored via the world seed). Every camp has exactly
+  **2 tents** at random positions, a campfire, dense surrounding jungle trees and **1-2 beggars**. The four beggars outside the kingdom remain in place.
 - Walk up to a beggar and press USE / E: it costs 1 Gold Coin from your own wallet and the beggar becomes a citizen
   who wanders in front of the kingdom house. Recruited beggars are saved. Farmer/knight/hunter jobs are Stage 2 (not implemented).
 
