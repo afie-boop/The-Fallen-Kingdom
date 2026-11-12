@@ -1,0 +1,47 @@
+{
+  "_comment": "Optional tuning overrides. Keys starting with _ are ignored. Unknown keys are ignored. Values marked UNDECIDED in the design are placeholders, NOT official game rules.",
+
+  "world_width": 2400,
+  "world_height": 2400,
+  "tree_count": 160,
+  "camera_zoom": 2.0,
+  "day_length_seconds": 240.0,
+
+  "player_max_hp": 100.0,
+  "player_speed": 90.0,
+  "player_attack_damage": 12.0,
+  "player_attack_cooldown": 0.45,
+  "player_attack_range": 38.0,
+  "respawn_delay": 2.0,
+
+  "starting_gold": 15,
+  "death_penalty_percent": 0.0,
+  "_death_penalty_percent_note": "UNDECIDED in design. 0 = no penalty. Only ever applied to the dead player's own wallet.",
+  "reward_distribution_mode": "pickup",
+  "_reward_distribution_mode_note": "UNDECIDED in design. Stage 1: whoever picks the coin up gets it.",
+
+  "tree_hp": 3,
+  "wood_per_tree_min": 1,
+  "wood_per_tree_max": 2,
+
+  "zombie_max_hp": 30.0,
+  "zombie_speed": 38.0,
+  "zombie_damage": 8.0,
+  "zombie_attack_cooldown": 1.0,
+  "zombie_castle_damage": 5.0,
+  "zombie_coin_drop_chance": 0.5,
+  "zombie_aggro_day": 120.0,
+  "zombie_aggro_night": 220.0,
+  "zombie_cap_day": 0,
+  "zombie_cap_night": 16,
+  "zombie_spawn_interval_day": 12.0,
+  "zombie_spawn_interval_night": 3.5,
+
+  "castle_max_hp": 500.0,
+  "_buildings_note": "Costs/HP/damage arrays are indexed by level-1. PLACEHOLDER values, not official.",
+  "cost_castle": [6, 10, 16],
+  "cost_wall": [2, 3, 6],
+  "cost_archer_post": [3, 4, 8],
+  "cost_builder_hut": [3, 4, 8],
+  "autosave_interval": 60.0
+}
