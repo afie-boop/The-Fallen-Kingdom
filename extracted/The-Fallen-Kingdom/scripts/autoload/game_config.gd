@@ -47,8 +47,8 @@ var castle_max_hp: float = 500.0
 # Costs and stats are PLACEHOLDERS (design says exact costs are not decided); change in data/game_config.json.
 var cost_castle: Array = [6, 10, 16]
 var cost_wall: Array = [10, 10, 20, 30, 40] # one fence build, then progressive territory expansions
-var cost_archer_post: Array = [3, 4, 8]
-var cost_builder_hut: Array = [3, 4, 8]
+var cost_archer_post: Array = [1, 4, 8]
+var cost_builder_hut: Array = [1, 4, 8]
 var hp_castle: Array = [600, 1000, 1500]
 var hp_wall: Array = [120, 240, 400]
 var hp_archer_post: Array = [150, 260, 400]

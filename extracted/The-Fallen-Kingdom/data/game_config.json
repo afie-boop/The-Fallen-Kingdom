@@ -41,7 +41,7 @@
   "_buildings_note": "Costs/HP/damage arrays are indexed by level-1. PLACEHOLDER values, not official.",
   "cost_castle": [6, 10, 16],
   "cost_wall": [10, 10, 20, 30, 40],
-  "cost_archer_post": [3, 4, 8],
-  "cost_builder_hut": [3, 4, 8],
+  "cost_archer_post": [1, 4, 8],
+  "cost_builder_hut": [1, 4, 8],
   "autosave_interval": 60.0
 }
