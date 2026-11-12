@@ -105,13 +105,13 @@ func _place_small_lake() -> void:
     rng.seed = GameState.world_seed + 481516
     for attempt in 120:
         var angle: float = rng.randf_range(0.0, TAU)
-        var radius: float = rng.randf_range(560.0, 1050.0)
+        var radius: float = rng.randf_range(760.0, 1450.0)
         var p: Vector2 = GameState.island.center_pos + Vector2.from_angle(angle) * radius
         if GameState.island.sample(p) < 0.28:
             continue
         if p.distance_to(GameState.island.far_inland_pos) < 650.0:
             continue
-        GameState.island.add_lake(p, rng.randf_range(85.0, 125.0))
+        GameState.island.add_lake(p, rng.randf_range(110.0, 155.0))
         return
 
 
