@@ -54,7 +54,7 @@ fi
 cp "$WEB_RELEASE" "$TEMPLATE_DIR/web_nothreads_release.zip"
 
 # Use the repository's known browser export preset.
-if [[ -f "$ROOT_DIR/export_presets.cfg" ]]; then
+if [[ -f "$ROOT_DIR/export_presets.cfg" && "$ROOT_DIR/export_presets.cfg" != "$PROJECT_DIR/export_presets.cfg" ]]; then
   cp "$ROOT_DIR/export_presets.cfg" "$PROJECT_DIR/export_presets.cfg"
 fi
 
