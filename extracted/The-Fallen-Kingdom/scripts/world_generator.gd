@@ -106,16 +106,19 @@ static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, coun
 ## Spawns deer and rabbits across the island, with a few close to the kingdom.
 ## Spawns a small herd in wooded areas, choosing positions near existing trees.
 ## A fresh random seed is used each time this runs (initial day and every dawn).
-static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, count: int, home: Vector2) -> int:
+static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, count: int, home: Vector2, on_killed: Callable = Callable()) -> int:
     var rng := RandomNumberGenerator.new()
     rng.randomize()
     var trees: Array = parent.get_tree().get_nodes_in_group("trees")
     if trees.is_empty():
         return 0
     var placed: Array[Vector2] = []
+    for existing in parent.get_tree().get_nodes_in_group("wildlife"):
+        if existing is Node2D:
+            placed.append((existing as Node2D).global_position)
     var spawned: int = 0
     var tries: int = 0
-    while spawned < count and tries < count * 45:
+    while spawned < count and tries < count * 70:
         tries += 1
         var tree_node: Node2D = trees[rng.randi_range(0, trees.size() - 1)] as Node2D
         if tree_node == null or not is_instance_valid(tree_node):
@@ -137,6 +140,8 @@ static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, c
         var animal := Wildlife.new()
         animal.configure(kind)
         animal.position = p
+        if on_killed.is_valid():
+            animal.killed.connect(on_killed)
         parent.add_child(animal)
         spawned += 1
     return spawned

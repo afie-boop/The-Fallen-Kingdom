@@ -2,6 +2,8 @@ class_name Wildlife
 extends Node2D
 ## Passive deer and rabbits. Archers can claim and hunt them during daylight.
 
+signal killed
+
 var animal_type: String = "deer"
 var hp: float = 18.0
 var coin_value: int = 2
@@ -67,6 +69,7 @@ func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
         dropped.value = coin_value
         dropped.global_position = global_position
         get_parent().add_child(dropped)
+        killed.emit()
         queue_free()
         return true
     return false
