@@ -23,6 +23,13 @@ func _ready() -> void:
     add_child(shape)
 
 
+func fell_by_fence() -> void:
+    # A newly built or expanded fence clears trees directly in its footprint.
+    # Use the normal harvest/save path so removed trees stay gone after loading.
+    hp = 1
+    take_hit(null)
+
+
 func take_hit(by: Node) -> void:
     hp -= 1
     var tw := create_tween()

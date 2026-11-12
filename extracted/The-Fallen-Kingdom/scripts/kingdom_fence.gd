@@ -39,11 +39,26 @@ func _rebuild() -> void:
         _add_piece(Vector2(-half, y), false, vertical_step)
         _add_piece(Vector2(half, y), false, vertical_step)
 
+    # Trees caught by the new perimeter are felled automatically.
+    _clear_trees_on_perimeter(half)
+
     # Cap each junction with one solid timber/stone post so the two wall
     # directions meet cleanly instead of showing a crossed, doubled corner.
     for corner_x in [-half, half]:
         for corner_y in [-half, half]:
             _add_corner_post(Vector2(corner_x, corner_y))
+
+
+func _clear_trees_on_perimeter(half: float) -> void:
+    for node in get_tree().get_nodes_in_group("trees"):
+        var tree := node as ChoppableTree
+        if tree == null or not is_instance_valid(tree):
+            continue
+        var p: Vector2 = to_local(tree.global_position)
+        var along_x: bool = absf(p.y) <= half + 24.0 and absf(absf(p.x) - half) <= 24.0
+        var along_y: bool = absf(p.x) <= half + 24.0 and absf(absf(p.y) - half) <= 24.0
+        if along_x or along_y:
+            tree.fell_by_fence()
 
 
 func _add_corner_post(at: Vector2) -> void:
