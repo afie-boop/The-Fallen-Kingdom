@@ -77,6 +77,7 @@ func _ready() -> void:
     kingdom = KingdomManager.new()
     add_child(kingdom)
     kingdom.setup(entities, castle.position)
+    _spawn_castle_beggars()
     _build_player()
     _restore_citizens()
     kingdom.assign_jobs()
@@ -320,7 +321,14 @@ func _close_build() -> void:
 
 func _on_build_action(kind: String, action: String) -> void:
     var msg: String = kingdom.do_action(kind, action, player.player_id)
+    _spawn_castle_beggars()
     hud.show_build(kingdom.menu_rows(), kingdom.info_text(), msg)
+
+
+func _spawn_castle_beggars() -> void:
+    if kingdom == null or kingdom.castle_level() < 1:
+        return
+    WorldGenerator.spawn_castle_beggars(entities, castle.position, GameState.recruited_beggars)
 
 
 func _toggle_pause() -> void:
