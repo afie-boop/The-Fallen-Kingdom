@@ -70,37 +70,6 @@ func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
     return false
 
 static func _make_texture(kind: String) -> Texture2D:
-    var w: int = 24 if kind == "deer" else 16
-    var h: int = 20 if kind == "deer" else 14
-    var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
-    img.fill(Color(0, 0, 0, 0))
-    var body := Color(0.55, 0.32, 0.16) if kind == "deer" else Color(0.62, 0.48, 0.32)
-    var dark := Color(0.25, 0.16, 0.1)
-    var light := Color(0.78, 0.58, 0.35)
     if kind == "deer":
-        for y in range(6, 14):
-            for x in range(4, 20):
-                img.set_pixel(x, y, body)
-        for x in [6, 16]:
-            for y in range(13, 19):
-                img.set_pixel(x, y, dark)
-                img.set_pixel(x + 1, y, dark)
-        for x in range(17, 22):
-            img.set_pixel(x, 4, body)
-            img.set_pixel(x, 5, body)
-        for x in [18, 21]:
-            img.set_pixel(x, 1, dark)
-            img.set_pixel(x, 2, dark)
-        img.set_pixel(20, 5, light)
-    else:
-        for y in range(5, 11):
-            for x in range(3, 13):
-                img.set_pixel(x, y, body)
-        for x in [4, 10]:
-            for y in range(10, 14):
-                img.set_pixel(x, y, dark)
-        for x in [5, 9]:
-            for y in range(0, 6):
-                img.set_pixel(x, y, light)
-        img.set_pixel(12, 6, dark)
-    return ImageTexture.create_from_image(img)
+        return PixelArt.file_tex("res://assets/animals/IMG_c6952660-aa86-4aec-b154-2b02a2423a6f.png")
+    return PixelArt.file_tex("res://assets/animals/pixel-art-rabbit-icons-easter-bunny-vector-illustration-pixel-art-rabbit-icons-108230666.jpg")
