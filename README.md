@@ -1,23 +1,29 @@
 # The Fallen Kingdom
 
-Godot 4 project exported as a browser game and hosted on Render Static Site.
+Godot 4 project configured for deployment as a browser game on Render Static Site.
 
-## Repository layout
+## Project source
 
-- `The-Fallen-Kingdom2.zip` — source Godot project archive. It must contain `project.godot` and all project assets/scripts/scenes.
-- `export_presets.cfg` — Web export preset used by the Render build.
-- `render-build.sh` — extracts the archive, installs the matching Godot Web export template, imports resources, and exports the game to `public/`.
-- `.gitignore` — excludes generated build output and caches.
+The build accepts either:
+- A complete Godot project in the repository root (with `project.godot`), or
+- `The-Fallen-Kingdom2.zip` in the repository root. The ZIP must contain the complete Godot project, including `project.godot`, scenes, scripts, assets and referenced resources.
 
-## Render settings
+At least one of these source options must be present. The current repository must contain the actual game project before a successful build is possible.
 
-- Service type: Static Site
+## Render deployment
+
+A `render.yaml` Blueprint is included. In Render, create a new Blueprint from this repository, or configure a Static Site manually:
+
 - Branch: `main`
 - Build command: `bash render-build.sh`
 - Publish directory: `public`
 
-Do not set the publish directory to the ZIP or the Godot source folder. Render must publish the generated `public/index.html` and its companion Web export files.
+The build script downloads Godot 4.3 and its Web export template, imports the project, and exports the browser build to `public/index.html`.
 
-## Local project requirements
+Do not publish the ZIP or the raw Godot project directory. Render must publish the generated `public/` directory.
 
-The ZIP must be a complete Godot project, not an exported APK or a partial collection of scripts. Keep `project.godot` at the project root inside the archive, with referenced `scenes/`, `scripts/`, `assets/`, and other project folders included as needed. The Web preset is configured for single-threaded Web export.
+## Notes
+
+- The Web preset is configured for single-threaded Web export.
+- If the game uses external plugins or native extensions that do not support Godot Web, those dependencies must be removed or replaced before export.
+- A successful export still needs browser testing, especially on Android touch controls and mobile screen sizes.
