@@ -190,19 +190,19 @@ static func spawn_jungle_trees(parent: Node2D, island: IslandMap, world_seed: in
     for camp_index in camps.size():
         var camp: Vector2 = camps[camp_index]
         var placed: Array[Vector2] = []
-        for slot in 72:
+        for slot in 120:
             var tree_id: int = 100000 + camp_index * 100 + slot
             var p := Vector2.ZERO
             var valid: bool = false
             for attempt in 24:
                 var angle: float = rng.randf_range(0.0, TAU)
-                var radius: float = rng.randf_range(125.0, 350.0)
+                var radius: float = rng.randf_range(130.0, 430.0)
                 var candidate: Vector2 = camp + Vector2.from_angle(angle) * radius
                 if island.sample(candidate) < 0.16 or island.dirt_at(candidate) > 0.56:
                     continue
                 var close: bool = false
                 for q in placed:
-                    if candidate.distance_to(q) < 30.0:
+                    if candidate.distance_to(q) < 27.0:
                         close = true
                         break
                 if close:
@@ -242,11 +242,7 @@ static func spawn_castle_beggars(parent: Node2D, home: Vector2, recruited: Array
                 break
         if already_spawned:
             continue
-        var tent := CAMP_PROP_SCENE.instantiate() as CampProp
-        tent.kind = "tent"
-        var tent_offsets: Array[Vector2] = [Vector2(-150.0, -240.0), Vector2(150.0, -240.0), Vector2(-150.0, -165.0), Vector2(150.0, -165.0)]
-        tent.position = home + tent_offsets[i]
-        parent.add_child(tent)
+        # Castle residents are unhoused; only remote poor camps receive tents.
         var b := BEGGAR_SCENE.instantiate() as Beggar
         b.beggar_id = bid
         b.variant = (bid * 7 + 3) % PixelArt.BEGGAR_VARIANTS
