@@ -10,7 +10,7 @@ var _sprite: Sprite2D
 
 func _ready() -> void:
     add_to_group("hunting_coins")
-    _sprite = PixelArt.make_sprite("coin")
+    _sprite = PixelArt.make_sprite_tex(PixelArt.file_tex("res://assets/animals/IMG_58318099-31fa-4056-968b-2b044a28f6a0.gif"))
     add_child(_sprite)
 
 func _process(delta: float) -> void:
