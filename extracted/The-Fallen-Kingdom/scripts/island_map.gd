@@ -4,10 +4,10 @@ extends RefCounted
 ## coastline, so only the seed has to be saved (or synced in multiplayer).
 ## Field value v: > 0 land, 0..0.1 beach, > 0.1 grass, < 0 sea.
 
-const RES: int = 192
+const RES: int = 384
 const BEACH_END: float = 0.1
 
-var world_size: Vector2 = Vector2(2400, 2400)
+var world_size: Vector2 = Vector2(4800, 4800)
 var texture: ImageTexture
 var center_pos: Vector2 = Vector2.ZERO
 var far_inland_pos: Vector2 = Vector2.ZERO  ## good spot for the Zombie Castle
