@@ -8,6 +8,7 @@ var castle: Node2D
 var entities: Node2D
 var world_size: Vector2 = Vector2(4800, 4800)
 var _refresh_t: float = 0.0
+var _map_texture: ImageTexture
 
 func setup(map_data: IslandMap, player_node: Node2D, castle_node: Node2D, world_nodes: Node2D, size: Vector2) -> void:
     island = map_data
@@ -15,6 +16,7 @@ func setup(map_data: IslandMap, player_node: Node2D, castle_node: Node2D, world_
     castle = castle_node
     entities = world_nodes
     world_size = size
+    _make_map_texture()
     queue_redraw()
 
 func _process(delta: float) -> void:
@@ -23,6 +25,23 @@ func _process(delta: float) -> void:
         _refresh_t = 0.18
         queue_redraw()
 
+
+func _make_map_texture() -> void:
+    if island == null:
+        return
+    var img := Image.create(160, 160, false, Image.FORMAT_RGBA8)
+    for y in 160:
+        for x in 160:
+            var p := Vector2((float(x) + 0.5) / 160.0 * world_size.x, (float(y) + 0.5) / 160.0 * world_size.y)
+            var field: float = island.sample(p)
+            var col := Color(0.10, 0.30, 0.48)
+            if field > 0.1:
+                col = Color(0.22, 0.43, 0.20)
+            elif field > 0.0:
+                col = Color(0.72, 0.64, 0.42)
+            img.set_pixel(x, y, col)
+    _map_texture = ImageTexture.create_from_image(img)
+
 func _draw() -> void:
     var rect := Rect2(Vector2.ZERO, size)
     draw_rect(rect, Color(0.035, 0.055, 0.065, 0.9), true)
@@ -30,7 +49,8 @@ func _draw() -> void:
     if island == null or island.texture == null:
         return
     var pad := Rect2(Vector2(5, 5), size - Vector2(10, 10))
-    draw_texture_rect(island.texture, pad, false, Color(0.75, 0.88, 0.76))
+    if _map_texture != null:
+        draw_texture_rect(_map_texture, pad, false)
     if entities != null and is_instance_valid(entities):
         _draw_group("zombie_caves", Color(0.78, 0.25, 0.82), 2.8, pad)
         _draw_group("wildlife", Color(0.96, 0.88, 0.53), 1.7, pad)
