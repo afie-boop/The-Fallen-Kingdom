@@ -16,15 +16,15 @@ s = castle.read_text()
 old = "func interact(player: Player) -> void:\n    player.heal(player.max_hp)\n"
 new = """func interact(player: Player) -> void:
     if not GameState.kingdom_fence_built:
-        if not GameState.spend_gold(5, player.player_id):
-            notice.emit("A kingdom fence costs 5 Gold Coins. Not enough gold.")
+        if not GameState.spend_gold(10, player.player_id):
+            notice.emit("A kingdom fence costs 10 Gold Coins. Not enough gold.")
             return
         GameState.kingdom_fence_built = true
         var fence := Node2D.new()
         fence.set_script(load("res://scripts/kingdom_fence.gd"))
         fence.position = global_position
         get_parent().add_child(fence)
-        notice.emit("Kingdom fence built! 5 Gold Coins paid.")
+        notice.emit("Kingdom fence built! 10 Gold Coins paid.")
         interacted.emit()
         return
     player.heal(player.max_hp)
@@ -82,16 +82,23 @@ func _add_wall_collision(body: StaticBody2D, center: Vector2, size: Vector2) -> 
 
 func _draw() -> void:
     var half := territory_size * 0.5
-    draw_rect(Rect2(-half, territory_size), FENCE_COLOR, false, FENCE_THICKNESS)
+    # Continuous wooden rails: no gaps between fence posts.
+    var rail_offset := 5.0
+    for side_y in [-half.y, half.y]:
+        draw_line(Vector2(-half.x, side_y - rail_offset), Vector2(half.x, side_y - rail_offset), FENCE_HIGHLIGHT, 5.0)
+        draw_line(Vector2(-half.x, side_y + rail_offset), Vector2(half.x, side_y + rail_offset), FENCE_HIGHLIGHT, 5.0)
+    for side_x in [-half.x, half.x]:
+        draw_line(Vector2(side_x - rail_offset, -half.y), Vector2(side_x - rail_offset, half.y), FENCE_HIGHLIGHT, 5.0)
+        draw_line(Vector2(side_x + rail_offset, -half.y), Vector2(side_x + rail_offset, half.y), FENCE_HIGHLIGHT, 5.0)
     var spacing := 28.0
     var x := -half.x
     while x <= half.x:
-        draw_line(Vector2(x, -half.y - 7), Vector2(x, -half.y + 7), FENCE_HIGHLIGHT, 4.0)
-        draw_line(Vector2(x, half.y - 7), Vector2(x, half.y + 7), FENCE_HIGHLIGHT, 4.0)
+        draw_line(Vector2(x, -half.y - 9), Vector2(x, -half.y + 9), FENCE_COLOR, 7.0)
+        draw_line(Vector2(x, half.y - 9), Vector2(x, half.y + 9), FENCE_COLOR, 7.0)
         x += spacing
     var y := -half.y
     while y <= half.y:
-        draw_line(Vector2(-half.x - 7, y), Vector2(-half.x + 7, y), FENCE_HIGHLIGHT, 4.0)
-        draw_line(Vector2(half.x - 7, y), Vector2(half.x + 7, y), FENCE_HIGHLIGHT, 4.0)
+        draw_line(Vector2(-half.x - 9, y), Vector2(-half.x + 9, y), FENCE_COLOR, 7.0)
+        draw_line(Vector2(half.x - 9, y), Vector2(half.x + 9, y), FENCE_COLOR, 7.0)
         y += spacing
 ''')
