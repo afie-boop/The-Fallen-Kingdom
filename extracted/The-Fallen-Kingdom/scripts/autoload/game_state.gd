@@ -33,7 +33,7 @@ var kills: int = 0
 var removed_trees: Array = []
 var recruited_beggars: Array = []   ## ids of beggars who became citizens
 var citizen_jobs: Dictionary = {}   ## citizen id -> "archer" | "builder" (missing = jobless)
-var buildings: Array = []           ## [{kind, slot, level, hp}] kinds: castle, wall, archer_post, builder_hut
+var buildings: Array = []           ## [{kind, slot, level, hp}] kinds: castle, wall, builder_hut
 var player_skin: int = 1          ## which character sprite (1..11) the local player uses
 var island: IslandMap              ## built by the game scene from world_seed
 
@@ -244,7 +244,7 @@ func from_dict(d: Dictionary) -> void:
                 continue
             var ed: Dictionary = e
             var kind: String = str(ed.get("kind", ""))
-            if not ["castle", "wall", "archer_post", "builder_hut"].has(kind):
+            if not ["castle", "wall", "builder_hut"].has(kind):
                 continue
             buildings.append({
                 "kind": kind,
