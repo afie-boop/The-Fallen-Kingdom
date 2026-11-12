@@ -4,7 +4,6 @@ extends Node2D
 
 const PLAYER_SCENE: PackedScene = preload("res://scenes/player.tscn")
 const CASTLE_SCENE: PackedScene = preload("res://scenes/castle.tscn")
-const ENEMY_CASTLE_SCENE: PackedScene = preload("res://scenes/enemy_castle.tscn")
 const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
 const CITIZEN_SCENE: PackedScene = preload("res://scenes/citizen.tscn")
 const MENU_SCENE: String = "res://scenes/main_menu.tscn"
@@ -12,7 +11,6 @@ const MENU_SCENE: String = "res://scenes/main_menu.tscn"
 var entities: Node2D
 var player: Player
 var castle: KingdomCastle
-var enemy_castle: EnemyCastle
 var hud: Hud
 var day_night: DayNight
 var spawner: ZombieSpawner
@@ -41,28 +39,20 @@ func _ready() -> void:
     castle = CASTLE_SCENE.instantiate() as KingdomCastle
     castle.position = GameState.island.center_pos
     entities.add_child(castle)
-    enemy_castle = ENEMY_CASTLE_SCENE.instantiate() as EnemyCastle
-    enemy_castle.position = GameState.island.far_inland_pos
-    entities.add_child(enemy_castle)
 
     var avoid: Array = [
         {"pos": castle.position, "r": 330.0},
-        {"pos": enemy_castle.position, "r": 210.0},
     ]
-    # Zombie nests, then the poor people's camps (3-4, random per world seed), then ruins and trees.
-    var nest_avoid: Array = [
-        {"pos": castle.position, "r": 480.0},
-        {"pos": enemy_castle.position, "r": 260.0},
-    ]
-    var nest_spots: Array[Vector2] = WorldGenerator.spawn_nests(entities, GameState.island, GameState.world_seed, 8, nest_avoid)
-    for np in nest_spots:
-        avoid.append({"pos": np, "r": 130.0})
+    # Random caves replace the old zombie nests and Zombie Castle.
+    var cave_avoid: Array = [{"pos": castle.position, "r": 480.0}]
+    var cave_spots: Array[Vector2] = WorldGenerator.spawn_caves(entities, GameState.island, GameState.world_seed, 8, cave_avoid)
+    for cp in cave_spots:
+        avoid.append({"pos": cp, "r": 150.0})
     var camp_avoid: Array = [
         {"pos": castle.position, "r": 760.0},
-        {"pos": enemy_castle.position, "r": 300.0},
     ]
-    for np in nest_spots:
-        camp_avoid.append({"pos": np, "r": 220.0})
+    for cp in cave_spots:
+        camp_avoid.append({"pos": cp, "r": 240.0})
     var camp_spots: Array[Vector2] = WorldGenerator.spawn_camps(entities, GameState.island, GameState.world_seed, camp_avoid, GameState.recruited_beggars)
     WorldGenerator.spawn_jungle_trees(entities, GameState.island, GameState.world_seed, camp_spots, GameState.removed_trees)
     for cp in camp_spots:
@@ -313,11 +303,11 @@ func _respawn() -> void:
 
 func _on_dawn() -> void:
     spawner.retreat_all()
-    hud.show_message("Dawn breaks. The zombies crawl back into their nests.")
+    hud.show_message("Dawn breaks. The zombies retreat into caves.")
 
 
 func _on_dusk() -> void:
-    hud.show_message("Night falls. Zombies crawl out of their nests...")
+    hud.show_message("Night falls. Zombies emerge from caves...")
 
 
 func _open_build() -> void:
