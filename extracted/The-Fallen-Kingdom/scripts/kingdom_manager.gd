@@ -5,9 +5,9 @@ extends Node
 ## Costs are paid from the acting player's PERSONAL wallet. All numbers live in GameConfig.
 
 const STRUCTURE_SCENE: PackedScene = preload("res://scenes/structure.tscn")
-const KINDS: Array[String] = ["castle", "wall", "archer_post", "builder_hut"]
-const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "archer_post": "Archer Posts", "builder_hut": "Builder Huts"}
-const JOBS: Dictionary = {"archer_post": "archer", "builder_hut": "builder"}
+const KINDS: Array[String] = ["castle", "wall", "builder_hut"]
+const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "builder_hut": "Builder Huts"}
+const JOBS: Dictionary = {"builder_hut": "builder"}
 const MAX_LEVEL: int = 3
 const MAX_FENCE_LEVEL: int = 5
 const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
@@ -21,7 +21,6 @@ const SLOTS: Dictionary = {
         Vector2(-230, 70), Vector2(230, 70),
         Vector2(-120, 130), Vector2(120, 130),
     ],
-    "archer_post": [Vector2(-190, -175), Vector2(190, -175), Vector2(0, 175)],
     "builder_hut": [Vector2(-140, 22), Vector2(140, 22)],
 }
 
@@ -116,9 +115,9 @@ func info_text() -> String:
         citizens += 1
         if (c as Citizen).job == "":
             jobless += 1
-    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d/%d   Builders: %d/%d" % [
+    return "Gold: %d   Citizens: %d (jobless %d)   Builders: %d/%d" % [
         GameState.get_gold(), citizens, jobless,
-        _workers("archer_post"), count("archer_post"), _workers("builder_hut"), count("builder_hut")]
+        _workers("builder_hut"), count("builder_hut")]
 
 
 func _workers(kind: String) -> int:
