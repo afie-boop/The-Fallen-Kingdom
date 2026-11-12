@@ -118,6 +118,9 @@ static func spawn_camps(parent: Node2D, island: IslandMap, world_seed: int, avoi
             tries = 0
             gap -= 70.0
         var c: Vector2 = island.random_land_point(rng, 0.3, 170.0)
+        # Camps are placed deep in the jungle, well away from the kingdom.
+        if c.distance_to(island.center_pos) < 760.0:
+            continue
         if _blocked(c, avoid):
             continue
         var ok: bool = true
@@ -176,3 +179,45 @@ static func spawn_kingdom_beggars(parent: Node2D, island: IslandMap, world_seed:
         b.variant = (bid * 7 + 3) % PixelArt.BEGGAR_VARIANTS
         b.position = pos
         parent.add_child(b)
+
+
+## Dense jungle groves surround the poor people's camps. Separate tree ids keep
+## chopped jungle trees stable across saves without colliding with normal trees.
+static func spawn_jungle_trees(parent: Node2D, island: IslandMap, world_seed: int, camps: Array[Vector2], removed: Array) -> int:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = world_seed + 60617
+    var spawned: int = 0
+    for camp_index in camps.size():
+        var camp: Vector2 = camps[camp_index]
+        var placed: Array[Vector2] = []
+        for slot in 48:
+            var tree_id: int = 100000 + camp_index * 100 + slot
+            var p := Vector2.ZERO
+            var valid: bool = false
+            for attempt in 24:
+                var angle: float = rng.randf_range(0.0, TAU)
+                var radius: float = rng.randf_range(145.0, 390.0)
+                var candidate: Vector2 = camp + Vector2.from_angle(angle) * radius
+                if island.sample(candidate) < 0.16 or island.dirt_at(candidate) > 0.56:
+                    continue
+                var close: bool = false
+                for q in placed:
+                    if candidate.distance_to(q) < 30.0:
+                        close = true
+                        break
+                if close:
+                    continue
+                p = candidate
+                valid = true
+                break
+            if not valid:
+                continue
+            placed.append(p)
+            if removed.has(tree_id):
+                continue
+            var tree := TREE_SCENE.instantiate() as ChoppableTree
+            tree.tree_id = tree_id
+            tree.position = p
+            parent.add_child(tree)
+            spawned += 1
+    return spawned
