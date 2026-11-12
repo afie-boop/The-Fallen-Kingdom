@@ -12,7 +12,7 @@ func _ready() -> void:
     add_to_group("hunting_coins")
     var coin_texture: Texture2D = PixelArt.file_tex("res://assets/animals/gold_coin.png")
     _sprite = PixelArt.make_sprite_tex(coin_texture)
-    _sprite.scale = Vector2.ONE * (28.0 / float(maxi(coin_texture.get_width(), coin_texture.get_height())))
+    _sprite.scale = Vector2.ONE * (12.0 / float(maxi(coin_texture.get_width(), coin_texture.get_height())))
     add_child(_sprite)
 
 func _process(delta: float) -> void:
