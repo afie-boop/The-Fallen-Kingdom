@@ -87,7 +87,7 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
     if job == "archer":
         var from_home: Vector2 = global_position - home
         var patrol_limit: float = _kingdom_radius() - 28.0
-        if from_home.length() > patrol_limit:
+        if (GameState.is_night or _wildlife == null) and from_home.length() > patrol_limit:
             global_position = home + from_home.normalized() * patrol_limit
     _sprite.position.y = -absf(sin(_t * 9.0)) * 2.0
     _sprite.rotation = sin(_t * 9.0) * 0.06
@@ -147,7 +147,7 @@ func _archer(delta: float) -> void:
         return
 
     if _wildlife == null or not is_instance_valid(_wildlife):
-        _wildlife = _nearest_wildlife(radius)
+        _wildlife = _nearest_wildlife(maxf(radius, 1200.0))
         if _wildlife != null:
             _wildlife.claim(self)
     if _wildlife != null and is_instance_valid(_wildlife):

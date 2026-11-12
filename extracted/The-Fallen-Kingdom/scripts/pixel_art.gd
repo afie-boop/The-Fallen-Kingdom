@@ -647,65 +647,49 @@ static func _wall(horizontal: bool, level: int) -> Image:
     var img := _new(w, h)
     _rect(img, 0, h - 3, w, 3, Color(0, 0, 0, 0.28))
     if level <= 1:
-        # Weathered vertical timber planks, matching the reference fence.
-        var plank_count: int = 8 if horizontal else 3
-        var plank_w: int = int(ceil(float(w) / float(plank_count)))
-        var woods: Array[Color] = [
-            Color(0.48, 0.29, 0.14),
-            Color(0.54, 0.33, 0.16),
-            Color(0.44, 0.26, 0.13),
-            Color(0.58, 0.36, 0.18),
-            Color(0.50, 0.30, 0.14)
-        ]
-        for i in plank_count:
-            var x0: int = i * plank_w
-            var ww: int = mini(plank_w, w - x0)
-            var wood: Color = woods[(i * 3 + 1) % woods.size()]
-            _rect(img, x0, 3, ww, h - 6, _shade(wood, 0.88))
-            _rect(img, x0 + 1, 3, maxi(1, ww - 2), h - 6, wood)
-            # Uneven lighter grain and darker worn streaks.
-            for streak in 2:
-                var sx: int = x0 + 2 + posmod(i * 5 + streak * 3, maxi(1, ww - 3))
-                var sy: int = 5 + posmod(i * 7 + streak * 11, maxi(1, h - 12))
-                _rect(img, sx, sy, 1, maxi(3, h / 3), _shade(wood, 1.13 if streak == 0 else 0.78))
-            if ww >= 7:
-                var knot_x: int = x0 + 2 + posmod(i * 7, maxi(1, ww - 4))
-                var knot_y: int = 9 + posmod(i * 9, maxi(1, h - 15))
-                _rect(img, knot_x, knot_y, 2, 2, _shade(wood, 0.68))
-                _px(img, knot_x + 1, knot_y + 1, _shade(wood, 0.82))
-            _rect(img, x0, 3, 1, h - 6, _shade(wood, 0.58))
-            _rect(img, x0 + ww - 1, 3, 1, h - 6, _shade(wood, 0.52))
-        # Deep narrow gaps and worn horizontal support rails.
-        for x in range(0, w, plank_w):
-            _rect(img, x, 3, 1, h - 6, Color(0.20, 0.12, 0.07))
-        _rect(img, 0, 5, w, 2, Color(0.31, 0.19, 0.10))
-        _rect(img, 0, h - 7, w, 2, Color(0.29, 0.17, 0.09))
-        _rect(img, 0, h - 5, w, 2, Color(0.40, 0.24, 0.12))
-        # Slightly irregular top edge, like rough-cut palisade boards.
-        for i in plank_count:
-            var x0: int = i * plank_w
-            var ww: int = mini(plank_w, w - x0)
-            var top_y: int = 1 + posmod(i * 3, 4)
-            _rect(img, x0 + 1, top_y, maxi(1, ww - 2), 3 - top_y, _shade(woods[(i * 3 + 1) % woods.size()], 0.92))
+        var woods: Array[Color] = [Color(0.48, 0.29, 0.14), Color(0.54, 0.33, 0.16), Color(0.44, 0.26, 0.13), Color(0.58, 0.36, 0.18)]
+        if horizontal:
+            var plank_w: int = 8
+            for x0 in range(0, w, plank_w):
+                var ww: int = mini(plank_w, w - x0)
+                var wood: Color = woods[posmod(x0 / plank_w, woods.size())]
+                _rect(img, x0, 3, ww, h - 6, _shade(wood, 0.84))
+                _rect(img, x0 + 1, 3, maxi(1, ww - 2), h - 6, wood)
+                _rect(img, x0 + 2, 8 + posmod(x0, 9), 1, 9, _shade(wood, 1.18))
+                _rect(img, x0, 3, 1, h - 6, _shade(wood, 0.55))
+                _rect(img, x0 + ww - 1, 3, 1, h - 6, _shade(wood, 0.55))
+            _rect(img, 0, 5, w, 2, Color(0.31, 0.19, 0.10))
+            _rect(img, 0, h - 7, w, 2, Color(0.29, 0.17, 0.09))
+        else:
+            var course_h: int = 7
+            for y0 in range(0, h, course_h):
+                var hh: int = mini(course_h, h - y0)
+                var wood: Color = woods[posmod(y0 / course_h, woods.size())]
+                _rect(img, 1, y0, w - 2, hh, _shade(wood, 0.78))
+                _rect(img, 2, y0 + 1, w - 4, maxi(1, hh - 2), wood)
+                _rect(img, 4, y0 + 2, w - 8, 1, _shade(wood, 1.18))
+                _rect(img, 1, y0, w - 2, 1, _shade(wood, 0.55))
+                _rect(img, 1, y0 + hh - 1, w - 2, 1, Color(0.20, 0.12, 0.07))
+            _rect(img, 0, 2, w, 2, Color(0.31, 0.19, 0.10))
+            _rect(img, 0, h - 5, w, 2, Color(0.29, 0.17, 0.09))
     else:
         var stone := Color(0.58, 0.58, 0.63) if level == 2 else Color(0.42, 0.42, 0.5)
         var stone_d := _shade(stone, 0.7)
-        var band := Color(0.3, 0.32, 0.4)
-        var x0: int = 0 if horizontal else 3
-        var ww: int = w if horizontal else 16
-        var top: int = 8 if horizontal else 6
-        _rect(img, x0, top, ww, h - top - 3, stone)
-        for y in range(top + 1, h - 3, 5):
-            _rect(img, x0, y, ww, 1, stone_d)
-            var off: int = 0 if ((y - top) / 5) % 2 == 0 else 4
-            for x in range(x0 + off, x0 + ww, 8):
-                _rect(img, x, y, 1, 5, stone_d)
-        for x in range(x0, x0 + ww - 3, 10):
-            _rect(img, x, top - 5, 6, 5, stone)
+        if horizontal:
+            _rect(img, 0, 8, w, h - 11, stone)
+            for y in range(9, h - 3, 5):
+                _rect(img, 0, y, w, 1, stone_d)
+                var off: int = 0 if ((y - 8) / 5) % 2 == 0 else 4
+                for x in range(off, w, 8):
+                    _rect(img, x, y, 1, 5, stone_d)
+        else:
+            _rect(img, 3, 0, w - 6, h, stone)
+            for y in range(0, h, 8):
+                _rect(img, 3, y, w - 6, 1, stone_d)
+                _rect(img, 3, y, 1, 8, stone_d)
+                _rect(img, 11, y, 1, 8, stone_d)
         if level >= 3:
-            _rect(img, x0, top + 6, ww, 2, band)
-            for x in range(x0 + 3, x0 + ww - 2, 12):
-                _px(img, x, top - 8, Color(0.75, 0.77, 0.82))
+            _rect(img, 0 if horizontal else 3, 6 if horizontal else 0, w if horizontal else w - 6, 2, Color(0.3, 0.32, 0.4))
     return img
 
 ## Archer post / watchtower (40x64).

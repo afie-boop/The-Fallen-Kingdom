@@ -52,7 +52,7 @@ func _add_corner_post(at: Vector2) -> void:
     post.centered = true
     post.offset = Vector2.ZERO
     post.position = at
-    post.scale = Vector2(0.55, 0.55)
+    post.scale = Vector2(0.8, 0.8)
     post.z_index = 8
     add_child(post)
 
@@ -62,26 +62,26 @@ func _add_piece(at: Vector2, horizontal: bool, segment_length: float) -> void:
     body.position = at
     # The perimeter is a visual boundary, not a movement barrier. Players
     # and hunting units must be able to cross it freely to reach wildlife.
-    body.collision_layer = 0
+    body.collision_layer = 4
     body.collision_mask = 0
 
-    var sprite := PixelArt.make_sprite("wall_%s_1" % ("h" if horizontal else "v"))
+    var sprite := PixelArt.make_sprite("wall_%s_%d" % ["h" if horizontal else "v", level])
     # Fence sprites are centred on their segment positions. The default
     # PixelArt helper is bottom-anchored for characters/buildings.
     sprite.centered = true
     sprite.offset = Vector2.ZERO
     if horizontal:
-        sprite.scale = Vector2(segment_length / HORIZONTAL_LENGTH, 1.0)
+        sprite.scale = Vector2((segment_length + 18.0) / HORIZONTAL_LENGTH, 1.0)
     else:
-        sprite.scale = Vector2(1.0, segment_length / VERTICAL_LENGTH)
+        sprite.scale = Vector2(1.0, (segment_length + 18.0) / VERTICAL_LENGTH)
     body.add_child(sprite)
 
     var collision := CollisionShape2D.new()
     var rect := RectangleShape2D.new()
     if horizontal:
-        rect.size = Vector2(segment_length, 14.0)
+        rect.size = Vector2(segment_length + 18.0, 14.0)
     else:
-        rect.size = Vector2(18.0, segment_length)
+        rect.size = Vector2(18.0, segment_length + 18.0)
     collision.shape = rect
     body.add_child(collision)
     add_child(body)

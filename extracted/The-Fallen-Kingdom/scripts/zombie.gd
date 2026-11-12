@@ -22,7 +22,7 @@ var _retreating: bool = false
 
 
 func _ready() -> void:
-    collision_layer = 4
+    collision_layer = 8
     collision_mask = 1 | 4
     motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
     _sprite = PixelArt.make_sprite_tex(PixelArt.zombie_tex(0))
