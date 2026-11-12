@@ -1,0 +1,9 @@
+.godot/
+.import/
+*.translation
+export_presets.cfg
+*.apk
+*.aab
+*.idsig
+android/
+.mono/

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/zombie_nest.gd" id="1"]
+
+[node name="ZombieNest" type="StaticBody2D"]
+script = ExtResource("1")
