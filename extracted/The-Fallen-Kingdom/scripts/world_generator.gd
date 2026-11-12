@@ -5,7 +5,6 @@ extends RefCounted
 
 const TREE_SCENE: PackedScene = preload("res://scenes/tree.tscn")
 const RUIN_SCENE: PackedScene = preload("res://scenes/ruin.tscn")
-const NEST_SCENE: PackedScene = preload("res://scenes/zombie_nest.tscn")
 const CAMP_PROP_SCENE: PackedScene = preload("res://scenes/camp_prop.tscn")
 const BEGGAR_SCENE: PackedScene = preload("res://scenes/beggar.tscn")
 
@@ -77,29 +76,30 @@ static func spawn_ruins(parent: Node2D, island: IslandMap, world_seed: int, coun
     return spots
 
 
-## Small zombie nests spread over the island (the big Zombie Castle is placed separately).
-static func spawn_nests(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array) -> Array[Vector2]:
+## Random caves scattered around the island; zombies emerge from these at night.
+static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array) -> Array[Vector2]:
     var rng := RandomNumberGenerator.new()
     rng.seed = world_seed + 4242
     var spots: Array[Vector2] = []
     var tries: int = 0
-    while spots.size() < count and tries < 500:
+    while spots.size() < count and tries < 700:
         tries += 1
         var p: Vector2 = island.random_land_point(rng, 0.25, 140.0)
         if _blocked(p, avoid):
             continue
         var ok: bool = true
         for q in spots:
-            if p.distance_to(q) < 380.0:
+            if p.distance_to(q) < 520.0:
                 ok = false
                 break
         if not ok:
             continue
         spots.append(p)
-        var n := NEST_SCENE.instantiate() as ZombieNest
-        n.position = p
-        parent.add_child(n)
-        island.add_dirt_spot(p + Vector2(0, 8), 60.0)
+        var cave := ZombieCave.new()
+        cave.position = p
+        cave.variant = rng.randi_range(0, 2)
+        parent.add_child(cave)
+        island.add_dirt_spot(p + Vector2(0, 8), 75.0)
     return spots
 
 
