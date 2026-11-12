@@ -116,6 +116,8 @@ static func _build(key: String) -> Image:
         return _hut(int(key.substr(4)))
     if key == "nest":
         return _nest()
+    if key.begins_with("cave_"):
+        return _cave(int(key.substr(5)))
     if key == "fire_0" or key == "fire_1":
         return _fire(int(key.substr(5)))
     if key.begins_with("player_"):
@@ -693,3 +695,26 @@ static func _rock(variant: int) -> Image:
     _rect(img, 15, 22, 5, 2, light)
     _rect(img, 37, 31, 8, 3, dark)
     return img
+
+## Dark rocky cave entrance with a deep black opening.
+static func _cave(variant: int) -> Image:
+    var img := _new(72, 52)
+    var palette: Array[Color] = [Color(0.34, 0.35, 0.38), Color(0.39, 0.36, 0.33), Color(0.31, 0.36, 0.37)]
+    var rock: Color = palette[posmod(variant, 3)]
+    var shade: Color = _shade(rock, 0.68)
+    var light: Color = _shade(rock, 1.28)
+    _disc(img, 36, 43, 29, Color(0, 0, 0, 0.3))
+    _rect(img, 7, 29, 58, 13, shade)
+    _disc(img, 36, 28, 28, rock)
+    _disc(img, 36, 26, 22, light)
+    _disc(img, 36, 33, 17, Color(0.055, 0.045, 0.05))
+    _rect(img, 19, 32, 34, 11, Color(0.055, 0.045, 0.05))
+    _rect(img, 18, 27, 5, 9, shade)
+    _rect(img, 49, 25, 6, 11, shade)
+    _rect(img, 27, 12, 5, 4, light)
+    _rect(img, 39, 9, 6, 5, light)
+    _rect(img, 12, 37, 8, 5, rock)
+    _rect(img, 54, 36, 7, 6, rock)
+    _rect(img, 29, 43, 14, 3, shade)
+    return img
+
