@@ -29,6 +29,64 @@ static func file_tex(path: String) -> Texture2D:
     return tex
 
 
+## Loads a JPG/PNG and removes only light background pixels connected to its edges.
+## This keeps white details inside the animal while making the outside transparent.
+static func file_tex_remove_light_background(path: String) -> Texture2D:
+    var cache_key: String = path + "#edge-transparent"
+    if _cache.has(cache_key):
+        return _cache[cache_key]
+    var source: Texture2D = file_tex(path)
+    var img: Image = source.get_image()
+    if img == null:
+        return source
+    img.convert(Image.FORMAT_RGBA8)
+    var w: int = img.get_width()
+    var h: int = img.get_height()
+    if w < 1 or h < 1:
+        return source
+
+    var visited := PackedByteArray()
+    visited.resize(w * h)
+    var queue := PackedInt32Array()
+    var seeds: Array[Vector2i] = [Vector2i(0, 0), Vector2i(w - 1, 0), Vector2i(0, h - 1), Vector2i(w - 1, h - 1)]
+    for seed in seeds:
+        var c: Color = img.get_pixel(seed.x, seed.y)
+        if c.r > 0.72 and c.g > 0.72 and c.b > 0.72:
+            var idx: int = seed.y * w + seed.x
+            if visited[idx] == 0:
+                visited[idx] = 1
+                queue.append(idx)
+
+    var head: int = 0
+    while head < queue.size():
+        var idx: int = queue[head]
+        head += 1
+        var x: int = idx % w
+        var y: int = idx / w
+        var c: Color = img.get_pixel(x, y)
+        # Remove light edge-connected background, but stop at darker outlines.
+        var lightness: float = minf(c.r, minf(c.g, c.b))
+        if lightness < 0.68:
+            continue
+        var alpha: float = clampf((0.94 - lightness) / 0.22, 0.0, 1.0)
+        img.set_pixel(x, y, Color(c.r, c.g, c.b, alpha))
+        var neighbors: Array[Vector2i] = [Vector2i(x - 1, y), Vector2i(x + 1, y), Vector2i(x, y - 1), Vector2i(x, y + 1)]
+        for n in neighbors:
+            if n.x < 0 or n.y < 0 or n.x >= w or n.y >= h:
+                continue
+            var ni: int = n.y * w + n.x
+            if visited[ni] != 0:
+                continue
+            var nc: Color = img.get_pixel(n.x, n.y)
+            if nc.r > 0.72 and nc.g > 0.72 and nc.b > 0.72:
+                visited[ni] = 1
+                queue.append(ni)
+
+    var result := ImageTexture.create_from_image(img)
+    _cache[cache_key] = result
+    return result
+
+
 const TREE_COUNT: int = 9
 const RUIN_COUNT: int = 5
 const CHAR_COUNT: int = 11
