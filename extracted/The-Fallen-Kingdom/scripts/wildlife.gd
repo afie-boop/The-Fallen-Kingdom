@@ -26,7 +26,7 @@ func _ready() -> void:
         _sprite.sprite_frames = frames
         _sprite.position.y = -sprite_height * 0.5
         _sprite.play("walk")
-        _sprite.scale = Vector2.ONE * (sprite_height / float(_frame_source_height(sheet_path, frames)))
+        _sprite.scale = Vector2.ONE * (sprite_height / float(frames.get_frame_texture("walk", 0).get_height()))
         _sprite.material = _black_background_material()
     else:
         var fallback := Sprite2D.new()
@@ -187,10 +187,6 @@ func _build_sprite_frames(path: String) -> SpriteFrames:
         result.add_frame("walk", atlas)
     result.add_frame("idle", result.get_frame_texture("walk", 0))
     return result
-
-func _frame_source_height(path: String, _frames: SpriteFrames) -> float:
-    var source := load(path) as Texture2D
-    return float(source.get_height()) if source != null else 1.0
 
 func _black_background_material() -> ShaderMaterial:
     var shader := Shader.new()
