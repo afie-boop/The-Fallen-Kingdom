@@ -138,6 +138,14 @@ func _archer(delta: float) -> void:
         _engage_zombie(night_target, delta, radius)
         return
 
+    var dropped_coin: HuntingCoin = _nearest_hunting_coin(radius)
+    if dropped_coin != null:
+        if global_position.distance_to(dropped_coin.global_position) > 14.0:
+            _step(dropped_coin.global_position, WORK_SPEED, delta)
+        else:
+            _carried_gold += dropped_coin.collect(self)
+        return
+
     if _wildlife == null or not is_instance_valid(_wildlife):
         _wildlife = _nearest_wildlife(radius)
         if _wildlife != null:
@@ -153,7 +161,6 @@ func _archer(delta: float) -> void:
                 _shoot_cd = 0.85
                 var killed: bool = _wildlife.take_damage(12.0, global_position)
                 if killed:
-                    _carried_gold += _wildlife.coin_value
                     _wildlife = null
         return
 
@@ -235,6 +242,24 @@ func _nearest_wildlife(radius: float) -> Wildlife:
         if distance < best_distance:
             best_distance = distance
             best = animal
+    return best
+
+
+func _nearest_hunting_coin(radius: float) -> HuntingCoin:
+    var best: HuntingCoin = null
+    var best_distance: float = radius
+    for node in get_tree().get_nodes_in_group("hunting_coins"):
+        var coin := node as HuntingCoin
+        if coin == null or (coin.collector != null and is_instance_valid(coin.collector) and coin.collector != self):
+            continue
+        if not _inside_kingdom(coin.global_position, radius - 20.0):
+            continue
+        var distance: float = global_position.distance_to(coin.global_position)
+        if distance < best_distance:
+            best_distance = distance
+            best = coin
+    if best != null:
+        best.claim(self)
     return best
 
 
