@@ -84,6 +84,11 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
     global_position += d.normalized() * speed * delta
     if GameState.island != null:
         global_position = GameState.island.constrain(before, global_position)
+    if job == "archer":
+        var from_home: Vector2 = global_position - home
+        var patrol_limit: float = _kingdom_radius() - 28.0
+        if from_home.length() > patrol_limit:
+            global_position = home + from_home.normalized() * patrol_limit
     _sprite.position.y = -absf(sin(_t * 9.0)) * 2.0
     _sprite.rotation = sin(_t * 9.0) * 0.06
     if absf(d.x) > 1.0:
