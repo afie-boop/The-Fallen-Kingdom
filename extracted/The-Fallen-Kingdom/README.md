@@ -44,13 +44,13 @@ Touch-screen laptops show the touch controls as well.
 - Grass is one big generated realistic image (not tiled) and some areas are bare soil without grass (patches, a yard around the house and the ruins); sea, sand, trees, ruined houses and characters use the PNG files in `assets/` (see `assets/CREDITS.md`
   about licences). The player uses `char_01` (knight); set `GameState.player_skin` (1-11) to use another one.
   Zombies use a green recolour. Characters are single front-facing sprites (walk = hop + tilt + flip).
-- Six ruined houses are scattered on the island as decoration with collision. Castles are drawn at 2x size.
+- Twelve ruined houses are scattered across the larger island as decoration with collision. Castles are drawn at 2x size.
 
 ## Zombies, nests, camps and beggars
 
-- Zombies only appear **at night**. They crawl out of **5 small nests** scattered over the island and out of the big
+- Zombies only appear **at night**. They crawl out of **8 small nests** scattered over the island and out of the big
   **Zombie Castle** (which spawns more). At dawn they fade away. Each zombie uses one of 11 zombie sprites.
-- **3-4 poor people's camps** are placed at random for each new world (stored via the world seed). Every camp has exactly
+- **5-6 poor people's camps** are placed at random for each new world (stored via the world seed). Every camp has exactly
   **2 tents** at random positions, a campfire and **1-2 beggars**.
 - Walk up to a beggar and press USE / E: it costs 1 Gold Coin from your own wallet and the beggar becomes a citizen
   who wanders in front of the kingdom house. Recruited beggars are saved. Farmer/knight/hunter jobs are Stage 2 (not implemented).
@@ -71,7 +71,7 @@ Touch-screen laptops show the touch controls as well.
 
 ## Gameplay in Stage 1
 
-- Walk around a 2400×2400 world with collision, a camera that follows you, day/night cycle.
+- Walk around a 4800×4800 world with collision, a camera that follows you, day/night cycle.
 - Zombies come out at night from nests and the Zombie Castle and walk toward you or the kingdom house.
 - Kill zombies with the sword; they sometimes drop **Gold Coins** (personal wallet).
 - Chop trees for **wood** (carried). At the **castle**, **USE** deposits wood into the shared kingdom stock, heals you and saves.
