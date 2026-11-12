@@ -57,12 +57,13 @@ func _ready() -> void:
     for np in nest_spots:
         avoid.append({"pos": np, "r": 130.0})
     var camp_avoid: Array = [
-        {"pos": castle.position, "r": 360.0},
+        {"pos": castle.position, "r": 760.0},
         {"pos": enemy_castle.position, "r": 300.0},
     ]
     for np in nest_spots:
         camp_avoid.append({"pos": np, "r": 220.0})
     var camp_spots: Array[Vector2] = WorldGenerator.spawn_camps(entities, GameState.island, GameState.world_seed, camp_avoid, GameState.recruited_beggars)
+    WorldGenerator.spawn_jungle_trees(entities, GameState.island, GameState.world_seed, camp_spots, GameState.removed_trees)
     for cp in camp_spots:
         avoid.append({"pos": cp, "r": 130.0})
     WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
