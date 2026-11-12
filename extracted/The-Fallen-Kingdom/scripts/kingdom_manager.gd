@@ -115,15 +115,33 @@ func info_text() -> String:
         citizens += 1
         if (c as Citizen).job == "":
             jobless += 1
-    return "Gold: %d   Citizens: %d (jobless %d)   Builders: %d/%d" % [
+    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d   Builders: %d/%d" % [
         GameState.get_gold(), citizens, jobless,
-        _workers("builder_hut"), count("builder_hut")]
+        _job_count("archer"), _workers("builder_hut"), count("builder_hut")]
 
 
 func _workers(kind: String) -> int:
     var n: int = 0
     for s in _structures:
         if s.kind == kind and _worker_for(s) != null:
+            n += 1
+    return n
+
+
+func _job_count(job_name: String) -> int:
+    var n: int = 0
+    for c in get_tree().get_nodes_in_group("citizens"):
+        var cz := c as Citizen
+        if cz != null and cz.job == job_name:
+            n += 1
+    return n
+
+
+func _jobless_count() -> int:
+    var n: int = 0
+    for c in get_tree().get_nodes_in_group("citizens"):
+        var cz := c as Citizen
+        if cz != null and cz.job == "":
             n += 1
     return n
 
@@ -180,11 +198,28 @@ func menu_rows() -> Array:
                 else:
                     up_enabled = true
             rows.append({"title": "Upgrade %s" % NAMES[kind], "info": up_info, "button": up_btn, "enabled": up_enabled, "kind": kind, "action": "upgrade"})
+    var available_citizens: int = _jobless_count()
+    rows.append({
+        "title": "Archer",
+        "info": "%d pemanah bekerja tanpa bangunan khas. Tiada kos; gunakan rakyat yang belum bekerja." % _job_count("archer"),
+        "button": "Assign 1 citizen" if available_citizens > 0 else "No jobless citizens",
+        "enabled": available_citizens > 0,
+        "kind": "archer",
+        "action": "hire"
+    })
     return rows
 
 
 ## Performs a menu action for a player. Returns a short result message.
 func do_action(kind: String, action: String, player_id: int) -> String:
+    if kind == "archer" and action == "hire":
+        for c in get_tree().get_nodes_in_group("citizens"):
+            var cz := c as Citizen
+            if cz != null and cz.job == "":
+                cz.set_job("archer", null)
+                changed.emit()
+                return "Citizen assigned as an archer."
+        return "No jobless citizens available."
     if not SLOTS.has(kind):
         return ""
     if kind == "wall":
