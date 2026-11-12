@@ -39,6 +39,23 @@ func _rebuild() -> void:
         _add_piece(Vector2(-half, y), false, vertical_step)
         _add_piece(Vector2(half, y), false, vertical_step)
 
+    # Cap each junction with one solid timber/stone post so the two wall
+    # directions meet cleanly instead of showing a crossed, doubled corner.
+    for corner_x in [-half, half]:
+        for corner_y in [-half, half]:
+            _add_corner_post(Vector2(corner_x, corner_y))
+
+
+func _add_corner_post(at: Vector2) -> void:
+    var post := Sprite2D.new()
+    post.texture = PixelArt.get_tex("post_%d" % level)
+    post.centered = true
+    post.offset = Vector2.ZERO
+    post.position = at
+    post.scale = Vector2(0.55, 0.55)
+    post.z_index = 8
+    add_child(post)
+
 
 func _add_piece(at: Vector2, horizontal: bool, segment_length: float) -> void:
     var body := StaticBody2D.new()
