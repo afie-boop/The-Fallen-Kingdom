@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: the-fallen-kingdom
+    runtime: static
+    branch: main
+    buildCommand: bash render-build.sh
+    staticPublishPath: ./public
+    autoDeploy: true
