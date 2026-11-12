@@ -108,7 +108,7 @@ static func spawn_nests(parent: Node2D, island: IslandMap, world_seed: int, coun
 static func spawn_camps(parent: Node2D, island: IslandMap, world_seed: int, avoid: Array, recruited: Array) -> Array[Vector2]:
     var rng := RandomNumberGenerator.new()
     rng.seed = world_seed + 31337
-    var wanted: int = rng.randi_range(3, 4)
+    var wanted: int = rng.randi_range(5, 6)
     var spots: Array[Vector2] = []
     var tries: int = 0
     var gap: float = 380.0     # minimum distance between camps; relaxed if the island is small
