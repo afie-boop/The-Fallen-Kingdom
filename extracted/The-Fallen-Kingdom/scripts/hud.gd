@@ -44,6 +44,7 @@ var _build_msg: Label
 var build_open: bool = false
 var _clock_t: float = 0.0
 var _hint_label: Label
+var _minimap: GameMiniMap
 
 
 func _ready() -> void:
@@ -55,6 +56,10 @@ func _ready() -> void:
     _root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _build_status()
     _build_controls()
+    _minimap = GameMiniMap.new()
+    _minimap.size = Vector2(142, 142)
+    _minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _root.add_child(_minimap)
     _build_death_panel()
     _build_pause_panel()
     _build_build_panel()
@@ -94,6 +99,11 @@ func _process(delta: float) -> void:
 
 
 # --- public API --------------------------------------------------------------
+
+func setup_minimap(island: IslandMap, player_node: Node2D, castle_node: Node2D, world_nodes: Node2D, world_size: Vector2) -> void:
+    if _minimap != null:
+        _minimap.setup(island, player_node, castle_node, world_nodes, world_size)
+
 
 func update_hp(hp: float, max_hp: float) -> void:
     _hp_fill.size.x = BAR_W * clampf(hp / maxf(1.0, max_hp), 0.0, 1.0)
@@ -237,6 +247,9 @@ func _layout() -> void:
     interact_button.position = Vector2(attack_button.position.x - u * 0.6, attack_button.position.y - u - 18.0)
     pause_button.size = Vector2(52, 52)
     pause_button.position = Vector2(vs.x - 52.0 - 14.0, 10.0)
+    if _minimap != null:
+        _minimap.position = Vector2(vs.x - 156.0, 72.0)
+        _minimap.size = Vector2(142.0, 142.0)
     if _build_btn != null:
         _build_btn.size = Vector2(96, 44)
         _build_btn.position = Vector2(vs.x - 96.0 - 12.0, 72.0)

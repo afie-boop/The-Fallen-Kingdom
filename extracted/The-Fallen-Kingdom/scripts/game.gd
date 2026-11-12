@@ -84,6 +84,7 @@ func _ready() -> void:
 
     hud = Hud.new()
     add_child(hud)
+    hud.setup_minimap(GameState.island, player, castle, entities, _world_rect.size)
     _connect_signals()
     hud.update_hp(player.hp, player.max_hp)
 
