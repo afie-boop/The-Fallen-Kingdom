@@ -61,6 +61,10 @@ func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
         return false
     hp -= amount
     if hp <= 0.0:
+        var dropped := HuntingCoin.new()
+        dropped.value = coin_value
+        dropped.global_position = global_position
+        get_parent().add_child(dropped)
         queue_free()
         return true
     return false
