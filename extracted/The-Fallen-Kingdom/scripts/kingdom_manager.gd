@@ -174,7 +174,7 @@ func menu_rows() -> Array:
             if target <= level_cap:
                 var up_cost: int = _cost(kind, target - 1)
                 up_btn = "Upgrade Lv %d  %d coin" % [target, up_cost]
-                if kind != "castle" and target > cl:
+                if kind != "castle" and kind != "wall" and target > cl:
                     up_info = "Needs Castle level %d first." % target
                 elif gold < up_cost:
                     up_info += "  (not enough coins)"
