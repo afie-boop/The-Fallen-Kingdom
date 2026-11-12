@@ -662,3 +662,34 @@ static func _hut(level: int) -> Image:
     _rect(img, 38, 24, 7, 6, Color(0.2, 0.16, 0.12))
     _rect(img, 40, 4, 5, 8, Color(0.4, 0.4, 0.45))   # chimney
     return img
+
+
+## Natural-looking large boulders, four shape/shade variations (64x48).
+static func _rock(variant: int) -> Image:
+    var img := _new(64, 48)
+    var base_colors: Array[Color] = [Color(0.43, 0.45, 0.47), Color(0.49, 0.46, 0.41), Color(0.38, 0.43, 0.45), Color(0.52, 0.51, 0.48)]
+    var base: Color = base_colors[posmod(variant, base_colors.size())]
+    var dark: Color = _shade(base, 0.62)
+    var light: Color = _shade(base, 1.28)
+    _disc(img, 32, 39, 23, Color(0, 0, 0, 0.25))
+    var widths: Array[int] = [23, 20, 25, 22]
+    var heights: Array[int] = [17, 20, 15, 18]
+    var rx: int = widths[posmod(variant, 4)]
+    var ry: int = heights[posmod(variant, 4)]
+    for y in range(9, 43):
+        for x in range(7, 58):
+            var dx: float = float(x - 32) / float(rx)
+            var dy: float = float(y - (27 + (variant % 2) * 2)) / float(ry)
+            if dx * dx + dy * dy <= 1.0:
+                var shade: Color = base
+                if y < 20 or x < 22:
+                    shade = light
+                elif y > 34 or x > 43:
+                    shade = dark
+                if (x * 7 + y * 11 + variant * 13) % 19 == 0:
+                    shade = _shade(shade, 0.82)
+                _px(img, x, y, shade)
+    _rect(img, 21, 15, 10, 3, light)
+    _rect(img, 15, 22, 5, 2, light)
+    _rect(img, 37, 31, 8, 3, dark)
+    return img
