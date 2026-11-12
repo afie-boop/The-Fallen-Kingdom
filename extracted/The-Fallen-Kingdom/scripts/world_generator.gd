@@ -104,31 +104,42 @@ static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, coun
 
 
 ## Spawns deer and rabbits across the island, with a few close to the kingdom.
+## Spawns a small herd in wooded areas, choosing positions near existing trees.
+## A fresh random seed is used each time this runs (initial day and every dawn).
 static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, count: int, home: Vector2) -> int:
     var rng := RandomNumberGenerator.new()
-    rng.seed = world_seed + 77123
+    rng.randomize()
+    var trees: Array = parent.get_tree().get_nodes_in_group("trees")
+    if trees.is_empty():
+        return 0
+    var placed: Array[Vector2] = []
     var spawned: int = 0
     var tries: int = 0
-    while spawned < count and tries < count * 30:
+    while spawned < count and tries < count * 45:
         tries += 1
-        var p: Vector2
-        # Ensure a useful number of animals can be found inside the kingdom fence.
-        if spawned < 3:
-            var angle: float = rng.randf_range(0.0, TAU)
-            var radius: float = rng.randf_range(90.0, 275.0)
-            p = home + Vector2.from_angle(angle) * radius
-        else:
-            p = island.random_land_point(rng, 0.22, 100.0)
-        if not island.is_walkable(p) or p.distance_to(home) < 65.0:
+        var tree_node: Node2D = trees[rng.randi_range(0, trees.size() - 1)] as Node2D
+        if tree_node == null or not is_instance_valid(tree_node):
             continue
-        var kind: String = "deer" if rng.randf() < 0.42 else "rabbit"
+        var angle: float = rng.randf_range(0.0, TAU)
+        var distance: float = rng.randf_range(34.0, 115.0)
+        var p: Vector2 = tree_node.global_position + Vector2.from_angle(angle) * distance
+        if not island.is_walkable(p) or p.distance_to(home) < 300.0:
+            continue
+        var crowded: bool = false
+        for other in placed:
+            if p.distance_to(other) < 110.0:
+                crowded = true
+                break
+        if crowded:
+            continue
+        placed.append(p)
+        var kind: String = "deer" if rng.randf() < 0.4 else "rabbit"
         var animal := Wildlife.new()
         animal.configure(kind)
         animal.position = p
         parent.add_child(animal)
         spawned += 1
     return spawned
-
 
 ## Poor people's camps: 3-4 camps, each with exactly 2 tents (random positions) and 1-2 beggars.
 ## Beggar ids are stable (camp * 10 + slot) so recruited ones stay gone after loading.
