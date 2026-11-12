@@ -86,9 +86,10 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
         global_position = GameState.island.constrain(before, global_position)
     if job == "archer":
         var from_home: Vector2 = global_position - home
-        # Hunting is allowed just beyond the fence, but never far enough
-        # for the archer to wander off-screen across the island.
-        var patrol_limit: float = _kingdom_radius() + 220.0 if (not GameState.is_night and is_instance_valid(_wildlife)) else _kingdom_radius() - 28.0
+        # Keep one stable movement boundary in every archer state.
+        # Changing the limit immediately after a kill used to teleport the archer
+        # back toward home, making it appear to vanish in front of the player.
+        var patrol_limit: float = _kingdom_radius() + 220.0
         if from_home.length() > patrol_limit:
             global_position = home + from_home.normalized() * patrol_limit
     _sprite.position.y = -absf(sin(_t * 9.0)) * 2.0
