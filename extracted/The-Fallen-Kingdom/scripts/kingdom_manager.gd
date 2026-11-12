@@ -6,9 +6,11 @@ extends Node
 
 const STRUCTURE_SCENE: PackedScene = preload("res://scenes/structure.tscn")
 const KINDS: Array[String] = ["castle", "wall", "archer_post", "builder_hut"]
-const NAMES: Dictionary = {"castle": "Castle", "wall": "Wall segments", "archer_post": "Archer Posts", "builder_hut": "Builder Huts"}
+const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "archer_post": "Archer Posts", "builder_hut": "Builder Huts"}
 const JOBS: Dictionary = {"archer_post": "archer", "builder_hut": "builder"}
 const MAX_LEVEL: int = 3
+const MAX_FENCE_LEVEL: int = 5
+const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
 
 ## Slot offsets from the kingdom house position (bottom-anchored buildings).
 const SLOTS: Dictionary = {
@@ -28,6 +30,8 @@ signal changed
 var home: Vector2 = Vector2.ZERO
 var _entities: Node2D
 var _structures: Array[Structure] = []
+var fence: KingdomFence
+var fence_level: int = 0
 
 
 func setup(entities: Node2D, home_pos: Vector2) -> void:
@@ -37,13 +41,19 @@ func setup(entities: Node2D, home_pos: Vector2) -> void:
         var d: Dictionary = b
         var kind: String = str(d.get("kind", ""))
         var slot: int = int(d.get("slot", 0))
-        if SLOTS.has(kind) and slot < (SLOTS[kind] as Array).size():
+        if kind == "wall":
+            fence_level = maxi(fence_level, int(d.get("level", 1)))
+        elif SLOTS.has(kind) and slot < (SLOTS[kind] as Array).size():
             _spawn(kind, slot, int(d.get("level", 1)), float(d.get("hp", -1.0)))
+    if fence_level > 0:
+        _create_fence()
 
 
 # --- queries -----------------------------------------------------------------
 
 func count(kind: String) -> int:
+    if kind == "wall":
+        return 1 if fence_level > 0 else 0
     var n: int = 0
     for s in _structures:
         if s.kind == kind:
@@ -52,11 +62,15 @@ func count(kind: String) -> int:
 
 
 func capacity(kind: String) -> int:
+    if kind == "wall":
+        return 1
     return (SLOTS[kind] as Array).size()
 
 
 ## Lowest level among built structures of a kind (0 if none).
 func level_of(kind: String) -> int:
+    if kind == "wall":
+        return fence_level
     var lowest: int = 99
     for s in _structures:
         if s.kind == kind:
@@ -83,6 +97,8 @@ func _cost(kind: String, level_index: int) -> int:
 
 
 func _free_slot(kind: String) -> int:
+    if kind == "wall":
+        return 0 if fence_level == 0 else -1
     var used: Array[int] = []
     for s in _structures:
         if s.kind == kind:
@@ -154,7 +170,8 @@ func menu_rows() -> Array:
             var up_btn: String = "Max level"
             var up_enabled: bool = false
             var up_info: String = "Upgrades all %s." % NAMES[kind].to_lower()
-            if target <= MAX_LEVEL:
+            var level_cap: int = MAX_FENCE_LEVEL if kind == "wall" else MAX_LEVEL
+            if target <= level_cap:
                 var up_cost: int = _cost(kind, target - 1)
                 up_btn = "Upgrade Lv %d  %d coin" % [target, up_cost]
                 if kind != "castle" and target > cl:
@@ -171,6 +188,32 @@ func menu_rows() -> Array:
 func do_action(kind: String, action: String, player_id: int) -> String:
     if not SLOTS.has(kind):
         return ""
+    if kind == "wall":
+        if action == "build":
+            if fence_level > 0:
+                return "The kingdom fence is already built."
+            if not GameState.spend_gold(_cost("wall", 0), player_id):
+                return "Not enough Gold Coins."
+            fence_level = 1
+            _create_fence()
+            sync_state()
+            changed.emit()
+            return "A complete fence now surrounds your kingdom."
+        if action == "upgrade":
+            if fence_level <= 0:
+                return "Build the fence first."
+            if fence_level >= MAX_FENCE_LEVEL:
+                return "Territory is already at its maximum size."
+            var next_level: int = fence_level + 1
+            var expansion_cost: int = _cost("wall", next_level - 1)
+            if not GameState.spend_gold(expansion_cost, player_id):
+                return "Not enough Gold Coins."
+            fence_level = next_level
+            if is_instance_valid(fence):
+                fence.set_level(fence_level)
+            sync_state()
+            changed.emit()
+            return "Kingdom territory expanded. Fence boundary moved outward."
     if action == "build":
         var slot: int = _free_slot(kind)
         if slot < 0 or (kind == "castle" and count("castle") > 0):
@@ -205,6 +248,15 @@ func do_action(kind: String, action: String, player_id: int) -> String:
     return ""
 
 
+func _create_fence() -> void:
+    if is_instance_valid(fence):
+        fence.queue_free()
+    fence = FENCE_SCRIPT.new() as KingdomFence
+    fence.level = fence_level
+    fence.position = home
+    _entities.add_child(fence)
+
+
 func _spawn(kind: String, slot: int, level: int, hp: float) -> void:
     var s := STRUCTURE_SCENE.instantiate() as Structure
     s.kind = kind
@@ -224,6 +276,8 @@ func sync_state() -> void:
     for s in _structures:
         if is_instance_valid(s):
             list.append(s.to_save())
+    if fence_level > 0:
+        list.append({"kind": "wall", "slot": -1, "level": fence_level, "hp": -1.0})
     GameState.buildings = list
 
 
