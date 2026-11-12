@@ -796,61 +796,56 @@ static func _rock(variant: int) -> Image:
 
 ## Dark rocky cave entrance with a deep black opening.
 static func _cave(variant: int) -> Image:
-    # Ancient enchanted cavern: layered stone, jagged silhouette, glowing
-    # crystal shards and old runes around a deep, ominous entrance.
+    # A plain natural cave mouth: a dark opening surrounded only by rough
+    # boulders embedded in the hillside. No crystals, runes, bones or props.
     var img := _new(80, 60)
     var palettes: Array[Color] = [
-        Color(0.25, 0.31, 0.38), Color(0.34, 0.29, 0.27), Color(0.22, 0.34, 0.34)
+        Color(0.29, 0.31, 0.33), Color(0.34, 0.31, 0.28), Color(0.27, 0.32, 0.33)
     ]
     var rock: Color = palettes[posmod(variant, palettes.size())]
-    var shade: Color = _shade(rock, 0.58)
-    var light: Color = _shade(rock, 1.38)
-    var glow: Color = Color(0.28, 0.88, 0.82) if variant == 0 else (Color(0.70, 0.42, 0.95) if variant == 1 else Color(0.48, 0.78, 1.0))
-    var dark := Color(0.025, 0.035, 0.065)
-    _disc(img, 40, 51, 32, Color(0, 0, 0, 0.34))
-    # Broad rock foundation and uneven crown.
-    _rect(img, 8, 31, 64, 18, shade)
-    _disc(img, 40, 31, 30, rock)
-    _disc(img, 40, 27, 23, light)
-    _disc(img, 17, 35, 12, shade)
-    _disc(img, 63, 35, 13, shade)
-    # Angular rock highlights and cracks.
-    _rect(img, 13, 23, 8, 5, light)
-    _rect(img, 22, 16, 7, 4, light)
-    _rect(img, 53, 14, 8, 5, light)
-    _rect(img, 63, 25, 6, 5, light)
-    _rect(img, 17, 29, 2, 8, shade)
-    _rect(img, 60, 27, 2, 9, shade)
-    _rect(img, 29, 17, 2, 6, shade)
-    _rect(img, 48, 19, 2, 7, shade)
-    # Deep arched entrance with a faint inner glow.
-    _disc(img, 40, 34, 19, dark)
-    _rect(img, 21, 34, 38, 14, dark)
-    _disc(img, 40, 39, 12, Color(0.10, 0.07, 0.16))
-    _rect(img, 28, 39, 24, 9, dark)
-    _rect(img, 35, 42, 10, 5, Color(0.12, 0.10, 0.22))
-    # Crystal clusters flanking the entrance.
-    _disc(img, 13, 43, 7, _shade(glow, 0.45))
-    _rect(img, 10, 32, 4, 13, glow)
-    _px(img, 11, 29, _shade(glow, 1.45))
-    _rect(img, 15, 37, 3, 8, _shade(glow, 0.78))
-    _disc(img, 67, 43, 7, _shade(glow, 0.45))
-    _rect(img, 65, 33, 4, 12, glow)
-    _px(img, 66, 30, _shade(glow, 1.45))
-    _rect(img, 61, 38, 3, 7, _shade(glow, 0.78))
-    # Ancient glowing runes and scattered luminous fragments.
-    for p in [Vector2i(25, 28), Vector2i(54, 27), Vector2i(20, 45), Vector2i(58, 46)]:
-        _px(img, p.x, p.y, glow)
-        _px(img, p.x + 1, p.y + 1, _shade(glow, 1.25))
-    _rect(img, 31, 10, 2, 5, glow)
-    _rect(img, 29, 12, 6, 1, _shade(glow, 0.8))
-    _rect(img, 47, 8, 2, 5, glow)
-    _rect(img, 45, 10, 6, 1, _shade(glow, 0.8))
-    # Broken bones and stones at the threshold.
-    _rect(img, 23, 49, 9, 2, Color(0.72, 0.69, 0.58))
-    _rect(img, 26, 47, 2, 4, Color(0.82, 0.78, 0.66))
-    _rect(img, 49, 50, 8, 2, Color(0.68, 0.65, 0.56))
-    _disc(img, 8, 50, 4, shade)
-    _disc(img, 72, 51, 5, shade)
+    var shade: Color = _shade(rock, 0.62)
+    var dark_shade: Color = _shade(rock, 0.42)
+    var light: Color = _shade(rock, 1.24)
+    var opening := Color(0.012, 0.014, 0.018)
+    _disc(img, 40, 53, 32, Color(0, 0, 0, 0.30))
+
+    # Irregular rocky hillside and heavy stones forming a rough arch.
+    _disc(img, 40, 31, 31, shade)
+    _disc(img, 40, 27, 25, rock)
+    _disc(img, 19, 34, 13, dark_shade)
+    _disc(img, 61, 34, 14, dark_shade)
+    _disc(img, 23, 20, 12, light)
+    _disc(img, 38, 15, 13, shade)
+    _disc(img, 55, 20, 13, light)
+    _disc(img, 10, 39, 9, rock)
+    _disc(img, 70, 40, 9, rock)
+
+    # Individual boulder faces and natural cracks, all in muted stone tones.
+    _rect(img, 10, 29, 8, 3, light)
+    _rect(img, 19, 17, 7, 3, light)
+    _rect(img, 34, 10, 8, 3, light)
+    _rect(img, 52, 16, 8, 3, light)
+    _rect(img, 65, 29, 6, 3, light)
+    _rect(img, 15, 33, 2, 7, dark_shade)
+    _rect(img, 25, 24, 2, 6, dark_shade)
+    _rect(img, 53, 23, 2, 7, dark_shade)
+    _rect(img, 63, 34, 2, 6, dark_shade)
+    _rect(img, 31, 18, 2, 5, dark_shade)
+    _rect(img, 46, 17, 2, 6, dark_shade)
+
+    # Deep, uneven cave mouth. The stone lip overlaps its upper edge.
+    _disc(img, 40, 35, 19, opening)
+    _rect(img, 21, 35, 38, 14, opening)
+    _disc(img, 40, 39, 13, Color(0.035, 0.035, 0.04))
+    _rect(img, 27, 40, 26, 9, opening)
+    _rect(img, 34, 44, 12, 5, Color(0.018, 0.019, 0.022))
+
+    # Loose natural stones at the entrance, matching the surrounding rock.
+    _disc(img, 12, 49, 5, dark_shade)
+    _disc(img, 20, 52, 4, shade)
+    _disc(img, 64, 51, 5, dark_shade)
+    _disc(img, 72, 48, 4, shade)
+    _rect(img, 29, 51, 7, 2, dark_shade)
+    _rect(img, 46, 52, 8, 2, dark_shade)
     return img
 
