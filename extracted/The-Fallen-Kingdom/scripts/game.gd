@@ -30,6 +30,7 @@ func _ready() -> void:
 
     GameState.island = IslandMap.new()
     GameState.island.build(GameState.world_seed, _world_rect.size)
+    _place_small_lake()
     _build_ground()
     _build_bounds()
     entities = Node2D.new()
@@ -67,11 +68,8 @@ func _ready() -> void:
     for cp in camp_spots:
         avoid.append({"pos": cp, "r": 130.0})
     WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
-    var ruin_spots: Array[Vector2] = WorldGenerator.spawn_ruins(entities, GameState.island, GameState.world_seed, 12, avoid)
-    for rp in ruin_spots:
-        avoid.append({"pos": rp, "r": 90.0})
-        GameState.island.add_dirt_spot(rp + Vector2(0, 14), 85.0)
     GameState.island.refresh_texture()
+    # No ruined houses are scattered around the island; tents mark poor camps.
     WorldGenerator.spawn_trees(entities, GameState.island, GameState.world_seed, GameConfig.tree_count, avoid, GameState.removed_trees)
 
     kingdom = KingdomManager.new()
@@ -100,6 +98,21 @@ func _ready() -> void:
     if GameState.castle_hp > 0.0:
         castle.set_hp(GameState.castle_hp)
     hud.show_message("Loaded saved game." if GameState.loaded_from_save else "Defend the kingdom. Chop trees, fight zombies, collect coins.", 4.0)
+
+
+func _place_small_lake() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = GameState.world_seed + 481516
+    for attempt in 120:
+        var angle: float = rng.randf_range(0.0, TAU)
+        var radius: float = rng.randf_range(560.0, 1050.0)
+        var p: Vector2 = GameState.island.center_pos + Vector2.from_angle(angle) * radius
+        if GameState.island.sample(p) < 0.28:
+            continue
+        if p.distance_to(GameState.island.far_inland_pos) < 650.0:
+            continue
+        GameState.island.add_lake(p, rng.randf_range(85.0, 125.0))
+        return
 
 
 func _build_ground() -> void:
