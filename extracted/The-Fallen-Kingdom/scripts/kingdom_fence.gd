@@ -46,7 +46,7 @@ func _add_piece(at: Vector2, horizontal: bool) -> void:
         collision.position = Vector2(0.0, -7.0)
     else:
         rect.size = Vector2(18.0, VERTICAL_LENGTH - 6.0)
-        collision.position = Vector2(0.0, -(VERTICAL_LENGTH - 6.0) * 0.5)
+        collision.position = Vector2(0.0, -VERTICAL_LENGTH * 0.5)
     collision.shape = rect
     body.add_child(collision)
     add_child(body)
