@@ -155,16 +155,18 @@ func _archer(delta: float) -> void:
             _wildlife.claim(self)
     if _wildlife != null and is_instance_valid(_wildlife):
         var animal_distance: float = global_position.distance_to(_wildlife.global_position)
-        if animal_distance > 18.0:
+        var lvl: int = clampi(workplace.level if is_instance_valid(workplace) else 1, 1, 3)
+        var hunting_reach: float = float(GameConfig.archer_range[lvl - 1])
+        if animal_distance > hunting_reach * 0.8:
             _step(_wildlife.global_position, WORK_SPEED, delta)
         else:
             _sprite.flip_h = _wildlife.global_position.x < global_position.x
-            _shoot_cd -= delta
+            _shoot_cd = maxf(0.0, _shoot_cd - delta)
             if _shoot_cd <= 0.0:
-                _shoot_cd = 0.85
-                var killed: bool = _wildlife.take_damage(12.0, global_position)
-                if killed:
-                    _wildlife = null
+                _shoot_cd = GameConfig.archer_cooldown
+                var arrow := Arrow.new()
+                get_parent().add_child(arrow)
+                arrow.launch(global_position + Vector2(0, -14), _wildlife, 12.0)
         return
 
     # No prey nearby: patrol randomly, remaining safely inside the fence.

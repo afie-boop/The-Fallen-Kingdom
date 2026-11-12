@@ -3,7 +3,7 @@ extends Node2D
 ## A fast arrow fired by an archer. Flies to the target and damages it on arrival.
 
 
-func launch(from: Vector2, target: Zombie, damage: float) -> void:
+func launch(from: Vector2, target: Node2D, damage: float) -> void:
     global_position = from
     var sprite := Sprite2D.new()
     sprite.texture = PixelArt.get_tex("arrow")
@@ -15,7 +15,10 @@ func launch(from: Vector2, target: Zombie, damage: float) -> void:
     tw.tween_callback(_arrived.bind(target, damage, from))
 
 
-func _arrived(target: Zombie, damage: float, from: Vector2) -> void:
-    if is_instance_valid(target) and target.active:
-        target.take_damage(damage, from)
+func _arrived(target: Node2D, damage: float, from: Vector2) -> void:
+    if is_instance_valid(target):
+        if target is Zombie and (target as Zombie).active:
+            (target as Zombie).take_damage(damage, from)
+        elif target is Wildlife:
+            (target as Wildlife).take_damage(damage, from)
     queue_free()
