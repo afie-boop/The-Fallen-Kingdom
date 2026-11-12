@@ -13,8 +13,8 @@ var _wait: float = 0.0
 var _t: float = 0.0
 var _sprite: AnimatedSprite2D
 
-const BUNNY_SHEET := "res://Sprite karakter/Sprite karakter bunny.jpg"
-const DEER_SHEET := "res://Sprite karakter/Sprite karakter deer.jpg"
+const BUNNY_SHEET := "res://assets/animals/rabbit_walk.jpg"
+const DEER_SHEET := "res://assets/animals/deer_walk.jpg"
 
 func _ready() -> void:
     add_to_group("wildlife")
