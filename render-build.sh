@@ -32,6 +32,11 @@ else
   exit 1
 fi
 
+# Apply gameplay patches kept alongside the source archive.
+if [[ -f "$ROOT_DIR/patches/apply_kingdom_fence.py" ]]; then
+  python3 "$ROOT_DIR/patches/apply_kingdom_fence.py" "$PROJECT_DIR"
+fi
+
 echo "Downloading Godot ${GODOT_VERSION}..."
 curl -fsSL "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o "$TOOLS_DIR/godot.zip"
 unzip -oq "$TOOLS_DIR/godot.zip" -d "$TOOLS_DIR"
