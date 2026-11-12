@@ -113,7 +113,7 @@ static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, c
         tries += 1
         var p: Vector2
         # Ensure a useful number of animals can be found inside the kingdom fence.
-        if spawned < 10:
+        if spawned < 3:
             var angle: float = rng.randf_range(0.0, TAU)
             var radius: float = rng.randf_range(90.0, 275.0)
             p = home + Vector2.from_angle(angle) * radius

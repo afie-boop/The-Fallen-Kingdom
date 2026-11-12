@@ -17,7 +17,7 @@ func _ready() -> void:
     _sprite.texture = _make_texture(animal_type)
     _sprite.centered = false
     # Normalize source artwork to a consistent in-game height.
-    var sprite_height: float = 36.0
+    var sprite_height: float = 30.0 if animal_type == "deer" else 15.0
     var source_height: float = float(maxi(_sprite.texture.get_width(), _sprite.texture.get_height()))
     _sprite.scale = Vector2.ONE * (sprite_height / source_height)
     _sprite.offset = Vector2(-_sprite.texture.get_width() / 2.0, -_sprite.texture.get_height())
@@ -61,8 +61,6 @@ func release(by: Node2D) -> void:
         hunter = null
 
 func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
-    if hunter == null:
-        return false
     hp -= amount
     if hp <= 0.0:
         var dropped := HuntingCoin.new()

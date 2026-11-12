@@ -107,6 +107,10 @@ func try_attack() -> void:
     for z in get_tree().get_nodes_in_group("zombies"):
         if origin.distance_to((z as Node2D).global_position) < reach:
             z.call("take_damage", GameConfig.player_attack_damage, global_position)
+    for animal_node in get_tree().get_nodes_in_group("wildlife"):
+        var animal := animal_node as Wildlife
+        if animal != null and origin.distance_to(animal.global_position) < reach:
+            animal.take_damage(GameConfig.player_attack_damage, global_position)
     for t in get_tree().get_nodes_in_group("trees"):
         if origin.distance_to((t as Node2D).global_position) < reach:
             t.call("take_hit", self)
