@@ -1,9 +1,9 @@
 {
   "_comment": "Optional tuning overrides. Keys starting with _ are ignored. Unknown keys are ignored. Values marked UNDECIDED in the design are placeholders, NOT official game rules.",
 
-  "world_width": 4800,
-  "world_height": 4800,
-  "tree_count": 500,
+  "world_width": 6400,
+  "world_height": 6400,
+  "tree_count": 850,
   "camera_zoom": 2.0,
   "day_length_seconds": 240.0,
 
