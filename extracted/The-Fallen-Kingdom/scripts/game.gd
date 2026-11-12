@@ -326,7 +326,8 @@ func _on_build_action(kind: String, action: String) -> void:
 
 
 func _spawn_castle_beggars() -> void:
-    if kingdom == null or kingdom.castle_level() < 1:
+    # Four beggars live beside the starting castle before any upgrade.
+    if entities == null or castle == null:
         return
     WorldGenerator.spawn_castle_beggars(entities, castle.position, GameState.recruited_beggars)
 
