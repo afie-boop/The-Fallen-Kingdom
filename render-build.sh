@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK_DIR="$ROOT_DIR/.render-build"
 TOOLS_DIR="$WORK_DIR/tools"
 SRC_DIR="$WORK_DIR/source"
-PROJECT_ZIP="$ROOT_DIR/The-Fallen-Kingdom2.zip"
+PROJECT_ZIP="$ROOT_DIR/The-Fallen-Kingdom.zip"
 GODOT_VERSION="${GODOT_VERSION:-4.3}"
 TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
 
