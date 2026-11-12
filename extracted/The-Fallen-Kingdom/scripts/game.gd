@@ -53,7 +53,7 @@ func _ready() -> void:
         {"pos": castle.position, "r": 480.0},
         {"pos": enemy_castle.position, "r": 260.0},
     ]
-    var nest_spots: Array[Vector2] = WorldGenerator.spawn_nests(entities, GameState.island, GameState.world_seed, 5, nest_avoid)
+    var nest_spots: Array[Vector2] = WorldGenerator.spawn_nests(entities, GameState.island, GameState.world_seed, 8, nest_avoid)
     for np in nest_spots:
         avoid.append({"pos": np, "r": 130.0})
     var camp_avoid: Array = [
@@ -66,7 +66,7 @@ func _ready() -> void:
     for cp in camp_spots:
         avoid.append({"pos": cp, "r": 130.0})
     WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
-    var ruin_spots: Array[Vector2] = WorldGenerator.spawn_ruins(entities, GameState.island, GameState.world_seed, 6, avoid)
+    var ruin_spots: Array[Vector2] = WorldGenerator.spawn_ruins(entities, GameState.island, GameState.world_seed, 12, avoid)
     for rp in ruin_spots:
         avoid.append({"pos": rp, "r": 90.0})
         GameState.island.add_dirt_spot(rp + Vector2(0, 14), 85.0)
