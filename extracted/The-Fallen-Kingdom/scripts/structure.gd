@@ -1,6 +1,6 @@
 class_name Structure
 extends StaticBody2D
-## A kingdom building: "castle", "wall", "archer_post" or "builder_hut".
+## A kingdom building: "castle", "wall" or "builder_hut".
 ## Zombies attack it, builders repair it (free, daytime only). A wall at 0 HP is breached
 ## (no collision) until a builder repairs it.
 
@@ -44,8 +44,6 @@ func _hp_for_level() -> float:
     match kind:
         "wall":
             arr = GameConfig.hp_wall
-        "archer_post":
-            arr = GameConfig.hp_archer_post
         "builder_hut":
             arr = GameConfig.hp_builder_hut
     return float(arr[clampi(level - 1, 0, arr.size() - 1)])
@@ -70,8 +68,6 @@ func _build_visual() -> void:
             else:
                 rect.size = Vector2(18, 54)
                 _shape.position = Vector2(0, -27)
-        "archer_post":
-            _sprite = PixelArt.make_sprite("post_%d" % level)
             _base_scale = Vector2.ONE
             rect.size = Vector2(30, 14)
             _shape.position = Vector2(0, -7)
