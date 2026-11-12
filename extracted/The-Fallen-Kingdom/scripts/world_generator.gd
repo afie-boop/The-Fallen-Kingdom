@@ -103,6 +103,33 @@ static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, coun
     return spots
 
 
+## Spawns deer and rabbits across the island, with a few close to the kingdom.
+static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, count: int, home: Vector2) -> int:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = world_seed + 77123
+    var spawned: int = 0
+    var tries: int = 0
+    while spawned < count and tries < count * 30:
+        tries += 1
+        var p: Vector2
+        # Ensure a useful number of animals can be found inside the kingdom fence.
+        if spawned < 10:
+            var angle: float = rng.randf_range(0.0, TAU)
+            var radius: float = rng.randf_range(90.0, 275.0)
+            p = home + Vector2.from_angle(angle) * radius
+        else:
+            p = island.random_land_point(rng, 0.22, 100.0)
+        if not island.is_walkable(p) or p.distance_to(home) < 65.0:
+            continue
+        var kind: String = "deer" if rng.randf() < 0.42 else "rabbit"
+        var animal := Wildlife.new()
+        animal.configure(kind)
+        animal.position = p
+        parent.add_child(animal)
+        spawned += 1
+    return spawned
+
+
 ## Poor people's camps: 3-4 camps, each with exactly 2 tents (random positions) and 1-2 beggars.
 ## Beggar ids are stable (camp * 10 + slot) so recruited ones stay gone after loading.
 static func spawn_camps(parent: Node2D, island: IslandMap, world_seed: int, avoid: Array, recruited: Array) -> Array[Vector2]:
