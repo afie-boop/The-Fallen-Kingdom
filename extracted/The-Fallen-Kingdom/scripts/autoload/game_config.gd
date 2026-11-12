@@ -7,9 +7,9 @@ const SAVE_VERSION: int = 1
 const GAME_VERSION: String = "0.1.0-stage1"
 const OVERRIDE_PATH: String = "res://data/game_config.json"
 
-var world_width: float = 6400.0
-var world_height: float = 6400.0
-var tree_count: int = 850
+var world_width: float = 8000.0
+var world_height: float = 8000.0
+var tree_count: int = 1800
 var camera_zoom: float = 2.0
 var day_length_seconds: float = 240.0
 
@@ -46,7 +46,7 @@ var castle_max_hp: float = 500.0
 # Kingdom buildings. Arrays are indexed by level - 1 (index 0 = build / level 1).
 # Costs and stats are PLACEHOLDERS (design says exact costs are not decided); change in data/game_config.json.
 var cost_castle: Array = [6, 10, 16]
-var cost_wall: Array = [2, 3, 6]            # build one segment / upgrade all walls to level 2 / level 3
+var cost_wall: Array = [10, 10, 20, 30, 40] # one fence build, then progressive territory expansions
 var cost_archer_post: Array = [3, 4, 8]
 var cost_builder_hut: Array = [3, 4, 8]
 var hp_castle: Array = [600, 1000, 1500]
