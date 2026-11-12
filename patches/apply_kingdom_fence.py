@@ -1,6 +1,7 @@
 from pathlib import Path
+import sys
 
-root = Path(__file__).resolve().parent
+root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
 state = root / "scripts/autoload/game_state.gd"
 s = state.read_text()
 if "var kingdom_fence_built: bool" not in s:
