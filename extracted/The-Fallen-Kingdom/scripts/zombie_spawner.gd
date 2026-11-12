@@ -1,27 +1,24 @@
 class_name ZombieSpawner
 extends Node
-## Spawns zombies at night only, from the nests (small nests + the big Zombie Castle),
+## Spawns zombies at night only, from scattered caves,
 ## using a fixed-size object pool. At dawn they retreat.
 
 signal zombie_killed(pos: Vector2)
 
 const ZOMBIE_SCENE: PackedScene = preload("res://scenes/zombie.tscn")
-const CASTLE_WEIGHT: int = 3   ## the Zombie Castle spawns this many times more often than a nest
 
 var _pool: Array = []
-var _nests: Array[Node2D] = []
+var _caves: Array[Node2D] = []
 var _timer: float = 4.0
 
 
-## Call after all nests exist (they join the "nests" group).
+## Call after all caves exist (they join the "zombie_caves" group).
 func setup(entities: Node2D, kingdom_castle: Node2D) -> void:
-    for n in get_tree().get_nodes_in_group("nests"):
+    for n in get_tree().get_nodes_in_group("zombie_caves"):
         var node := n as Node2D
         if node == null:
             continue
-        var times: int = CASTLE_WEIGHT if node is EnemyCastle else 1
-        for i in times:
-            _nests.append(node)
+        _caves.append(node)
     var count: int = maxi(GameConfig.zombie_cap_day, GameConfig.zombie_cap_night)
     for i in count:
         var z := ZOMBIE_SCENE.instantiate() as Zombie
@@ -37,7 +34,7 @@ func retreat_all() -> void:
 
 
 func _process(delta: float) -> void:
-    if not GameState.is_night or _nests.is_empty():
+    if not GameState.is_night or _caves.is_empty():
         return
     _timer -= delta
     if _timer > 0.0:
@@ -52,8 +49,8 @@ func _process(delta: float) -> void:
             free_z = z
     if free_z == null or active_count >= GameConfig.zombie_cap_night:
         return
-    var nest: Node2D = _nests.pick_random()
-    free_z.activate(nest.call("spawn_pos"))
+    var cave: Node2D = _caves.pick_random()
+    free_z.activate(cave.call("spawn_pos"))
 
 
 func _on_killed(z: Zombie) -> void:
