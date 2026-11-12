@@ -6,7 +6,7 @@ Godot 4 project configured for deployment as a browser game on Render Static Sit
 
 The build accepts either:
 - A complete Godot project in the repository root (with `project.godot`), or
-- `The-Fallen-Kingdom2.zip` in the repository root. The ZIP must contain the complete Godot project, including `project.godot`, scenes, scripts, assets and referenced resources.
+- `The-Fallen-Kingdom.zip` in the repository root. The ZIP must contain the complete Godot project, including `project.godot`, scenes, scripts, assets and referenced resources.
 
 At least one of these source options must be present. The current repository must contain the actual game project before a successful build is possible.
 
