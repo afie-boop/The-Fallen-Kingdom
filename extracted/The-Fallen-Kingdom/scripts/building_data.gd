@@ -4,7 +4,7 @@ extends RefCounted
 ## not official game rules - tune them here. min_castle_level is the hook for locked progression
 ## (0 = no requirement): e.g. set tower level 3 to require castle level 2 later.
 
-const ORDER: Array[String] = ["castle", "wall", "tower", "hut"]
+const ORDER: Array[String] = ["castle", "wall", "hut"]
 const MAX_LEVEL: int = 3
 
 const DATA: Dictionary = {
@@ -16,11 +16,6 @@ const DATA: Dictionary = {
     "wall": {
         "name": "Wall", "build_cost": 1, "upgrade_costs": [2, 4], "hp": [60.0, 120.0, 200.0],
         "radius": 20.0, "reach": 34.0, "limit": 60, "footprint": Vector2(44, 12), "worker": "",
-        "min_castle_level": [0, 0, 0],
-    },
-    "tower": {
-        "name": "Archer Tower", "build_cost": 3, "upgrade_costs": [4, 6], "hp": [120.0, 200.0, 300.0],
-        "radius": 26.0, "reach": 30.0, "limit": 4, "footprint": Vector2(24, 14), "worker": "archer",
         "min_castle_level": [0, 0, 0],
     },
     "hut": {
