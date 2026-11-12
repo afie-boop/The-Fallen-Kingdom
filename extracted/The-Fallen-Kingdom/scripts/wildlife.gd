@@ -72,4 +72,4 @@ func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
 static func _make_texture(kind: String) -> Texture2D:
     if kind == "deer":
         return PixelArt.file_tex("res://assets/animals/IMG_c6952660-aa86-4aec-b154-2b02a2423a6f.png")
-    return PixelArt.file_tex("res://assets/animals/pixel-art-rabbit-icons-easter-bunny-vector-illustration-pixel-art-rabbit-icons-108230666.jpg")
+    return PixelArt.file_tex_remove_light_background("res://assets/animals/pixel-art-rabbit-icons-easter-bunny-vector-illustration-pixel-art-rabbit-icons-108230666.jpg")
