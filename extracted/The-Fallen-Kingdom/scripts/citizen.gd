@@ -21,6 +21,9 @@ var _shoot_cd: float = 0.0
 var _zombie: Zombie = null
 var _repair: Node2D = null
 var _sprite: Sprite2D
+var _wildlife: Wildlife = null
+var _carried_gold: int = 0
+var _patrol_target: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -111,30 +114,143 @@ func _station() -> Vector2:
 # --- archer ----------------------------------------------------------------
 
 func _archer(delta: float) -> void:
-    if not _step(_station(), WORK_SPEED, delta):
+    _deliver_hunting_gold()
+    var radius: float = _kingdom_radius()
+    var night_target: Zombie = _nearest_zombie(radius + 120.0)
+    if GameState.is_night:
+        _release_wildlife()
+        # At night archers return to their post, but can reposition to attack
+        # zombies that enter the kingdom perimeter.
+        if night_target != null:
+            _engage_zombie(night_target, delta, radius)
+            return
+        _step(_station(), WORK_SPEED * 1.35, delta)
         return
+
+    # Daytime: defend the fenced kingdom first, then hunt wildlife.
+    if night_target != null:
+        _release_wildlife()
+        _engage_zombie(night_target, delta, radius)
+        return
+
+    if _wildlife == null or not is_instance_valid(_wildlife):
+        _wildlife = _nearest_wildlife(radius)
+        if _wildlife != null:
+            _wildlife.claim(self)
+    if _wildlife != null and is_instance_valid(_wildlife):
+        var animal_distance: float = global_position.distance_to(_wildlife.global_position)
+        if animal_distance > 18.0:
+            _step(_wildlife.global_position, WORK_SPEED, delta)
+        else:
+            _sprite.flip_h = _wildlife.global_position.x < global_position.x
+            _shoot_cd -= delta
+            if _shoot_cd <= 0.0:
+                _shoot_cd = 0.85
+                var killed: bool = _wildlife.take_damage(12.0, global_position)
+                if killed:
+                    _carried_gold += _wildlife.coin_value
+                    _wildlife = null
+        return
+
+    # No prey nearby: patrol randomly, remaining safely inside the fence.
+    if _patrol_target == Vector2.ZERO or global_position.distance_to(_patrol_target) < 12.0:
+        _patrol_target = _random_patrol_point(radius)
+    _step(_patrol_target, WORK_SPEED, delta)
+
+
+func _kingdom_radius() -> float:
+    var fence_level: int = 0
+    for building in GameState.buildings:
+        var data: Dictionary = building
+        if str(data.get("kind", "")) == "wall":
+            fence_level = maxi(fence_level, int(data.get("level", 1)))
+    return 320.0 + float(maxi(1, fence_level) - 1) * 180.0
+
+
+func _inside_kingdom(pos: Vector2, radius: float) -> bool:
+    return pos.distance_to(home) <= radius
+
+
+func _random_patrol_point(radius: float) -> Vector2:
+    for attempt in 20:
+        var candidate: Vector2 = home + Vector2.from_angle(randf_range(0.0, TAU)) * randf_range(70.0, maxf(90.0, radius - 55.0))
+        if GameState.island == null or GameState.island.is_walkable(candidate):
+            return candidate
+    return _station()
+
+
+func _nearest_zombie(radius: float) -> Zombie:
+    var best: Zombie = null
+    var best_distance: float = radius
+    for node in get_tree().get_nodes_in_group("zombies"):
+        var zombie := node as Zombie
+        if zombie == null or not zombie.active:
+            continue
+        if not _inside_kingdom(zombie.global_position, _kingdom_radius() - 12.0):
+            continue
+        var distance: float = global_position.distance_to(zombie.global_position)
+        if distance < best_distance:
+            best_distance = distance
+            best = zombie
+    return best
+
+
+func _engage_zombie(zombie: Zombie, delta: float, radius: float) -> void:
+    if not is_instance_valid(zombie) or not zombie.active:
+        return
+    var distance: float = global_position.distance_to(zombie.global_position)
     var lvl: int = clampi(workplace.level if is_instance_valid(workplace) else 1, 1, 3)
     var reach: float = float(GameConfig.archer_range[lvl - 1])
-    _scan_t -= delta
-    if _scan_t <= 0.0:
-        _scan_t = 0.4
-        _zombie = null
-        var best: float = reach
-        for z in get_tree().get_nodes_in_group("zombies"):
-            var zz := z as Zombie
-            if zz == null or not zz.active:
-                continue
-            var d: float = global_position.distance_to(zz.global_position)
-            if d < best:
-                best = d
-                _zombie = zz
-    if _zombie != null and is_instance_valid(_zombie) and _zombie.active:
-        _sprite.flip_h = _zombie.global_position.x < global_position.x
-        if _shoot_cd <= 0.0 and global_position.distance_to(_zombie.global_position) <= reach:
-            _shoot_cd = GameConfig.archer_cooldown
-            var arrow := Arrow.new()
-            get_parent().add_child(arrow)
-            arrow.launch(global_position + Vector2(0, -14), _zombie, float(GameConfig.archer_damage[lvl - 1]))
+    if distance > reach * 0.72:
+        var desired: Vector2 = zombie.global_position
+        var offset: Vector2 = desired - home
+        if offset.length() > radius - 45.0:
+            desired = home + offset.normalized() * (radius - 45.0)
+        _step(desired, WORK_SPEED * (1.35 if GameState.is_night else 1.0), delta)
+        return
+    _sprite.flip_h = zombie.global_position.x < global_position.x
+    _shoot_cd = maxf(0.0, _shoot_cd - delta)
+    if _shoot_cd <= 0.0:
+        _shoot_cd = GameConfig.archer_cooldown
+        var arrow := Arrow.new()
+        get_parent().add_child(arrow)
+        arrow.launch(global_position + Vector2(0, -14), zombie, float(GameConfig.archer_damage[lvl - 1]))
+
+
+func _nearest_wildlife(radius: float) -> Wildlife:
+    var best: Wildlife = null
+    var best_distance: float = radius
+    for node in get_tree().get_nodes_in_group("wildlife"):
+        var animal := node as Wildlife
+        if animal == null or (animal.hunter != null and is_instance_valid(animal.hunter)):
+            continue
+        if not _inside_kingdom(animal.global_position, radius - 20.0):
+            continue
+        var distance: float = global_position.distance_to(animal.global_position)
+        if distance < best_distance:
+            best_distance = distance
+            best = animal
+    return best
+
+
+func _release_wildlife() -> void:
+    if is_instance_valid(_wildlife):
+        _wildlife.release(self)
+    _wildlife = null
+
+
+func _deliver_hunting_gold() -> void:
+    if _carried_gold <= 0:
+        return
+    for node in get_tree().get_nodes_in_group("players"):
+        var pl := node as Player
+        if pl == null or pl.dead:
+            continue
+        if global_position.distance_to(pl.global_position) <= 58.0:
+            GameState.add_gold(_carried_gold, pl.player_id)
+            GameState.notice.emit("Your archer delivered %d Gold Coins from hunting." % _carried_gold)
+            _carried_gold = 0
+            return
 
 
 # --- builder ---------------------------------------------------------------
