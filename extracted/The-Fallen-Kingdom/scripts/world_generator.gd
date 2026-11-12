@@ -248,3 +248,43 @@ static func spawn_castle_beggars(parent: Node2D, home: Vector2, recruited: Array
         b.variant = (bid * 7 + 3) % PixelArt.BEGGAR_VARIANTS
         b.position = home + Vector2(0, -135) + offsets[i]
         parent.add_child(b)
+
+
+## Large boulders scattered randomly across walkable grass.
+## Stable seed and spacing keep the map consistent between saves.
+static func spawn_rocks(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array) -> int:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = world_seed + 88271
+    var placed: Array[Vector2] = []
+    var spawned: int = 0
+    var tries: int = 0
+    while spawned < count and tries < count * 35:
+        tries += 1
+        var p: Vector2 = island.random_land_point(rng, 0.22, 90.0)
+        if _blocked(p, avoid):
+            continue
+        var clear: bool = true
+        for q in placed:
+            if p.distance_to(q) < 105.0:
+                clear = false
+                break
+        if not clear:
+            continue
+        placed.append(p)
+        var rock := StaticBody2D.new()
+        rock.name = "LargeRock_%d" % spawned
+        rock.position = p
+        rock.collision_layer = 1
+        rock.collision_mask = 0
+        var variant: int = rng.randi_range(0, 3)
+        var sprite := PixelArt.make_sprite("rock_%d" % variant)
+        rock.add_child(sprite)
+        var hitbox := CollisionShape2D.new()
+        var shape := CircleShape2D.new()
+        shape.radius = 22.0 if variant < 2 else 28.0
+        hitbox.position = Vector2(0.0, -12.0)
+        hitbox.shape = shape
+        rock.add_child(hitbox)
+        parent.add_child(rock)
+        spawned += 1
+    return spawned
