@@ -780,23 +780,61 @@ static func _rock(variant: int) -> Image:
 
 ## Dark rocky cave entrance with a deep black opening.
 static func _cave(variant: int) -> Image:
-    var img := _new(72, 52)
-    var palette: Array[Color] = [Color(0.34, 0.35, 0.38), Color(0.39, 0.36, 0.33), Color(0.31, 0.36, 0.37)]
-    var rock: Color = palette[posmod(variant, 3)]
-    var shade: Color = _shade(rock, 0.68)
-    var light: Color = _shade(rock, 1.28)
-    _disc(img, 36, 43, 29, Color(0, 0, 0, 0.3))
-    _rect(img, 7, 29, 58, 13, shade)
-    _disc(img, 36, 28, 28, rock)
-    _disc(img, 36, 26, 22, light)
-    _disc(img, 36, 33, 17, Color(0.055, 0.045, 0.05))
-    _rect(img, 19, 32, 34, 11, Color(0.055, 0.045, 0.05))
-    _rect(img, 18, 27, 5, 9, shade)
-    _rect(img, 49, 25, 6, 11, shade)
-    _rect(img, 27, 12, 5, 4, light)
-    _rect(img, 39, 9, 6, 5, light)
-    _rect(img, 12, 37, 8, 5, rock)
-    _rect(img, 54, 36, 7, 6, rock)
-    _rect(img, 29, 43, 14, 3, shade)
+    # Ancient enchanted cavern: layered stone, jagged silhouette, glowing
+    # crystal shards and old runes around a deep, ominous entrance.
+    var img := _new(80, 60)
+    var palettes: Array[Color] = [
+        Color(0.25, 0.31, 0.38), Color(0.34, 0.29, 0.27), Color(0.22, 0.34, 0.34)
+    ]
+    var rock: Color = palettes[posmod(variant, palettes.size())]
+    var shade: Color = _shade(rock, 0.58)
+    var light: Color = _shade(rock, 1.38)
+    var glow: Color = Color(0.28, 0.88, 0.82) if variant == 0 else (Color(0.70, 0.42, 0.95) if variant == 1 else Color(0.48, 0.78, 1.0))
+    var dark := Color(0.025, 0.035, 0.065)
+    _disc(img, 40, 51, 32, Color(0, 0, 0, 0.34))
+    # Broad rock foundation and uneven crown.
+    _rect(img, 8, 31, 64, 18, shade)
+    _disc(img, 40, 31, 30, rock)
+    _disc(img, 40, 27, 23, light)
+    _disc(img, 17, 35, 12, shade)
+    _disc(img, 63, 35, 13, shade)
+    # Angular rock highlights and cracks.
+    _rect(img, 13, 23, 8, 5, light)
+    _rect(img, 22, 16, 7, 4, light)
+    _rect(img, 53, 14, 8, 5, light)
+    _rect(img, 63, 25, 6, 5, light)
+    _rect(img, 17, 29, 2, 8, shade)
+    _rect(img, 60, 27, 2, 9, shade)
+    _rect(img, 29, 17, 2, 6, shade)
+    _rect(img, 48, 19, 2, 7, shade)
+    # Deep arched entrance with a faint inner glow.
+    _disc(img, 40, 34, 19, dark)
+    _rect(img, 21, 34, 38, 14, dark)
+    _disc(img, 40, 39, 12, Color(0.10, 0.07, 0.16))
+    _rect(img, 28, 39, 24, 9, dark)
+    _rect(img, 35, 42, 10, 5, Color(0.12, 0.10, 0.22))
+    # Crystal clusters flanking the entrance.
+    _disc(img, 13, 43, 7, _shade(glow, 0.45))
+    _rect(img, 10, 32, 4, 13, glow)
+    _px(img, 11, 29, _shade(glow, 1.45))
+    _rect(img, 15, 37, 3, 8, _shade(glow, 0.78))
+    _disc(img, 67, 43, 7, _shade(glow, 0.45))
+    _rect(img, 65, 33, 4, 12, glow)
+    _px(img, 66, 30, _shade(glow, 1.45))
+    _rect(img, 61, 38, 3, 7, _shade(glow, 0.78))
+    # Ancient glowing runes and scattered luminous fragments.
+    for p in [Vector2i(25, 28), Vector2i(54, 27), Vector2i(20, 45), Vector2i(58, 46)]:
+        _px(img, p.x, p.y, glow)
+        _px(img, p.x + 1, p.y + 1, _shade(glow, 1.25))
+    _rect(img, 31, 10, 2, 5, glow)
+    _rect(img, 29, 12, 6, 1, _shade(glow, 0.8))
+    _rect(img, 47, 8, 2, 5, glow)
+    _rect(img, 45, 10, 6, 1, _shade(glow, 0.8))
+    # Broken bones and stones at the threshold.
+    _rect(img, 23, 49, 9, 2, Color(0.72, 0.69, 0.58))
+    _rect(img, 26, 47, 2, 4, Color(0.82, 0.78, 0.66))
+    _rect(img, 49, 50, 8, 2, Color(0.68, 0.65, 0.56))
+    _disc(img, 8, 50, 4, shade)
+    _disc(img, 72, 51, 5, shade)
     return img
 

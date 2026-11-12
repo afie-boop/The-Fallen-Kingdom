@@ -60,7 +60,9 @@ func _add_corner_post(at: Vector2) -> void:
 func _add_piece(at: Vector2, horizontal: bool, segment_length: float) -> void:
     var body := StaticBody2D.new()
     body.position = at
-    body.collision_layer = 1
+    # The perimeter is a visual boundary, not a movement barrier. Players
+    # and hunting units must be able to cross it freely to reach wildlife.
+    body.collision_layer = 0
     body.collision_mask = 0
 
     var sprite := PixelArt.make_sprite("wall_%s_1" % ("h" if horizontal else "v"))
