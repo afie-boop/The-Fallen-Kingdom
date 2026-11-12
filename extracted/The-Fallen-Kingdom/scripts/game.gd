@@ -62,7 +62,7 @@ func _ready() -> void:
     # No ruined houses are scattered around the island; tents mark poor camps.
     WorldGenerator.spawn_trees(entities, GameState.island, GameState.world_seed, GameConfig.tree_count, avoid, GameState.removed_trees)
     # Spawn deer and rabbits using the three transparent reference assets.
-    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 6, castle.position)
+    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 17, castle.position)
 
     kingdom = KingdomManager.new()
     add_child(kingdom)
@@ -314,7 +314,7 @@ func _reset_morning_wildlife() -> void:
     for node in get_tree().get_nodes_in_group("wildlife"):
         if is_instance_valid(node):
             node.queue_free()
-    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 6, castle.position)
+    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 17, castle.position)
 
 
 func _on_dusk() -> void:
