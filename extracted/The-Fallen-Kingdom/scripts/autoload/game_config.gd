@@ -7,9 +7,9 @@ const SAVE_VERSION: int = 1
 const GAME_VERSION: String = "0.1.0-stage1"
 const OVERRIDE_PATH: String = "res://data/game_config.json"
 
-var world_width: float = 8000.0
-var world_height: float = 8000.0
-var tree_count: int = 1800
+var world_width: float = 10000.0
+var world_height: float = 10000.0
+var tree_count: int = 2800
 var camera_zoom: float = 2.0
 var day_length_seconds: float = 240.0
 
