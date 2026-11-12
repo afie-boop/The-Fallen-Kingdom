@@ -49,7 +49,8 @@ func _process(delta: float) -> void:
         global_position += direction.normalized() * (22.0 if animal_type == "deer" else 30.0) * delta
         if GameState.island != null:
             global_position = GameState.island.constrain(before, global_position)
-        _sprite.flip_h = direction.x < 0.0
+        # The rabbit source sprite faces left; deer artwork faces right.
+        _sprite.flip_h = direction.x > 0.0 if animal_type == "rabbit" else direction.x < 0.0
         _sprite.position.y = -absf(sin(_t * 8.0)) * 1.5
 
 func claim(by: Node2D) -> bool:
