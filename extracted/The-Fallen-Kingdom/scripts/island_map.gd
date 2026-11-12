@@ -125,6 +125,22 @@ func add_dirt_spot(pos: Vector2, radius: float) -> void:
                 _dirt[y * RES + x] = maxf(_dirt[y * RES + x], g)
 
 
+## Carves a small inland lake into the island mask so it uses the normal water ground texture.
+func add_lake(pos: Vector2, radius: float) -> void:
+    var cell: Vector2 = world_size / float(RES - 1)
+    var x0: int = maxi(0, int((pos.x - radius) / cell.x))
+    var x1: int = mini(RES - 1, int((pos.x + radius) / cell.x) + 1)
+    var y0: int = maxi(0, int((pos.y - radius) / cell.y))
+    var y1: int = mini(RES - 1, int((pos.y + radius) / cell.y) + 1)
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            var d: float = Vector2(x * cell.x, y * cell.y).distance_to(pos)
+            if d <= radius:
+                var i: int = y * RES + x
+                _vals[i] = -0.28
+    refresh_texture()
+
+
 ## Bilinear field value at a world position (very negative outside the world).
 func sample(pos: Vector2) -> float:
     return _bilerp(_vals, pos, -1.0)
