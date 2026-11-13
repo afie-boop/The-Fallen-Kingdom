@@ -15,6 +15,7 @@ var _sprite: AnimatedSprite2D
 
 const BUNNY_SHEET := "res://assets/animals/rabbit_walk.jpg"
 const DEER_SHEET := "res://assets/animals/deer_walk.jpg"
+static var _frames_cache: Dictionary = {}
 
 func _ready() -> void:
     add_to_group("wildlife")
@@ -92,6 +93,8 @@ func take_damage(amount: float, _from: Vector2 = Vector2.ZERO) -> bool:
     return false
 
 func _build_sprite_frames(path: String) -> SpriteFrames:
+    if _frames_cache.has(path):
+        return _frames_cache[path] as SpriteFrames
     var source := load(path) as Texture2D
     if source == null:
         push_warning("Wildlife sprite sheet missing: " + path)
@@ -186,6 +189,7 @@ func _build_sprite_frames(path: String) -> SpriteFrames:
         atlas.region = Rect2(rect)
         result.add_frame("walk", atlas)
     result.add_frame("idle", result.get_frame_texture("walk", 0))
+    _frames_cache[path] = result
     return result
 
 func _black_background_material() -> ShaderMaterial:
