@@ -6,6 +6,7 @@ var value: int = 1
 var collector: Node2D = null
 var _life: float = 90.0
 var _t: float = 0.0
+var _pickup_scan_t: float = 0.0
 var _sprite: Sprite2D
 
 func _ready() -> void:
@@ -19,15 +20,19 @@ func _process(delta: float) -> void:
     _life -= delta
     _t += delta
     _sprite.position.y = sin(_t * 5.0) * 1.5
-    # Players can collect animal drops directly; archers may still carry them home.
+    # Scan for nearby players a few times per second instead of every frame.
+    # This keeps multiple dropped coins from repeatedly traversing the player group.
     if collector == null:
-        for node in get_tree().get_nodes_in_group("players"):
-            var player := node as Player
-            if player != null and not player.dead and global_position.distance_to(player.global_position) <= 20.0:
-                GameState.add_gold(value, player.player_id)
-                GameState.notice.emit("Collected %d Gold Coin%s." % [value, "" if value == 1 else "s"])
-                queue_free()
-                return
+        _pickup_scan_t -= delta
+        if _pickup_scan_t <= 0.0:
+            _pickup_scan_t = 0.15
+            for node in get_tree().get_nodes_in_group("players"):
+                var player := node as Player
+                if player != null and not player.dead and global_position.distance_to(player.global_position) <= 20.0:
+                    GameState.add_gold(value, player.player_id)
+                    GameState.notice.emit("Collected %d Gold Coin%s." % [value, "" if value == 1 else "s"])
+                    queue_free()
+                    return
     if _life <= 0.0:
         queue_free()
 
