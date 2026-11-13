@@ -1,8 +1,7 @@
 class_name Citizen
 extends Node2D
-## A recruited beggar. Jobless citizens wander in front of the kingdom house.
-## Archers (work at an Archer Post) shoot zombies; builders (work at a Builder Hut) repair
-## damaged buildings and walls for free, in the daytime only.
+## A recruited citizen. Jobless citizens wander near the kingdom; archers defend and hunt,
+## while builders repair damaged buildings and walls without needing a workplace.
 
 const SPEED: float = 32.0
 const WORK_SPEED: float = 46.0
@@ -116,7 +115,7 @@ func _wander(delta: float) -> void:
 
 
 func _station() -> Vector2:
-    return workplace.global_position + Vector2(0, 14) if is_instance_valid(workplace) else home + Vector2(0, 60)
+    return home + Vector2(0, 60)
 
 
 # --- archer ----------------------------------------------------------------
@@ -155,7 +154,7 @@ func _archer(delta: float) -> void:
             _wildlife.claim(self)
     if _wildlife != null and is_instance_valid(_wildlife):
         var animal_distance: float = global_position.distance_to(_wildlife.global_position)
-        var lvl: int = clampi(workplace.level if is_instance_valid(workplace) else 1, 1, 3)
+        var lvl: int = 1
         var hunting_reach: float = float(GameConfig.archer_range[lvl - 1])
         if animal_distance > hunting_reach * 0.8:
             _step(_wildlife.global_position, WORK_SPEED, delta)
