@@ -22,6 +22,8 @@ var _repair: Node2D = null
 var _sprite: Sprite2D
 var _wildlife: Wildlife = null
 var _carried_gold: int = 0
+var _coin_target: HuntingCoin = null
+var _coin_scan_t: float = 0.0
 var _patrol_target: Vector2 = Vector2.ZERO
 var _stuck_time: float = 0.0
 
@@ -158,12 +160,21 @@ func _archer(delta: float) -> void:
         _engage_zombie(night_target, delta, radius)
         return
 
-    var dropped_coin: HuntingCoin = _nearest_hunting_coin(radius)
-    if dropped_coin != null:
-        if global_position.distance_to(dropped_coin.global_position) > 14.0:
-            _step(dropped_coin.global_position, WORK_SPEED, delta)
+    # Keep chasing a claimed drop, but only search the world periodically.
+    # Wildlife can die beyond the fence, so coin pickup must use the hunting
+    # radius rather than the kingdom radius.
+    if _coin_target == null or not is_instance_valid(_coin_target):
+        _coin_target = null
+        _coin_scan_t -= delta
+        if _coin_scan_t <= 0.0:
+            _coin_scan_t = 0.2
+            _coin_target = _nearest_hunting_coin(1400.0)
+    if _coin_target != null and is_instance_valid(_coin_target):
+        if global_position.distance_to(_coin_target.global_position) > 14.0:
+            _step(_coin_target.global_position, WORK_SPEED, delta)
         else:
-            _carried_gold += dropped_coin.collect(self)
+            _carried_gold += _coin_target.collect(self)
+            _coin_target = null
         return
 
     if _wildlife == null or not is_instance_valid(_wildlife):
@@ -271,8 +282,6 @@ func _nearest_hunting_coin(radius: float) -> HuntingCoin:
     for node in get_tree().get_nodes_in_group("hunting_coins"):
         var coin := node as HuntingCoin
         if coin == null or (coin.collector != null and is_instance_valid(coin.collector) and coin.collector != self):
-            continue
-        if not _inside_kingdom(coin.global_position, radius - 20.0):
             continue
         var distance: float = global_position.distance_to(coin.global_position)
         if distance < best_distance:
