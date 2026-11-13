@@ -55,7 +55,7 @@ var hp_archer_post: Array = [150, 260, 400]
 var hp_builder_hut: Array = [100, 180, 300]
 var archer_damage: Array = [8, 12, 18]
 var archer_range: Array = [240, 280, 320]
-var archer_cooldown: float = 1.3
+var archer_cooldown: float = 1.0
 var builder_repair_rate: Array = [15, 25, 40]   # HP per second, free, no materials, daytime only
 var autosave_interval: float = 60.0
 
