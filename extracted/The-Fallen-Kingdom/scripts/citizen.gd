@@ -134,8 +134,9 @@ func _wander(delta: float) -> void:
 func _station() -> Vector2:
     # Give every worker a distinct resting point so they never stack on one pixel.
     var angle: float = float(citizen_id) * 2.399963
-    var radius: float = 22.0 + float(abs(citizen_id) % 4) * 7.0
-    return home + Vector2(cos(angle), sin(angle)) * radius + Vector2(0, 60)
+    # Keep night stations far enough apart that returning archers do not overlap.
+    var radius: float = 72.0 + float(abs(citizen_id) % 5) * 22.0
+    return home + Vector2(cos(angle), sin(angle)) * radius + Vector2(0, 80)
 
 
 # --- archer ----------------------------------------------------------------
