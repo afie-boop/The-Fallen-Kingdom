@@ -143,7 +143,7 @@ func _station() -> Vector2:
 func _archer(delta: float) -> void:
     _deliver_hunting_gold()
     var radius: float = _kingdom_radius()
-    var night_target: Zombie = _nearest_zombie(radius + 120.0)
+    var night_target: Zombie = _nearest_zombie(1100.0 if GameState.is_night else radius + 120.0)
     if GameState.is_night:
         _release_wildlife()
         # At night archers return to their post, but can reposition to attack
@@ -229,8 +229,6 @@ func _nearest_zombie(radius: float) -> Zombie:
     for node in get_tree().get_nodes_in_group("zombies"):
         var zombie := node as Zombie
         if zombie == null or not zombie.active:
-            continue
-        if not _inside_kingdom(zombie.global_position, _kingdom_radius() - 12.0):
             continue
         var distance: float = global_position.distance_to(zombie.global_position)
         if distance < best_distance:
