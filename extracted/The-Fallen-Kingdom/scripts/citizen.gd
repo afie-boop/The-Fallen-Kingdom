@@ -225,17 +225,50 @@ func _random_patrol_point(radius: float) -> Vector2:
 
 
 func _nearest_zombie(radius: float) -> Zombie:
+    # Keep the current target while it is alive and in range. This prevents
+    # archers from switching targets every frame and repeatedly regrouping.
+    if is_instance_valid(_zombie) and _zombie.active:
+        if global_position.distance_to(_zombie.global_position) <= radius:
+            return _zombie
+    _zombie = null
+
+    # Reserve zombies already targeted by other archers. Each archer therefore
+    # chooses a different nearby zombie whenever more than one is available.
+    var reserved: Dictionary = {}
+    for node in get_tree().get_nodes_in_group("citizens"):
+        var other := node as Citizen
+        if other == null or other == self or other.job != "archer":
+            continue
+        if is_instance_valid(other._zombie) and other._zombie.active:
+            reserved[other._zombie.get_instance_id()] = true
+
     var best: Zombie = null
     var best_distance: float = radius
     for node in get_tree().get_nodes_in_group("zombies"):
         var zombie := node as Zombie
         if zombie == null or not zombie.active:
             continue
+        if reserved.has(zombie.get_instance_id()):
+            continue
         var distance: float = global_position.distance_to(zombie.global_position)
         if distance < best_distance:
             best_distance = distance
             best = zombie
-    return best
+
+    # If there are fewer zombies than archers, allow the nearest target to be
+    # shared rather than leaving some archers idle.
+    if best == null:
+        for node in get_tree().get_nodes_in_group("zombies"):
+            var zombie := node as Zombie
+            if zombie == null or not zombie.active:
+                continue
+            var distance: float = global_position.distance_to(zombie.global_position)
+            if distance < best_distance:
+                best_distance = distance
+                best = zombie
+
+    _zombie = best
+    return _zombie
 
 
 func _engage_zombie(zombie: Zombie, delta: float, radius: float) -> void:
