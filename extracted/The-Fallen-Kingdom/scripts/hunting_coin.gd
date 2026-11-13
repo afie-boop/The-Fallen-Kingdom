@@ -22,17 +22,18 @@ func _process(delta: float) -> void:
     _sprite.position.y = sin(_t * 5.0) * 1.5
     # Scan for nearby players a few times per second instead of every frame.
     # This keeps multiple dropped coins from repeatedly traversing the player group.
-    if collector == null:
-        _pickup_scan_t -= delta
-        if _pickup_scan_t <= 0.0:
-            _pickup_scan_t = 0.15
-            for node in get_tree().get_nodes_in_group("players"):
-                var player := node as Player
-                if player != null and not player.dead and global_position.distance_to(player.global_position) <= 20.0:
-                    GameState.add_gold(value, player.player_id)
-                    GameState.notice.emit("Collected %d Gold Coin%s." % [value, "" if value == 1 else "s"])
-                    queue_free()
-                    return
+    # A player has priority over an archer's claim: never let a claimed coin
+    # become impossible for the player to pick up by walking over it.
+    _pickup_scan_t -= delta
+    if _pickup_scan_t <= 0.0:
+        _pickup_scan_t = 0.08
+        for node in get_tree().get_nodes_in_group("players"):
+            var player := node as Player
+            if player != null and not player.dead and global_position.distance_to(player.global_position) <= 32.0:
+                GameState.add_gold(value, player.player_id)
+                GameState.notice.emit("Collected %d Gold Coin%s." % [value, "" if value == 1 else "s"])
+                queue_free()
+                return
     if _life <= 0.0:
         queue_free()
 
