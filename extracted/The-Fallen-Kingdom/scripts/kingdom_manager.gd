@@ -5,9 +5,9 @@ extends Node
 ## Costs are paid from the acting player's PERSONAL wallet. All numbers live in GameConfig.
 
 const STRUCTURE_SCENE: PackedScene = preload("res://scenes/structure.tscn")
-const KINDS: Array[String] = ["castle", "wall", "builder_hut"]
-const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "builder_hut": "Builder Huts"}
-const JOBS: Dictionary = {"builder_hut": "builder"}
+const KINDS: Array[String] = ["castle", "wall"]
+const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence"}
+const JOBS: Dictionary = {}
 const MAX_LEVEL: int = 3
 const MAX_FENCE_LEVEL: int = 5
 const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
@@ -21,7 +21,6 @@ const SLOTS: Dictionary = {
         Vector2(-230, 70), Vector2(230, 70),
         Vector2(-120, 130), Vector2(120, 130),
     ],
-    "builder_hut": [Vector2(-140, 22), Vector2(140, 22)],
 }
 
 signal changed
@@ -88,8 +87,6 @@ func _cost(kind: String, level_index: int) -> int:
             arr = GameConfig.cost_wall
         "archer_post":
             arr = GameConfig.cost_archer_post
-        "builder_hut":
-            arr = GameConfig.cost_builder_hut
         _:
             arr = GameConfig.cost_castle
     return int(arr[clampi(level_index, 0, arr.size() - 1)])
@@ -115,9 +112,9 @@ func info_text() -> String:
         citizens += 1
         if (c as Citizen).job == "":
             jobless += 1
-    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d   Builders: %d/%d" % [
+    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d   Builders: %d" % [
         GameState.get_gold(), citizens, jobless,
-        _job_count("archer"), _workers("builder_hut"), count("builder_hut")]
+        _job_count("archer"), _job_count("builder")]
 
 
 func _workers(kind: String) -> int:
@@ -199,26 +196,28 @@ func menu_rows() -> Array:
                     up_enabled = true
             rows.append({"title": "Upgrade %s" % NAMES[kind], "info": up_info, "button": up_btn, "enabled": up_enabled, "kind": kind, "action": "upgrade"})
     var available_citizens: int = _jobless_count()
-    rows.append({
-        "title": "Archer",
-        "info": "%d pemanah bekerja tanpa bangunan khas. Tiada kos; gunakan rakyat yang belum bekerja." % _job_count("archer"),
-        "button": "Assign 1 citizen" if available_citizens > 0 else "No jobless citizens",
-        "enabled": available_citizens > 0,
-        "kind": "archer",
-        "action": "hire"
-    })
+    for job_name in ["archer", "builder"]:
+        var job_title: String = "Archer" if job_name == "archer" else "Builder"
+        rows.append({
+            "title": job_title,
+            "info": "%d bekerja tanpa bangunan khas. Tiada kos; setiap pengambilan menukar seorang rakyat yang belum bekerja." % _job_count(job_name),
+            "button": "Assign 1 citizen" if available_citizens > 0 else "No jobless citizens",
+            "enabled": available_citizens > 0,
+            "kind": job_name,
+            "action": "hire"
+        })
     return rows
 
 
 ## Performs a menu action for a player. Returns a short result message.
 func do_action(kind: String, action: String, player_id: int) -> String:
-    if kind == "archer" and action == "hire":
+    if kind in ["archer", "builder"] and action == "hire":
         for c in get_tree().get_nodes_in_group("citizens"):
             var cz := c as Citizen
             if cz != null and cz.job == "":
-                cz.set_job("archer", null)
+                cz.set_job(kind, null)
                 changed.emit()
-                return "Citizen assigned as an archer."
+                return "Citizen assigned as a %s." % kind
         return "No jobless citizens available."
     if not SLOTS.has(kind):
         return ""
