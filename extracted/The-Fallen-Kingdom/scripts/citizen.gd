@@ -215,7 +215,7 @@ func _engage_zombie(zombie: Zombie, delta: float, radius: float) -> void:
     if not is_instance_valid(zombie) or not zombie.active:
         return
     var distance: float = global_position.distance_to(zombie.global_position)
-    var lvl: int = clampi(workplace.level if is_instance_valid(workplace) else 1, 1, 3)
+    var lvl: int = 1
     var reach: float = float(GameConfig.archer_range[lvl - 1])
     if distance > reach * 0.72:
         var desired: Vector2 = zombie.global_position
@@ -304,7 +304,7 @@ func _builder(delta: float) -> void:
         return
     var spot: Vector2 = _repair.global_position + Vector2(0, 18)
     if _step(spot, WORK_SPEED, delta):
-        var lvl: int = clampi(workplace.level if is_instance_valid(workplace) else 1, 1, 3)
+        var lvl: int = 1
         _repair.call("repair", float(GameConfig.builder_repair_rate[lvl - 1]) * delta)
 
 
