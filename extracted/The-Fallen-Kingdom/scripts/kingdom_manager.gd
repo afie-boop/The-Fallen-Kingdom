@@ -198,11 +198,18 @@ func menu_rows() -> Array:
     var available_citizens: int = _jobless_count()
     for job_name in ["archer", "builder"]:
         var job_title: String = "Archer" if job_name == "archer" else "Builder"
+        var job_cost: int = 1 if job_name == "archer" else 0
+        var can_hire: bool = available_citizens > 0 and gold >= job_cost
+        var hire_button: String = "Assign 1 citizen" if job_cost == 0 else "Assign 1 citizen  %d coin" % job_cost
+        if available_citizens <= 0:
+            hire_button = "No jobless citizens"
+        elif gold < job_cost:
+            hire_button = "Need %d coin" % job_cost
         rows.append({
             "title": job_title,
-            "info": "%d bekerja tanpa bangunan khas. Tiada kos; setiap pengambilan menukar seorang rakyat yang belum bekerja." % _job_count(job_name),
-            "button": "Assign 1 citizen" if available_citizens > 0 else "No jobless citizens",
-            "enabled": available_citizens > 0,
+            "info": "%d bekerja tanpa bangunan khas. Kos: %d Gold Coin setiap pengambilan." % [_job_count(job_name), job_cost],
+            "button": hire_button,
+            "enabled": can_hire,
             "kind": job_name,
             "action": "hire"
         })
@@ -212,12 +219,17 @@ func menu_rows() -> Array:
 ## Performs a menu action for a player. Returns a short result message.
 func do_action(kind: String, action: String, player_id: int) -> String:
     if kind in ["archer", "builder"] and action == "hire":
+        if _jobless_count() <= 0:
+            return "No jobless citizens available."
+        var hire_cost: int = 1 if kind == "archer" else 0
+        if hire_cost > 0 and not GameState.spend_gold(hire_cost, player_id):
+            return "Not enough Gold Coins."
         for c in get_tree().get_nodes_in_group("citizens"):
             var cz := c as Citizen
             if cz != null and cz.job == "":
                 cz.set_job(kind, null)
                 changed.emit()
-                return "Citizen assigned as a %s." % kind
+                return "Citizen assigned as a %s for %d Gold Coin(s)." % [kind, hire_cost]
         return "No jobless citizens available."
     if not SLOTS.has(kind):
         return ""
