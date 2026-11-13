@@ -23,6 +23,7 @@ var _sprite: Sprite2D
 var _wildlife: Wildlife = null
 var _carried_gold: int = 0
 var _patrol_target: Vector2 = Vector2.ZERO
+var _stuck_time: float = 0.0
 
 
 func _ready() -> void:
@@ -83,6 +84,18 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
     global_position += d.normalized() * speed * delta
     if GameState.island != null:
         global_position = GameState.island.constrain(before, global_position)
+    # If a destination is across an impassable patch of terrain, pick a new
+    # destination instead of repeatedly walking into the same blocked edge.
+    if global_position.distance_to(before) < 0.05:
+        _stuck_time += delta
+        if _stuck_time >= 0.75:
+            _stuck_time = 0.0
+            _target = _wander_target()
+            _patrol_target = Vector2.ZERO
+            if job == "archer":
+                _release_wildlife()
+    else:
+        _stuck_time = 0.0
     if job == "archer":
         var from_home: Vector2 = global_position - home
         # Keep one stable movement boundary in every archer state.
