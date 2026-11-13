@@ -101,7 +101,9 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
         # Keep one stable movement boundary in every archer state.
         # Changing the limit immediately after a kill used to teleport the archer
         # back toward home, making it appear to vanish in front of the player.
-        var patrol_limit: float = _kingdom_radius() + 220.0
+        # Daytime hunters may leave the kingdom to reach wildlife. At night,
+        # keep archers within the kingdom perimeter while they return to station.
+        var patrol_limit: float = 1400.0 if not GameState.is_night else _kingdom_radius() + 220.0
         if from_home.length() > patrol_limit:
             global_position = home + from_home.normalized() * patrol_limit
     _sprite.position.y = -absf(sin(_t * 9.0)) * 2.0
@@ -165,7 +167,7 @@ func _archer(delta: float) -> void:
         return
 
     if _wildlife == null or not is_instance_valid(_wildlife):
-        _wildlife = _nearest_wildlife(radius + 220.0)
+        _wildlife = _nearest_wildlife(1400.0)
         if _wildlife != null:
             _wildlife.claim(self)
     if _wildlife != null and is_instance_valid(_wildlife):
@@ -176,7 +178,6 @@ func _archer(delta: float) -> void:
             _step(_wildlife.global_position, WORK_SPEED, delta)
         else:
             _sprite.flip_h = _wildlife.global_position.x < global_position.x
-            _shoot_cd = maxf(0.0, _shoot_cd - delta)
             if _shoot_cd <= 0.0:
                 _shoot_cd = GameConfig.archer_cooldown
                 var arrow := Arrow.new()
@@ -256,8 +257,8 @@ func _nearest_wildlife(radius: float) -> Wildlife:
         var animal := node as Wildlife
         if animal == null or (animal.hunter != null and is_instance_valid(animal.hunter)):
             continue
-        if not _inside_kingdom(animal.global_position, radius - 20.0):
-            continue
+        # Wildlife spawns in the forest, usually beyond the initial fence.
+        # Hunters must be allowed to find animals outside the kingdom.
         var distance: float = global_position.distance_to(animal.global_position)
         if distance < best_distance:
             best_distance = distance
