@@ -242,7 +242,6 @@ func _engage_zombie(zombie: Zombie, delta: float, radius: float) -> void:
         _step(desired, WORK_SPEED * (1.35 if GameState.is_night else 1.0), delta)
         return
     _sprite.flip_h = zombie.global_position.x < global_position.x
-    _shoot_cd = maxf(0.0, _shoot_cd - delta)
     if _shoot_cd <= 0.0:
         _shoot_cd = GameConfig.archer_cooldown
         var arrow := Arrow.new()
