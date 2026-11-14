@@ -46,11 +46,19 @@ func _ready() -> void:
     # The island itself constrains player movement; giant 10,000px physics
     # boundary shapes are unnecessary in the web build and can stall physics setup.
     await get_tree().process_frame
-    _set_loading("Creating world objects...", 0.361)
+    _set_loading("Creating entities node...", 0.361)
+    await get_tree().process_frame
     entities = Node2D.new()
+    _set_loading("Naming entities node...", 0.3615)
+    await get_tree().process_frame
     entities.name = "Entities"
+    _set_loading("Configuring entities node...", 0.362)
+    await get_tree().process_frame
     entities.y_sort_enabled = true
+    _set_loading("Adding entities to scene...", 0.363)
+    await get_tree().process_frame
     add_child(entities)
+    _set_loading("Entities added to scene...", 0.364)
     await get_tree().process_frame
 
     _set_loading("Preparing castle...", 0.365)
