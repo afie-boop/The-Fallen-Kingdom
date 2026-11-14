@@ -49,17 +49,20 @@ func build(world_seed: int, size: Vector2) -> void:
             v -= smoothstep(0.72, 0.98, edge) * 1.6
             _vals[y * RES + x] = v
             _dirt[y * RES + x] = clampf(dnoise.get_noise_2d(p.x * 3.4 + ox, p.y * 3.4 + oy) * 0.5 + 0.5, 0.0, 1.0)
+        if y % 12 == 0:
+            await Engine.get_main_loop().process_frame
 
-    _keep_main_island()
+    await _keep_main_island()
     _find_far_inland()
     center_pos = size / 2.0
     add_dirt_spot(center_pos + Vector2(0, 20), 230.0)   # bare yard around the kingdom house
-    _make_texture()
+    await _make_texture()
 
 
 ## Removes land that is not connected to the island centre (tiny islets).
 func _keep_main_island() -> void:
     var seen := PackedByteArray()
+    var processed: int = 0
     seen.resize(RES * RES)
     var half: int = floori(RES / 2.0)
     var stack: Array[int] = [half * RES + half]
@@ -68,6 +71,9 @@ func _keep_main_island() -> void:
         if seen[i] == 1 or _vals[i] <= 0.0:
             continue
         seen[i] = 1
+        processed += 1
+        if processed % 4096 == 0:
+            await Engine.get_main_loop().process_frame
         var x: int = i % RES
         var y: int = floori(i / float(RES))
         if x > 0: stack.append(i - 1)
@@ -93,7 +99,12 @@ func _find_far_inland() -> void:
 
 func _make_texture() -> void:
     _img = Image.create(RES, RES, false, Image.FORMAT_RGBA8)
-    _fill_image()
+    for y in RES:
+        for x in RES:
+            var i: int = y * RES + x
+            _img.set_pixel(x, y, Color(clampf(_vals[i] * 0.5 + 0.5, 0.0, 1.0), clampf(_dirt[i], 0.0, 1.0), 0.0, 1.0))
+        if y % 16 == 0:
+            await Engine.get_main_loop().process_frame
     texture = ImageTexture.create_from_image(_img)
 
 

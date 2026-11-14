@@ -19,18 +19,26 @@ var kingdom: KingdomManager
 var _world_rect: Rect2
 var _autosave_t: float = 0.0
 var _interact_t: float = 0.0
+var _loading_layer: CanvasLayer
+var _loading_label: Label
+var _loading_bar: ProgressBar
 
 
 func _ready() -> void:
+    _create_loading_screen()
+    await get_tree().process_frame
     if not GameState.initialized:
         GameState.reset_new_game()  # e.g. scene started directly from the editor
     _world_rect = Rect2(Vector2.ZERO, GameConfig.world_size())
 
+    _set_loading("Generating island...", 0.08)
     GameState.island = IslandMap.new()
-    GameState.island.build(GameState.world_seed, _world_rect.size)
+    await GameState.island.build(GameState.world_seed, _world_rect.size)
+    _set_loading("Preparing terrain...", 0.30)
     _place_small_lake()
     _build_ground()
     _build_bounds()
+    await get_tree().process_frame
     entities = Node2D.new()
     entities.name = "Entities"
     entities.y_sort_enabled = true
@@ -45,7 +53,9 @@ func _ready() -> void:
     ]
     # Random caves replace the old zombie nests and Zombie Castle.
     var cave_avoid: Array = [{"pos": castle.position, "r": 480.0}]
+    _set_loading("Placing caves...", 0.38)
     var cave_spots: Array[Vector2] = WorldGenerator.spawn_caves(entities, GameState.island, GameState.world_seed, 8, cave_avoid)
+    await get_tree().process_frame
     for cp in cave_spots:
         avoid.append({"pos": cp, "r": 150.0})
     var camp_avoid: Array = [
@@ -53,16 +63,22 @@ func _ready() -> void:
     ]
     for cp in cave_spots:
         camp_avoid.append({"pos": cp, "r": 240.0})
+    _set_loading("Building jungle camps...", 0.48)
     var camp_spots: Array[Vector2] = WorldGenerator.spawn_camps(entities, GameState.island, GameState.world_seed, camp_avoid, GameState.recruited_beggars)
     WorldGenerator.spawn_jungle_trees(entities, GameState.island, GameState.world_seed, camp_spots, GameState.removed_trees)
+    await get_tree().process_frame
     for cp in camp_spots:
         avoid.append({"pos": cp, "r": 130.0})
     WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
     GameState.island.refresh_texture()
     # No ruined houses are scattered around the island; tents mark poor camps.
+    _set_loading("Growing forests...", 0.64)
     WorldGenerator.spawn_trees(entities, GameState.island, GameState.world_seed, GameConfig.tree_count, avoid, GameState.removed_trees)
+    await get_tree().process_frame
     # Spawn deer and rabbits using the three transparent reference assets.
     WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 13, castle.position, Callable(self, "_on_wildlife_killed"))
+    _set_loading("Setting up kingdom...", 0.76)
+    await get_tree().process_frame
 
     kingdom = KingdomManager.new()
     add_child(kingdom)
@@ -87,10 +103,51 @@ func _ready() -> void:
     hud.setup_minimap(GameState.island, player, castle, entities, _world_rect.size)
     _connect_signals()
     hud.update_hp(player.hp, player.max_hp)
+    _set_loading("Finishing world...", 0.92)
+    await get_tree().process_frame
 
     if GameState.castle_hp > 0.0:
         castle.set_hp(GameState.castle_hp)
     hud.show_message("Loaded saved game." if GameState.loaded_from_save else "Defend the kingdom. Chop trees, fight zombies, collect coins.", 4.0)
+    if is_instance_valid(_loading_layer):
+        _loading_layer.queue_free()
+
+
+func _create_loading_screen() -> void:
+    _loading_layer = CanvasLayer.new()
+    _loading_layer.layer = 100
+    add_child(_loading_layer)
+    var bg := ColorRect.new()
+    bg.color = Color(0.035, 0.045, 0.065, 1.0)
+    bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _loading_layer.add_child(bg)
+    var center := CenterContainer.new()
+    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _loading_layer.add_child(center)
+    var box := VBoxContainer.new()
+    box.custom_minimum_size = Vector2(280, 0)
+    box.add_theme_constant_override("separation", 14)
+    center.add_child(box)
+    _loading_label = Label.new()
+    _loading_label.text = "Preparing new world..."
+    _loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    _loading_label.add_theme_font_size_override("font_size", 20)
+    box.add_child(_loading_label)
+    _loading_bar = ProgressBar.new()
+    _loading_bar.custom_minimum_size = Vector2(280, 16)
+    _loading_bar.min_value = 0.0
+    _loading_bar.max_value = 1.0
+    _loading_bar.value = 0.02
+    _loading_bar.show_percentage = true
+    box.add_child(_loading_bar)
+
+
+func _set_loading(message: String, progress: float) -> void:
+    if is_instance_valid(_loading_label):
+        _loading_label.text = message
+    if is_instance_valid(_loading_bar):
+        _loading_bar.value = progress
+    await get_tree().process_frame
 
 
 func _place_small_lake() -> void:
