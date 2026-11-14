@@ -42,8 +42,9 @@ func _ready() -> void:
     _set_loading("Rendering terrain...", 0.34)
     _build_ground()
     await get_tree().process_frame
-    _set_loading("Building world boundaries...", 0.36)
-    _build_bounds()
+    _set_loading("Finishing terrain setup...", 0.36)
+    # The island itself constrains player movement; giant 10,000px physics
+    # boundary shapes are unnecessary in the web build and can stall physics setup.
     await get_tree().process_frame
     entities = Node2D.new()
     entities.name = "Entities"
