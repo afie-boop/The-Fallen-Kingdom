@@ -77,31 +77,37 @@ static func spawn_ruins(parent: Node2D, island: IslandMap, world_seed: int, coun
 
 
 ## Random caves scattered around the island; zombies emerge from these at night.
-static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array) -> Array[Vector2]:
+static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array, on_progress: Callable = Callable()) -> Array[Vector2]:
     var rng := RandomNumberGenerator.new()
     rng.seed = world_seed + 4242
     var spots: Array[Vector2] = []
     var tries: int = 0
+    var tree := parent.get_tree()
+    var slice_started: int = Time.get_ticks_msec()
     while spots.size() < count and tries < 700:
         tries += 1
         var p: Vector2 = island.random_land_point(rng, 0.25, 140.0)
-        if _blocked(p, avoid):
-            continue
-        var ok: bool = true
-        for q in spots:
-            if p.distance_to(q) < 520.0:
-                ok = false
-                break
-        if not ok:
-            continue
-        spots.append(p)
-        var cave := ZombieCave.new()
-        cave.position = p
-        cave.variant = rng.randi_range(0, 2)
-        parent.add_child(cave)
-        island.add_dirt_spot(p + Vector2(0, 8), 75.0)
+        if not _blocked(p, avoid):
+            var ok: bool = true
+            for q in spots:
+                if p.distance_to(q) < 520.0:
+                    ok = false
+                    break
+            if ok:
+                spots.append(p)
+                var cave := ZombieCave.new()
+                cave.position = p
+                cave.variant = rng.randi_range(0, 2)
+                parent.add_child(cave)
+                island.add_dirt_spot(p + Vector2(0, 8), 75.0)
+        if Time.get_ticks_msec() - slice_started >= 8:
+            if on_progress.is_valid():
+                on_progress.call(spots.size(), count)
+            await tree.process_frame
+            slice_started = Time.get_ticks_msec()
+    if on_progress.is_valid():
+        on_progress.call(spots.size(), count)
     return spots
-
 
 ## Spawns deer and rabbits across the island, with a few close to the kingdom.
 ## Spawns a small herd in wooded areas, choosing positions near existing trees.

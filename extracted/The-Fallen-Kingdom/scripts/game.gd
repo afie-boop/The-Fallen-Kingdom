@@ -75,7 +75,13 @@ func _ready() -> void:
     # Random caves replace the old zombie nests and Zombie Castle.
     var cave_avoid: Array = [{"pos": castle.position, "r": 480.0}]
     _set_loading("Placing caves...", 0.38)
-    var cave_spots: Array[Vector2] = WorldGenerator.spawn_caves(entities, GameState.island, GameState.world_seed, 8, cave_avoid)
+    await get_tree().process_frame
+    var cave_spots: Array[Vector2] = await WorldGenerator.spawn_caves(
+        entities, GameState.island, GameState.world_seed, 8, cave_avoid,
+        func(n, total):
+            if total > 0:
+                _set_loading("Placing caves %d/%d..." % [n, total], 0.38 + 0.08 * float(n) / float(total))
+    )
     await get_tree().process_frame
     for cp in cave_spots:
         avoid.append({"pos": cp, "r": 150.0})
@@ -85,7 +91,10 @@ func _ready() -> void:
     for cp in cave_spots:
         camp_avoid.append({"pos": cp, "r": 240.0})
     _set_loading("Building jungle camps...", 0.48)
+    await get_tree().process_frame
     var camp_spots: Array[Vector2] = WorldGenerator.spawn_camps(entities, GameState.island, GameState.world_seed, camp_avoid, GameState.recruited_beggars)
+    _set_loading("Growing jungle trees...", 0.56)
+    await get_tree().process_frame
     WorldGenerator.spawn_jungle_trees(entities, GameState.island, GameState.world_seed, camp_spots, GameState.removed_trees)
     await get_tree().process_frame
     for cp in camp_spots:
@@ -94,9 +103,12 @@ func _ready() -> void:
     GameState.island.refresh_texture()
     # No ruined houses are scattered around the island; tents mark poor camps.
     _set_loading("Growing forests...", 0.64)
+    await get_tree().process_frame
     WorldGenerator.spawn_trees(entities, GameState.island, GameState.world_seed, GameConfig.tree_count, avoid, GameState.removed_trees)
     await get_tree().process_frame
     # Spawn deer and rabbits using the three transparent reference assets.
+    _set_loading("Spawning wildlife...", 0.72)
+    await get_tree().process_frame
     WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 13, castle.position, Callable(self, "_on_wildlife_killed"))
     _set_loading("Setting up kingdom...", 0.76)
     await get_tree().process_frame
