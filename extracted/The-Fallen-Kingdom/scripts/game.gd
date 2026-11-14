@@ -57,8 +57,11 @@ func _ready() -> void:
     await get_tree().process_frame
     _set_loading("Creating castle object...", 0.367)
     castle = CASTLE_SCENE.instantiate() as KingdomCastle
-    _set_loading("Positioning castle...", 0.368)
-    castle.position = GameState.island.center_pos
+    _set_loading("Reading island center...", 0.368)
+    var castle_center: Vector2 = GameState.island.center_pos
+    _set_loading("Applying castle position...", 0.369)
+    castle.position = castle_center
+    _set_loading("Castle position applied...", 0.3695)
     await get_tree().process_frame
     _set_loading("Placing castle...", 0.37)
     entities.add_child(castle)
