@@ -5,6 +5,7 @@ extends Node2D
 
 const SPEED: float = 32.0
 const WORK_SPEED: float = 46.0
+const ARCHER_HUNT_LIMIT: float = 1000.0 # Maximum hunting distance from the castle.
 
 var citizen_id: int = 0
 var variant: int = 0
@@ -105,7 +106,7 @@ func _step(to: Vector2, speed: float, delta: float) -> bool:
         # back toward home, making it appear to vanish in front of the player.
         # Daytime hunters may leave the kingdom to reach wildlife. At night,
         # keep archers within the kingdom perimeter while they return to station.
-        var patrol_limit: float = 1400.0 if not GameState.is_night else _kingdom_radius() + 220.0
+        var patrol_limit: float = ARCHER_HUNT_LIMIT if not GameState.is_night else _kingdom_radius() + 220.0
         if from_home.length() > patrol_limit:
             global_position = home + from_home.normalized() * patrol_limit
     _sprite.position.y = -absf(sin(_t * 9.0)) * 2.0
@@ -169,17 +170,21 @@ func _archer(delta: float) -> void:
         _coin_scan_t -= delta
         if _coin_scan_t <= 0.0:
             _coin_scan_t = 0.2
-            _coin_target = _nearest_hunting_coin(1400.0)
+            _coin_target = _nearest_hunting_coin(ARCHER_HUNT_LIMIT)
     if _coin_target != null and is_instance_valid(_coin_target):
-        if global_position.distance_to(_coin_target.global_position) > 14.0:
+        if not _inside_hunt_limit(_coin_target.global_position):
+            _coin_target = null
+        elif global_position.distance_to(_coin_target.global_position) > 14.0:
             _step(_coin_target.global_position, WORK_SPEED, delta)
         else:
             _carried_gold += _coin_target.collect(self)
             _coin_target = null
         return
 
+    if _wildlife != null and is_instance_valid(_wildlife) and not _inside_hunt_limit(_wildlife.global_position):
+        _release_wildlife()
     if _wildlife == null or not is_instance_valid(_wildlife):
-        _wildlife = _nearest_wildlife(1400.0)
+        _wildlife = _nearest_wildlife(ARCHER_HUNT_LIMIT)
         if _wildlife != null:
             _wildlife.claim(self)
     if _wildlife != null and is_instance_valid(_wildlife):
@@ -214,6 +219,12 @@ func _kingdom_radius() -> float:
 
 func _inside_kingdom(pos: Vector2, radius: float) -> bool:
     return pos.distance_to(home) <= radius
+
+
+func _inside_hunt_limit(pos: Vector2) -> bool:
+    # Hunting bounds are measured from the castle, not the archer's current
+    # position, so archers cannot extend their search by walking outward.
+    return pos.distance_to(home) <= ARCHER_HUNT_LIMIT
 
 
 func _random_patrol_point(radius: float) -> Vector2:
@@ -299,8 +310,9 @@ func _nearest_wildlife(radius: float) -> Wildlife:
         var animal := node as Wildlife
         if animal == null or (animal.hunter != null and is_instance_valid(animal.hunter)):
             continue
-        # Wildlife spawns in the forest, usually beyond the initial fence.
-        # Hunters must be allowed to find animals outside the kingdom.
+        # Only detect wildlife inside the fixed hunting radius around the castle.
+        if not _inside_hunt_limit(animal.global_position):
+            continue
         var distance: float = global_position.distance_to(animal.global_position)
         if distance < best_distance:
             best_distance = distance
@@ -313,7 +325,7 @@ func _nearest_hunting_coin(radius: float) -> HuntingCoin:
     var best_distance: float = radius
     for node in get_tree().get_nodes_in_group("hunting_coins"):
         var coin := node as HuntingCoin
-        if coin == null or (coin.collector != null and is_instance_valid(coin.collector) and coin.collector != self):
+        if coin == null or not _inside_hunt_limit(coin.global_position) or (coin.collector != null and is_instance_valid(coin.collector) and coin.collector != self):
             continue
         var distance: float = global_position.distance_to(coin.global_position)
         if distance < best_distance:
