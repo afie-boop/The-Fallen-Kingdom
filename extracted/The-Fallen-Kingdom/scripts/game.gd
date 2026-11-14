@@ -54,7 +54,10 @@ func _ready() -> void:
     await get_tree().process_frame
 
     _set_loading("Preparing castle...", 0.365)
-    castle = KingdomCastle.new()
+    await get_tree().process_frame
+    _set_loading("Creating castle object...", 0.367)
+    castle = CASTLE_SCENE.instantiate() as KingdomCastle
+    _set_loading("Positioning castle...", 0.368)
     castle.position = GameState.island.center_pos
     await get_tree().process_frame
     _set_loading("Placing castle...", 0.37)
