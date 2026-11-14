@@ -54,7 +54,7 @@ func _ready() -> void:
     await get_tree().process_frame
 
     _set_loading("Preparing castle...", 0.365)
-    await get_tree().process_frame
+    # Skip this frame yield to isolate the stall before castle instantiation.
     _set_loading("Creating castle object...", 0.367)
     castle = CASTLE_SCENE.instantiate() as KingdomCastle
     _set_loading("Reading island center...", 0.368)
