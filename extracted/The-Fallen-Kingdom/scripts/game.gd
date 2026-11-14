@@ -62,9 +62,10 @@ func _ready() -> void:
     _set_loading("Applying castle position...", 0.369)
     castle.position = castle_center
     _set_loading("Castle position applied...", 0.3695)
-    await get_tree().process_frame
-    _set_loading("Placing castle...", 0.37)
+    # Skip a frame yield here to isolate whether the yield itself stalls web loading.
+    _set_loading("Adding castle to world...", 0.37)
     entities.add_child(castle)
+    _set_loading("Castle added to world...", 0.372)
     await get_tree().process_frame
     _set_loading("Castle ready...", 0.375)
 
