@@ -59,9 +59,8 @@ func _ready() -> void:
     await get_tree().process_frame
     add_child(entities)
     _set_loading("Entities added to scene...", 0.364)
-    await get_tree().process_frame
-
-    _set_loading("Preparing castle...", 0.365)
+    # Continue immediately; isolate the frame wait after adding the empty entities root.
+    _set_loading("Frame wait skipped; preparing castle...", 0.365)
     # Skip this frame yield to isolate the stall before castle instantiation.
     _set_loading("Creating castle object...", 0.367)
     castle = CASTLE_SCENE.instantiate() as KingdomCastle
