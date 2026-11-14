@@ -56,7 +56,7 @@ func _ready() -> void:
     await get_tree().process_frame
     entities.y_sort_enabled = true
     _set_loading("Adding entities to scene...", 0.363)
-    await get_tree().process_frame
+    # Skip the frame wait immediately before inserting the empty world root.
     add_child(entities)
     _set_loading("Entities added to scene...", 0.364)
     # Continue immediately; isolate the frame wait after adding the empty entities root.
