@@ -35,8 +35,14 @@ func _ready() -> void:
     GameState.island = IslandMap.new()
     await GameState.island.build(GameState.world_seed, _world_rect.size)
     _set_loading("Preparing terrain...", 0.30)
+    await get_tree().process_frame
+    _set_loading("Shaping coastline...", 0.32)
     _place_small_lake()
+    await get_tree().process_frame
+    _set_loading("Rendering terrain...", 0.34)
     _build_ground()
+    await get_tree().process_frame
+    _set_loading("Building world boundaries...", 0.36)
     _build_bounds()
     await get_tree().process_frame
     entities = Node2D.new()
