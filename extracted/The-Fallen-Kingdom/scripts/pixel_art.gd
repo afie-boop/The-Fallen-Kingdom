@@ -87,13 +87,19 @@ static func file_tex_remove_light_background(path: String) -> Texture2D:
     return result
 
 
-const TREE_COUNT: int = 9
+const TREE_COUNT: int = 12
 const RUIN_COUNT: int = 5
 const CHAR_COUNT: int = 11
 
 
 static func tree_tex(i: int) -> Texture2D:
-    return file_tex("res://assets/trees/tree_%02d.png" % (posmod(i, TREE_COUNT) + 1))
+    var index: int = posmod(i, TREE_COUNT)
+    if index < 9:
+        return file_tex("res://assets/trees/tree_%02d.png" % (index + 1))
+    var key: String = "tree_extra_%d" % (index - 9)
+    if not _cache.has(key):
+        _cache[key] = ImageTexture.create_from_image(_tree_extra(index - 9))
+    return _cache[key]
 
 
 static func ruin_tex(i: int) -> Texture2D:
@@ -228,55 +234,101 @@ static func _fallback() -> Image:
 # --- sprites ---------------------------------------------------------------
 
 static func _ground() -> Image:
-    # Natural layered grass: irregular soil variation, clustered blades,
-    # moss and tiny clover. Kept at 32px so existing world tiling is unchanged.
+    # Dense, vivid meadow grass inspired by the supplied reference image.
+    # The reference is a visual guide only; the tile is drawn procedurally.
     var img := _new(32, 32)
-    var base := Color(0.19, 0.36, 0.22)
-    img.fill(base)
+    img.fill(Color(0.25, 0.55, 0.16))
     var rng := RandomNumberGenerator.new()
     rng.seed = 48291
-    # Broad, softly irregular patches make the ground less like a flat grid.
-    for i in 9:
+    for i in 24:
         var cx: int = rng.randi_range(0, 31)
         var cy: int = rng.randi_range(0, 31)
-        var radius: int = rng.randi_range(3, 7)
-        var patch: Color = [Color(0.22, 0.40, 0.23), Color(0.16, 0.32, 0.20), Color(0.24, 0.38, 0.20)][rng.randi_range(0, 2)]
-        for yy in range(cy - radius, cy + radius + 1):
-            for xx in range(cx - radius, cx + radius + 1):
-                var dx: float = float(xx - cx)
-                var dy: float = float(yy - cy)
-                if dx * dx + dy * dy <= float(radius * radius) and xx >= 0 and yy >= 0 and xx < 32 and yy < 32:
-                    _px(img, xx, yy, patch)
-    # Fine colour noise breaks up repeated flat patches.
-    for i in 150:
-        var x: int = rng.randi() % 32
-        var y: int = rng.randi() % 32
-        var c: Color = img.get_pixel(x, y)
-        var shade: float = rng.randf_range(-0.035, 0.035)
-        _px(img, x, y, Color(clampf(c.r + shade, 0.0, 1.0), clampf(c.g + shade, 0.0, 1.0), clampf(c.b + shade * 0.7, 0.0, 1.0)))
-    # Small grass blades in natural, varied clusters.
-    for i in 22:
-        var x: int = rng.randi_range(1, 30)
-        var y: int = rng.randi_range(2, 30)
-        var blade: Color = [Color(0.30, 0.49, 0.27), Color(0.25, 0.44, 0.24), Color(0.36, 0.51, 0.28)][rng.randi_range(0, 2)]
+        var rx: int = rng.randi_range(2, 7)
+        var ry: int = rng.randi_range(2, 6)
+        var shade: Color = [Color(0.31, 0.64, 0.17), Color(0.22, 0.48, 0.13), Color(0.39, 0.69, 0.19), Color(0.27, 0.57, 0.14)][rng.randi_range(0, 3)]
+        for y in range(maxi(0, cy - ry), mini(32, cy + ry + 1)):
+            for x in range(maxi(0, cx - rx), mini(32, cx + rx + 1)):
+                var dx: float = float(x - cx) / float(rx)
+                var dy: float = float(y - cy) / float(ry)
+                if dx * dx + dy * dy < 0.95:
+                    _px(img, x, y, shade)
+    # Dense blade clusters create the lush, fine-textured appearance in the example.
+    for i in 190:
+        var x: int = rng.randi_range(0, 31)
+        var y: int = rng.randi_range(0, 31)
+        var blade: Color = [Color(0.48, 0.76, 0.22), Color(0.39, 0.68, 0.18), Color(0.57, 0.79, 0.25), Color(0.18, 0.43, 0.12), Color(0.33, 0.60, 0.15)][rng.randi_range(0, 4)]
         _px(img, x, y, blade)
-        if rng.randf() > 0.35:
-            _px(img, x + 1, y - 1, _shade(blade, 1.12))
-        if rng.randf() > 0.55:
-            _px(img, x - 1, y + 1, _shade(blade, 0.88))
-    # Sparse clover and pale wildflower flecks, not a repeating polka-dot pattern.
-    for p in [Vector2i(6, 8), Vector2i(24, 23), Vector2i(13, 27)]:
-        _px(img, p.x, p.y, Color(0.44, 0.56, 0.31))
-        _px(img, p.x + 1, p.y, Color(0.37, 0.51, 0.28))
-        _px(img, p.x, p.y + 1, Color(0.32, 0.47, 0.26))
-    for p in [Vector2i(4, 22), Vector2i(27, 7)]:
-        _px(img, p.x, p.y, Color(0.78, 0.76, 0.63))
-        _px(img, p.x + 1, p.y, Color(0.58, 0.72, 0.57))
-    # A few dark earth pixels suggest damp soil beneath the grass.
-    for p in [Vector2i(17, 5), Vector2i(19, 6), Vector2i(18, 7), Vector2i(8, 28)]:
-        _px(img, p.x, p.y, Color(0.14, 0.27, 0.17))
+        if rng.randf() > 0.24:
+            _px(img, x + 1, y, _shade(blade, 0.88))
+        if rng.randf() > 0.48:
+            _px(img, x, y - 1, _shade(blade, 1.12))
+        if rng.randf() > 0.68:
+            _px(img, x - 1, y + 1, _shade(blade, 0.78))
+    # Occasional mossy openings break up the otherwise dense grass.
+    for i in 7:
+        var x: int = rng.randi_range(2, 28)
+        var y: int = rng.randi_range(2, 28)
+        var patch := Color(0.36, 0.48, 0.20)
+        _px(img, x, y, patch)
+        _px(img, x + 1, y, _shade(patch, 0.9))
+        _px(img, x, y + 1, _shade(patch, 0.82))
     return img
 
+
+static func _tree_extra(variant: int) -> Image:
+    # Three extra tree silhouettes based on the supplied sprite reference.
+    var img := _new(64, 80)
+    var trunk := Color(0.39, 0.23, 0.12)
+    var trunk_light := Color(0.57, 0.35, 0.18)
+    _rect(img, 29, 54, 7, 23, trunk)
+    _rect(img, 31, 57, 2, 18, trunk_light)
+    _rect(img, 24, 73, 17, 4, trunk)
+    if variant == 0:
+        var dark := Color(0.08, 0.30, 0.12)
+        var mid := Color(0.13, 0.46, 0.17)
+        var light := Color(0.30, 0.64, 0.20)
+        _disc(img, 31, 32, 25, dark)
+        _disc(img, 16, 35, 15, dark)
+        _disc(img, 47, 35, 15, dark)
+        _disc(img, 20, 25, 14, mid)
+        _disc(img, 42, 23, 15, mid)
+        _disc(img, 31, 16, 16, mid)
+        _disc(img, 15, 39, 10, mid)
+        _disc(img, 48, 40, 10, mid)
+        for p in [Vector2i(13, 28), Vector2i(23, 16), Vector2i(34, 12), Vector2i(43, 29), Vector2i(20, 42), Vector2i(37, 40)]:
+            _disc(img, p.x, p.y, 5, light)
+    elif variant == 1:
+        _disc(img, 32, 31, 26, Color(0.04, 0.25, 0.11))
+        _disc(img, 32, 28, 22, Color(0.10, 0.42, 0.16))
+        _disc(img, 19, 34, 14, Color(0.13, 0.48, 0.18))
+        _disc(img, 45, 34, 14, Color(0.12, 0.44, 0.16))
+        _disc(img, 30, 18, 13, Color(0.24, 0.59, 0.20))
+        _disc(img, 19, 24, 8, Color(0.27, 0.62, 0.22))
+        _disc(img, 42, 23, 8, Color(0.22, 0.55, 0.18))
+    else:
+        var dark := Color(0.025, 0.20, 0.10)
+        var mid := Color(0.06, 0.34, 0.14)
+        var light := Color(0.20, 0.52, 0.18)
+        for layer in 5:
+            var y: int = 8 + layer * 9
+            var half: int = 8 + layer * 5
+            _rect(img, 32 - half, y, half * 2, 12, dark)
+            _rect(img, 32 - half + 3, y + 2, half * 2 - 6, 7, mid)
+            _rect(img, 32 - half + 5, y + 2, maxi(2, half - 8), 2, light)
+        _rect(img, 29, 51, 7, 5, dark)
+    # Pixel highlights add texture without importing the reference image itself.
+    for i in 55:
+        var x: int = _tree_detail_coord(i, variant, 8, 56)
+        var y: int = _tree_detail_coord(i, variant + 3, 8, 53)
+        if img.get_pixel(x, y).a > 0.0:
+            _px(img, x, y, Color(0.34, 0.65, 0.22))
+    return img
+
+
+static func _tree_detail_coord(a: int, b: int, low: int, high: int) -> int:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = a * 7919 + b * 104729 + 53
+    return rng.randi_range(low, high)
 
 static func _player(dir: int, frame: int) -> Image:
     # dir: 0 down, 1 up, 2 left, 3 right. frame: 0 idle, 1/2 walk.
@@ -796,56 +848,47 @@ static func _rock(variant: int) -> Image:
 
 ## Dark rocky cave entrance with a deep black opening.
 static func _cave(variant: int) -> Image:
-    # A plain natural cave mouth: a dark opening surrounded only by rough
-    # boulders embedded in the hillside. No crystals, runes, bones or props.
-    var img := _new(80, 60)
-    var palettes: Array[Color] = [
-        Color(0.29, 0.31, 0.33), Color(0.34, 0.31, 0.28), Color(0.27, 0.32, 0.33)
-    ]
-    var rock: Color = palettes[posmod(variant, palettes.size())]
-    var shade: Color = _shade(rock, 0.62)
-    var dark_shade: Color = _shade(rock, 0.42)
-    var light: Color = _shade(rock, 1.24)
-    var opening := Color(0.012, 0.014, 0.018)
-    _disc(img, 40, 53, 32, Color(0, 0, 0, 0.30))
-
-    # Irregular rocky hillside and heavy stones forming a rough arch.
-    _disc(img, 40, 31, 31, shade)
-    _disc(img, 40, 27, 25, rock)
-    _disc(img, 19, 34, 13, dark_shade)
-    _disc(img, 61, 34, 14, dark_shade)
-    _disc(img, 23, 20, 12, light)
-    _disc(img, 38, 15, 13, shade)
-    _disc(img, 55, 20, 13, light)
-    _disc(img, 10, 39, 9, rock)
-    _disc(img, 70, 40, 9, rock)
-
-    # Individual boulder faces and natural cracks, all in muted stone tones.
-    _rect(img, 10, 29, 8, 3, light)
-    _rect(img, 19, 17, 7, 3, light)
-    _rect(img, 34, 10, 8, 3, light)
-    _rect(img, 52, 16, 8, 3, light)
-    _rect(img, 65, 29, 6, 3, light)
-    _rect(img, 15, 33, 2, 7, dark_shade)
-    _rect(img, 25, 24, 2, 6, dark_shade)
-    _rect(img, 53, 23, 2, 7, dark_shade)
-    _rect(img, 63, 34, 2, 6, dark_shade)
-    _rect(img, 31, 18, 2, 5, dark_shade)
-    _rect(img, 46, 17, 2, 6, dark_shade)
-
-    # Deep, uneven cave mouth. The stone lip overlaps its upper edge.
-    _disc(img, 40, 35, 19, opening)
-    _rect(img, 21, 35, 38, 14, opening)
-    _disc(img, 40, 39, 13, Color(0.035, 0.035, 0.04))
-    _rect(img, 27, 40, 26, 9, opening)
-    _rect(img, 34, 44, 12, 5, Color(0.018, 0.019, 0.022))
-
-    # Loose natural stones at the entrance, matching the surrounding rock.
-    _disc(img, 12, 49, 5, dark_shade)
-    _disc(img, 20, 52, 4, shade)
-    _disc(img, 64, 51, 5, dark_shade)
-    _disc(img, 72, 48, 4, shade)
-    _rect(img, 29, 51, 7, 2, dark_shade)
-    _rect(img, 46, 52, 8, 2, dark_shade)
+    # Detailed stone cave entrance inspired by the supplied cave reference.
+    # This is original pixel art, not a pasted copy of the reference.
+    var img := _new(88, 76)
+    var stone := [Color(0.30, 0.27, 0.23), Color(0.34, 0.31, 0.27), Color(0.27, 0.29, 0.30)][posmod(variant, 3)]
+    var dark := _shade(stone, 0.62)
+    var light := _shade(stone, 1.32)
+    var opening := Color(0.035, 0.025, 0.028)
+    _disc(img, 44, 67, 37, Color(0, 0, 0, 0.28))
+    _disc(img, 44, 39, 35, dark)
+    _disc(img, 44, 34, 31, stone)
+    _rect(img, 12, 35, 64, 28, stone)
+    # Masonry blocks form an irregular rocky facade.
+    for row in 4:
+        var y: int = 13 + row * 11
+        var offset: int = 0 if row % 2 == 0 else 7
+        for col in 7:
+            var x: int = 8 + col * 11 + offset
+            if x > 79:
+                continue
+            var block := _shade(stone, 0.88 if (row + col) % 2 == 0 else 1.08)
+            _rect(img, x, y, 8, 7, block)
+            _rect(img, x + 1, y, 5, 1, light)
+            _rect(img, x + 6, y + 1, 1, 5, dark)
+    # Deep arched doorway and layered stone frame.
+    _disc(img, 44, 42, 23, dark)
+    _rect(img, 21, 42, 46, 22, dark)
+    _disc(img, 44, 43, 18, opening)
+    _rect(img, 26, 43, 36, 19, opening)
+    _disc(img, 44, 45, 14, Color(0.018, 0.014, 0.018))
+    _rect(img, 30, 46, 28, 15, Color(0.018, 0.014, 0.018))
+    for side in 2:
+        var x: int = 22 if side == 0 else 63
+        for row in 5:
+            var y: int = 36 + row * 5
+            _rect(img, x, y, 4, 3, light)
+            _rect(img, x + (1 if side == 0 else 0), y + 3, 3, 1, dark)
+    # Earthen doorstep, loose rubble and moss at the base.
+    _rect(img, 19, 63, 50, 3, Color(0.35, 0.25, 0.16))
+    _rect(img, 25, 66, 38, 4, Color(0.28, 0.20, 0.14))
+    for p in [Vector2i(12, 62), Vector2i(17, 67), Vector2i(71, 64), Vector2i(77, 68), Vector2i(8, 55), Vector2i(79, 53)]:
+        _disc(img, p.x, p.y, 3, dark)
+    _rect(img, 8, 69, 10, 2, Color(0.17, 0.28, 0.12))
+    _rect(img, 70, 70, 8, 2, Color(0.14, 0.25, 0.11))
     return img
-
