@@ -147,7 +147,6 @@ func _set_loading(message: String, progress: float) -> void:
         _loading_label.text = message
     if is_instance_valid(_loading_bar):
         _loading_bar.value = progress
-    await get_tree().process_frame
 
 
 func _place_small_lake() -> void:
