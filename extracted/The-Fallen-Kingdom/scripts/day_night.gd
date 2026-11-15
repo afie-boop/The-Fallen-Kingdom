@@ -38,7 +38,18 @@ func _is_night(v: float) -> bool:
 
 
 func _process(delta: float) -> void:
-    t += delta / maxf(1.0, GameConfig.day_length_seconds)
+    var cycle_seconds: float = maxf(1.0, GameConfig.day_length_seconds)
+    # Allocate the full cycle: 50% to morning, 30% to afternoon, 20% to night.
+    # The visual time ranges are morning 0.22-0.50, afternoon 0.50-0.78,
+    # and night 0.78-0.22 (wrapping through midnight).
+    var time_rate: float
+    if t >= 0.22 and t < 0.50:
+        time_rate = 0.28 / (cycle_seconds * 0.50)
+    elif t >= 0.50 and t < 0.78:
+        time_rate = 0.28 / (cycle_seconds * 0.30)
+    else:
+        time_rate = 0.44 / (cycle_seconds * 0.20)
+    t += delta * time_rate
     if t >= 1.0:
         t -= 1.0
         GameState.day_count += 1
