@@ -667,60 +667,88 @@ static func _wall(horizontal: bool, level: int) -> Image:
     var w: int = 64 if horizontal else 22
     var h: int = 30 if horizontal else 60
     var img := _new(w, h)
-    _rect(img, 0, h - 3, w, 3, Color(0, 0, 0, 0.28))
+    _rect(img, 0, h - 2, w, 2, Color(0.12, 0.10, 0.08, 0.24))
+
     if level <= 1:
-        var woods: Array[Color] = [Color(0.48, 0.29, 0.14), Color(0.54, 0.33, 0.16), Color(0.44, 0.26, 0.13), Color(0.58, 0.36, 0.18)]
-        var earth := Color(0.36, 0.24, 0.14)
-        var earth_light := Color(0.47, 0.32, 0.19)
-        var earth_dark := Color(0.23, 0.15, 0.09)
+        # Soft, earthy palette: warm timber, moss and rich soil.
+        var woods: Array[Color] = [
+            Color(0.43, 0.27, 0.16), Color(0.50, 0.32, 0.18),
+            Color(0.46, 0.29, 0.16), Color(0.55, 0.36, 0.21),
+            Color(0.40, 0.25, 0.15), Color(0.52, 0.33, 0.19),
+            Color(0.45, 0.28, 0.16), Color(0.48, 0.30, 0.17)
+        ]
+        var soil := Color(0.31, 0.22, 0.15)
+        var soil_light := Color(0.40, 0.29, 0.19)
+        var soil_dark := Color(0.20, 0.15, 0.11)
+        var moss := Color(0.31, 0.36, 0.22)
+        var moss_light := Color(0.47, 0.48, 0.29)
+
         if horizontal:
-            # Low, uneven earthen berm: the timber posts look planted into soil.
+            # A softly irregular earthen bank, with a thin mossy edge.
             for x in w:
-                var mound_top: int = 21 + int((x * 7 + x / 3) % 4)
-                _rect(img, x, mound_top, 1, h - mound_top, earth if x % 3 else earth_light)
-            _rect(img, 0, 27, w, 2, earth_dark)
-            _rect(img, 0, 22, w, 1, earth_light)
-            # Closely fitted upright logs with hand-cut pointed tops.
+                var rise: int = int((x * 13 + x / 3) % 3)
+                var bank_y: int = 22 + rise
+                _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
+                _rect(img, x, bank_y, 1, 1, moss if x % 3 else moss_light)
+            _rect(img, 0, 28, w, 2, soil_dark)
+
+            # A dark rear silhouette gives the palisade depth.
+            _rect(img, 0, 7, w, 17, Color(0.19, 0.14, 0.10))
             for i in 8:
                 var x0: int = i * 8
-                var wood: Color = woods[i % woods.size()]
-                var shade: Color = _shade(wood, 0.55)
-                for yy in range(0, 7):
-                    var half_width: int = 1 + mini(3, yy / 2)
-                    _rect(img, x0 + 4 - half_width, yy, half_width * 2, 1, shade)
+                var wood: Color = woods[i]
+                var dark: Color = _shade(wood, 0.58)
+                var light: Color = _shade(wood, 1.18)
+                var tip_height: int = 4 + (i % 3)
+                # Slightly varied, hand-hewn pointed log tops.
+                for yy in range(tip_height):
+                    var half_width: int = mini(3, 1 + yy)
+                    _rect(img, x0 + 4 - half_width, yy, half_width * 2, 1, dark)
                     _rect(img, x0 + 4 - half_width + 1, yy, maxi(1, half_width * 2 - 1), 1, wood)
-                _rect(img, x0 + 1, 6, 6, 17, shade)
-                _rect(img, x0 + 2, 6, 4, 16, wood)
-                _rect(img, x0 + 3, 8, 1, 12, _shade(wood, 1.22))
-                _rect(img, x0 + 6, 8, 1, 14, _shade(wood, 0.62))
-                # Small dark grain knots make each log less like a flat plank.
+                _rect(img, x0 + 1, tip_height, 6, 18 - tip_height, dark)
+                _rect(img, x0 + 2, tip_height, 4, 17 - tip_height, wood)
+                _rect(img, x0 + 2, tip_height + 1, 1, 14 - tip_height, light)
+                _rect(img, x0 + 6, tip_height + 1, 1, 15 - tip_height, dark)
+                # Restrained wood grain and occasional knots.
+                _rect(img, x0 + 3, tip_height + 5 + (i % 3), 1, 5, _shade(wood, 0.78))
                 if i % 3 == 1:
-                    _rect(img, x0 + 4, 13 + (i % 2) * 3, 2, 1, _shade(wood, 0.62))
-            # Two stout cross braces bind the palisade together.
-            _rect(img, 0, 10, w, 2, Color(0.29, 0.18, 0.10))
-            _rect(img, 0, 11, w, 1, Color(0.62, 0.4, 0.22))
-            _rect(img, 0, 18, w, 2, Color(0.27, 0.16, 0.09))
-            _rect(img, 0, 19, w, 1, Color(0.58, 0.36, 0.19))
-            # Soil is brought back over the foot of the logs to anchor them.
-            for x in range(w):
-                var top: int = 22 + int((x * 5 + x / 2) % 3)
-                _rect(img, x, top, 1, h - top, earth if x % 4 else earth_light)
-            _rect(img, 0, 28, w, 2, earth_dark)
+                    _rect(img, x0 + 4, tip_height + 8, 2, 2, _shade(wood, 0.70))
+                    _rect(img, x0 + 4, tip_height + 8, 1, 1, _shade(wood, 1.12))
+
+            # Two recessed horizontal braces, visible between the logs.
+            _rect(img, 0, 12, w, 2, Color(0.25, 0.17, 0.11))
+            _rect(img, 0, 12, w, 1, Color(0.57, 0.38, 0.23))
+            _rect(img, 0, 19, w, 2, Color(0.23, 0.16, 0.10))
+            _rect(img, 0, 19, w, 1, Color(0.50, 0.32, 0.19))
+
+            # Soil overlaps the foot of each log, making the wall feel planted.
+            for x in w:
+                var bank_y: int = 22 + int((x * 5 + x / 2) % 3)
+                _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
+                if x % 7 == 2:
+                    _rect(img, x, bank_y - 1, 1, 1, moss_light)
+            _rect(img, 0, 28, w, 2, soil_dark)
+            # Tiny stones and grass tufts break up the straight soil edge.
+            for x in [5, 17, 31, 46, 58]:
+                _rect(img, x, 25 + (x % 2), 2, 1, Color(0.49, 0.43, 0.34))
+            for x in [10, 26, 41, 54]:
+                _rect(img, x, 21, 1, 2, moss)
+                _rect(img, x + 1, 22, 1, 1, moss_light)
         else:
-            # End-on side segment: packed earth beneath horizontal timber courses.
+            # Narrow side-on piece uses matching timber and an earthy footing.
             for y in h:
-                var mound_left: int = 1 + int((y * 3) % 2)
-                _rect(img, 0, y, mound_left, 1, earth_dark)
-                _rect(img, w - 2, y, 2, 1, earth)
+                _rect(img, 0, y, 2, 1, soil_dark)
+                _rect(img, 2, y, 1, 1, moss if y % 9 == 0 else soil)
+                _rect(img, w - 3, y, 3, 1, soil)
             for y0 in range(0, h, 8):
                 var wood: Color = woods[posmod(y0 / 8, woods.size())]
-                _rect(img, 2, y0, w - 4, 8, _shade(wood, 0.68))
-                _rect(img, 3, y0 + 1, w - 6, 6, wood)
-                _rect(img, 5, y0 + 2, 1, 4, _shade(wood, 1.2))
-                _rect(img, 3, y0, w - 6, 1, _shade(wood, 0.55))
-                _rect(img, 3, y0 + 7, w - 6, 1, earth_dark)
-            _rect(img, 1, 0, 2, h, earth_dark)
-            _rect(img, w - 3, 0, 2, h, earth_dark)
+                _rect(img, 3, y0, w - 6, 8, _shade(wood, 0.60))
+                _rect(img, 4, y0 + 1, w - 8, 6, wood)
+                _rect(img, 5, y0 + 2, 1, 4, _shade(wood, 1.18))
+                _rect(img, 4, y0, w - 8, 1, _shade(wood, 0.52))
+                _rect(img, 4, y0 + 7, w - 8, 1, soil_dark)
+            _rect(img, 2, 0, 1, h, soil_dark)
+            _rect(img, w - 3, 0, 1, h, soil_dark)
     else:
         var stone := Color(0.58, 0.58, 0.63) if level == 2 else Color(0.42, 0.42, 0.5)
         var stone_d := _shade(stone, 0.7)
