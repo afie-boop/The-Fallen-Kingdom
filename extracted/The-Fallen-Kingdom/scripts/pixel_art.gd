@@ -670,30 +670,57 @@ static func _wall(horizontal: bool, level: int) -> Image:
     _rect(img, 0, h - 3, w, 3, Color(0, 0, 0, 0.28))
     if level <= 1:
         var woods: Array[Color] = [Color(0.48, 0.29, 0.14), Color(0.54, 0.33, 0.16), Color(0.44, 0.26, 0.13), Color(0.58, 0.36, 0.18)]
+        var earth := Color(0.36, 0.24, 0.14)
+        var earth_light := Color(0.47, 0.32, 0.19)
+        var earth_dark := Color(0.23, 0.15, 0.09)
         if horizontal:
-            var plank_w: int = 8
-            for x0 in range(0, w, plank_w):
-                var ww: int = mini(plank_w, w - x0)
-                var wood: Color = woods[posmod(x0 / plank_w, woods.size())]
-                _rect(img, x0, 3, ww, h - 6, _shade(wood, 0.84))
-                _rect(img, x0 + 1, 3, maxi(1, ww - 2), h - 6, wood)
-                _rect(img, x0 + 2, 8 + posmod(x0, 9), 1, 9, _shade(wood, 1.18))
-                _rect(img, x0, 3, 1, h - 6, _shade(wood, 0.55))
-                _rect(img, x0 + ww - 1, 3, 1, h - 6, _shade(wood, 0.55))
-            _rect(img, 0, 5, w, 2, Color(0.31, 0.19, 0.10))
-            _rect(img, 0, h - 7, w, 2, Color(0.29, 0.17, 0.09))
+            # Low, uneven earthen berm: the timber posts look planted into soil.
+            for x in w:
+                var mound_top: int = 21 + int((x * 7 + x / 3) % 4)
+                _rect(img, x, mound_top, 1, h - mound_top, earth if x % 3 else earth_light)
+            _rect(img, 0, 27, w, 2, earth_dark)
+            _rect(img, 0, 22, w, 1, earth_light)
+            # Closely fitted upright logs with hand-cut pointed tops.
+            for i in 8:
+                var x0: int = i * 8
+                var wood: Color = woods[i % woods.size()]
+                var shade: Color = _shade(wood, 0.55)
+                for yy in range(0, 7):
+                    var half_width: int = 1 + mini(3, yy / 2)
+                    _rect(img, x0 + 4 - half_width, yy, half_width * 2, 1, shade)
+                    _rect(img, x0 + 4 - half_width + 1, yy, maxi(1, half_width * 2 - 1), 1, wood)
+                _rect(img, x0 + 1, 6, 6, 17, shade)
+                _rect(img, x0 + 2, 6, 4, 16, wood)
+                _rect(img, x0 + 3, 8, 1, 12, _shade(wood, 1.22))
+                _rect(img, x0 + 6, 8, 1, 14, _shade(wood, 0.62))
+                # Small dark grain knots make each log less like a flat plank.
+                if i % 3 == 1:
+                    _rect(img, x0 + 4, 13 + (i % 2) * 3, 2, 1, _shade(wood, 0.62))
+            # Two stout cross braces bind the palisade together.
+            _rect(img, 0, 10, w, 2, Color(0.29, 0.18, 0.10))
+            _rect(img, 0, 11, w, 1, Color(0.62, 0.4, 0.22))
+            _rect(img, 0, 18, w, 2, Color(0.27, 0.16, 0.09))
+            _rect(img, 0, 19, w, 1, Color(0.58, 0.36, 0.19))
+            # Soil is brought back over the foot of the logs to anchor them.
+            for x in range(w):
+                var top: int = 22 + int((x * 5 + x / 2) % 3)
+                _rect(img, x, top, 1, h - top, earth if x % 4 else earth_light)
+            _rect(img, 0, 28, w, 2, earth_dark)
         else:
-            var course_h: int = 7
-            for y0 in range(0, h, course_h):
-                var hh: int = mini(course_h, h - y0)
-                var wood: Color = woods[posmod(y0 / course_h, woods.size())]
-                _rect(img, 1, y0, w - 2, hh, _shade(wood, 0.78))
-                _rect(img, 2, y0 + 1, w - 4, maxi(1, hh - 2), wood)
-                _rect(img, 4, y0 + 2, w - 8, 1, _shade(wood, 1.18))
-                _rect(img, 1, y0, w - 2, 1, _shade(wood, 0.55))
-                _rect(img, 1, y0 + hh - 1, w - 2, 1, Color(0.20, 0.12, 0.07))
-            _rect(img, 0, 2, w, 2, Color(0.31, 0.19, 0.10))
-            _rect(img, 0, h - 5, w, 2, Color(0.29, 0.17, 0.09))
+            # End-on side segment: packed earth beneath horizontal timber courses.
+            for y in h:
+                var mound_left: int = 1 + int((y * 3) % 2)
+                _rect(img, 0, y, mound_left, 1, earth_dark)
+                _rect(img, w - 2, y, 2, 1, earth)
+            for y0 in range(0, h, 8):
+                var wood: Color = woods[posmod(y0 / 8, woods.size())]
+                _rect(img, 2, y0, w - 4, 8, _shade(wood, 0.68))
+                _rect(img, 3, y0 + 1, w - 6, 6, wood)
+                _rect(img, 5, y0 + 2, 1, 4, _shade(wood, 1.2))
+                _rect(img, 3, y0, w - 6, 1, _shade(wood, 0.55))
+                _rect(img, 3, y0 + 7, w - 6, 1, earth_dark)
+            _rect(img, 1, 0, 2, h, earth_dark)
+            _rect(img, w - 3, 0, 2, h, earth_dark)
     else:
         var stone := Color(0.58, 0.58, 0.63) if level == 2 else Color(0.42, 0.42, 0.5)
         var stone_d := _shade(stone, 0.7)
