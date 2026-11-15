@@ -3,11 +3,12 @@ shader_type canvas_item;
 // the island mask (scripts/island_map.gd): R = land height, G = amount of bare soil.
 
 uniform sampler2D mask_tex : filter_linear, repeat_disable;
-uniform sampler2D grass_tex : source_color, filter_linear, repeat_disable;   // one big unique image, never tiled
+uniform sampler2D grass_tex : source_color, filter_linear, repeat_enable;
 uniform sampler2D dirt_tex : source_color, filter_linear, repeat_enable;     // seamless soil
 uniform sampler2D sand_tex : source_color, filter_nearest, repeat_enable;
 uniform sampler2D water_tex : source_color, filter_nearest, repeat_enable;
 uniform vec2 world_size = vec2(2400.0, 2400.0);
+uniform vec2 grass_px = vec2(360.0, 360.0);
 uniform vec2 dirt_px = vec2(768.0, 768.0);
 uniform vec2 sand_px = vec2(240.0, 240.0);
 uniform vec2 water_px = vec2(144.0, 144.0);
@@ -17,7 +18,7 @@ void fragment() {
 	vec4 m = texture(mask_tex, UV);
 	float v = m.r * 2.0 - 1.0;
 	float dirt_amount = m.g;
-	vec3 grass = texture(grass_tex, UV).rgb;
+	vec3 grass = texture(grass_tex, wp / grass_px).rgb;
 	vec3 dirt = texture(dirt_tex, wp / dirt_px).rgb;
 	vec3 sand = texture(sand_tex, wp / sand_px).rgb;
 	vec2 wuv = wp / water_px + vec2(TIME * 0.012, TIME * 0.006);
