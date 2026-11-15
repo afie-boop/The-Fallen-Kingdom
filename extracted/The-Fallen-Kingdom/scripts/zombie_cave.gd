@@ -10,7 +10,8 @@ func _ready() -> void:
     collision_layer = 1
     collision_mask = 0
     add_to_group("zombie_caves")
-    _sprite = PixelArt.make_sprite("cave_%d" % variant)
+    _sprite = PixelArt.make_sprite_tex(PixelArt.file_tex_remove_light_background("res://assets/cave/Gua.jpg"))
+    _sprite.scale = Vector2(0.25, 0.25)
     add_child(_sprite)
     var shape := CollisionShape2D.new()
     var rect := RectangleShape2D.new()
