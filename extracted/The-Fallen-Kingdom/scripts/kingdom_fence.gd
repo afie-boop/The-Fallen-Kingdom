@@ -4,7 +4,7 @@ extends Node2D
 ## so the final piece reaches the corner exactly without gaps or same-side overlap.
 
 const HORIZONTAL_LENGTH: float = 64.0
-const VERTICAL_LENGTH: float = 60.0
+const VERTICAL_LENGTH: float = 64.0
 var level: int = 1
 
 func _ready() -> void:
