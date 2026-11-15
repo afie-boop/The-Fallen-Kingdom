@@ -347,3 +347,37 @@ static func spawn_rocks(parent: Node2D, island: IslandMap, world_seed: int, coun
         parent.add_child(rock)
         spawned += 1
     return spawned
+
+
+## Places the five supplied ruined-house designs around the starting kingdom.
+## Each variant is used exactly once and positions remain stable for the same world seed.
+static func spawn_kingdom_ruins(parent: Node2D, island: IslandMap, world_seed: int, center: Vector2) -> Array[Vector2]:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = world_seed + 18473
+    var spots: Array[Vector2] = []
+    for i in 5:
+        var base_angle: float = -PI / 2.0 + float(i) * TAU / 5.0
+        var placed: bool = false
+        for attempt in 90:
+            var angle: float = base_angle + rng.randf_range(-0.22, 0.22)
+            var radius: float = rng.randf_range(390.0, 500.0)
+            var p: Vector2 = center + Vector2.from_angle(angle) * radius
+            if island.sample(p) < 0.22 or island.dirt_at(p) > 0.88:
+                continue
+            var clear: bool = true
+            for q in spots:
+                if p.distance_to(q) < 340.0:
+                    clear = false
+                    break
+            if not clear:
+                continue
+            spots.append(p)
+            var ruin := RUIN_SCENE.instantiate() as RuinProp
+            ruin.variant = i
+            ruin.position = p
+            parent.add_child(ruin)
+            placed = true
+            break
+        if not placed:
+            push_warning("Could not place kingdom ruin variant %d" % i)
+    return spots
