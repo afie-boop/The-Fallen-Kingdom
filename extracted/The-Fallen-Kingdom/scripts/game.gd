@@ -213,7 +213,7 @@ func _build_ground() -> void:
     var mat := ShaderMaterial.new()
     mat.shader = load("res://assets/shaders/ground.gdshader") as Shader
     mat.set_shader_parameter("mask_tex", GameState.island.texture)
-    mat.set_shader_parameter("grass_tex", PixelArt.file_tex("res://assets/terrain/grass.png"))
+    mat.set_shader_parameter("grass_tex", PixelArt.file_tex("res://assets/terrain/Rumput.jpg"))
     mat.set_shader_parameter("sand_tex", PixelArt.file_tex("res://assets/terrain/sand.png"))
     mat.set_shader_parameter("water_tex", PixelArt.file_tex("res://assets/terrain/water.png"))
     mat.set_shader_parameter("dirt_tex", PixelArt.file_tex("res://assets/terrain/dirt.png"))
