@@ -13,6 +13,7 @@ var prompt_text: String = "Rest, store wood and save"
 const HOUSE_VARIANT: int = 2   # ruin_3: the tile-roofed house
 var _sprite: Sprite2D
 var _top: float = 90.0
+const HOUSE_OFFSET: Vector2 = Vector2(0, 140)
 var _warn_cd: float = 0.0
 
 
@@ -27,14 +28,15 @@ func _ready() -> void:
     var tex: Texture2D = PixelArt.ruin_tex(HOUSE_VARIANT)
     _top = float(tex.get_height()) + 14.0
     _sprite = PixelArt.make_sprite_tex(tex)
+    _sprite.position = HOUSE_OFFSET
     add_child(_sprite)
     var shape := CollisionShape2D.new()
     var rect := RectangleShape2D.new()
     rect.size = Vector2(tex.get_width() * 0.75, 26.0)
     shape.shape = rect
-    shape.position = Vector2(0, -13)
+    shape.position = HOUSE_OFFSET + Vector2(0, -13)
     add_child(shape)
-    spawn_point = global_position + Vector2(0, 34)
+    spawn_point = global_position + HOUSE_OFFSET + Vector2(0, 34)
 
 
 func _process(delta: float) -> void:
@@ -44,8 +46,9 @@ func _process(delta: float) -> void:
 func _draw() -> void:
     if hp < max_hp:
         var w: float = 90.0
-        draw_rect(Rect2(-w / 2.0, -_top, w, 6.0), Color(0, 0, 0, 0.6))
-        draw_rect(Rect2(-w / 2.0 + 1.0, -_top + 1.0, (w - 2.0) * hp / max_hp, 4.0), Color(0.3, 0.8, 0.35))
+        var bar_y: float = HOUSE_OFFSET.y - _top
+        draw_rect(Rect2(-w / 2.0, bar_y, w, 6.0), Color(0, 0, 0, 0.6))
+        draw_rect(Rect2(-w / 2.0 + 1.0, bar_y + 1.0, (w - 2.0) * hp / max_hp, 4.0), Color(0.3, 0.8, 0.35))
 
 
 func take_damage(amount: float) -> void:
