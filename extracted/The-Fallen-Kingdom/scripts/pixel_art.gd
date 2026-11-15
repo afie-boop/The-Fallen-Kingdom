@@ -664,13 +664,8 @@ static func _arrow() -> Image:
 ## Wall segment. Horizontal: 64x30, vertical: 22x60. Level 1 palisade, 2 stone, 3 reinforced stone. Bottom-anchored.
 @warning_ignore("integer_division")
 static func _wall(horizontal: bool, level: int) -> Image:
-    # Build one consistent palisade design, then rotate it for the east/west sides.
-    if not horizontal:
-        var vertical_img: Image = _wall(true, level)
-        vertical_img.rotate_90()
-        return vertical_img
-    var w: int = 64
-    var h: int = 30
+    var w: int = 64 if horizontal else 22
+    var h: int = 30 if horizontal else 60
     var img := _new(w, h)
     _rect(img, 0, h - 2, w, 2, Color(0.12, 0.10, 0.08, 0.24))
 
