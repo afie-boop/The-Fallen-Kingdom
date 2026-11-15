@@ -13,7 +13,7 @@ var prompt_text: String = "Rest, store wood and save"
 const HOUSE_VARIANT: int = 2   # ruin_3: the tile-roofed house
 var _sprite: Sprite2D
 var _top: float = 90.0
-const HOUSE_OFFSET: Vector2 = Vector2(0, 140)
+const HOUSE_OFFSET: Vector2 = Vector2(0, 170)
 var _warn_cd: float = 0.0
 
 
