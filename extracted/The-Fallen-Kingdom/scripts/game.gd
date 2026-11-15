@@ -71,6 +71,11 @@ func _ready() -> void:
     var avoid: Array = [
         {"pos": castle.position, "r": 330.0},
     ]
+    # Five unique ruined houses from the supplied reference image mark the starting kingdom.
+    var ruin_spots: Array[Vector2] = WorldGenerator.spawn_kingdom_ruins(
+        entities, GameState.island, GameState.world_seed, castle.position)
+    for rp in ruin_spots:
+        avoid.append({"pos": rp, "r": 190.0})
     # Random caves replace the old zombie nests and Zombie Castle.
     var cave_avoid: Array = [{"pos": castle.position, "r": 480.0}]
     _set_loading("Placing caves...", 0.38)
