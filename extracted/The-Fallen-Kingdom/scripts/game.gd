@@ -77,7 +77,7 @@ func _ready() -> void:
     for rp in ruin_spots:
         avoid.append({"pos": rp, "r": 190.0})
     # Random caves replace the old zombie nests and Zombie Castle.
-    var cave_avoid: Array = [{"pos": castle.position, "r": 480.0}]
+    var cave_avoid: Array = [{"pos": castle.position, "r": 1200.0}]
     _set_loading("Placing caves...", 0.38)
     await get_tree().process_frame
     var cave_spots: Array[Vector2] = await WorldGenerator.spawn_caves(
