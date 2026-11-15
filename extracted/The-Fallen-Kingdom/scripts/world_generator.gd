@@ -356,17 +356,17 @@ static func spawn_kingdom_ruins(parent: Node2D, island: IslandMap, world_seed: i
     rng.seed = world_seed + 18473
     var spots: Array[Vector2] = []
     for i in 5:
-        var base_angle: float = -PI / 2.0 + float(i) * TAU / 5.0
         var placed: bool = false
-        for attempt in 90:
-            var angle: float = base_angle + rng.randf_range(-0.22, 0.22)
-            var radius: float = rng.randf_range(390.0, 500.0)
+        for attempt in 140:
+            # Scatter each ruin independently in a loose cluster near the kingdom.
+            var angle: float = rng.randf_range(0.0, TAU)
+            var radius: float = rng.randf_range(175.0, 315.0)
             var p: Vector2 = center + Vector2.from_angle(angle) * radius
             if island.sample(p) < 0.22 or island.dirt_at(p) > 0.88:
                 continue
             var clear: bool = true
             for q in spots:
-                if p.distance_to(q) < 340.0:
+                if p.distance_to(q) < 145.0:
                     clear = false
                     break
             if not clear:
