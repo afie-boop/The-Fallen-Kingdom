@@ -47,30 +47,22 @@ func _ready() -> void:
     # boundary shapes are unnecessary in the web build and can stall physics setup.
     await get_tree().process_frame
     _set_loading("Creating entities node...", 0.361)
-    await get_tree().process_frame
     entities = Node2D.new()
-    _set_loading("Naming entities node...", 0.3615)
-    await get_tree().process_frame
     entities.name = "Entities"
-    _set_loading("Configuring entities node...", 0.362)
-    await get_tree().process_frame
     entities.y_sort_enabled = true
     _set_loading("Adding entities to scene...", 0.363)
-    # Skip the frame wait immediately before inserting the empty world root.
+    await get_tree().process_frame
     add_child(entities)
     _set_loading("Entities added to scene...", 0.364)
-    # Continue immediately; isolate the frame wait after adding the empty entities root.
-    _set_loading("Frame wait skipped; preparing castle...", 0.365)
-    # Skip this frame yield to isolate the stall before castle instantiation.
+    await get_tree().process_frame
+
     _set_loading("Creating castle object...", 0.367)
+    await get_tree().process_frame
     castle = CASTLE_SCENE.instantiate() as KingdomCastle
-    _set_loading("Reading island center...", 0.368)
-    var castle_center: Vector2 = GameState.island.center_pos
-    _set_loading("Applying castle position...", 0.369)
-    castle.position = castle_center
-    _set_loading("Castle position applied...", 0.3695)
-    # Skip a frame yield here to isolate whether the yield itself stalls web loading.
+    _set_loading("Positioning castle...", 0.369)
+    castle.position = GameState.island.center_pos
     _set_loading("Adding castle to world...", 0.37)
+    await get_tree().process_frame
     entities.add_child(castle)
     _set_loading("Castle added to world...", 0.372)
     await get_tree().process_frame
@@ -111,7 +103,13 @@ func _ready() -> void:
     # No ruined houses are scattered around the island; tents mark poor camps.
     _set_loading("Growing forests...", 0.64)
     await get_tree().process_frame
-    WorldGenerator.spawn_trees(entities, GameState.island, GameState.world_seed, GameConfig.tree_count, avoid, GameState.removed_trees)
+    await WorldGenerator.spawn_trees(
+        entities, GameState.island, GameState.world_seed, GameConfig.tree_count,
+        avoid, GameState.removed_trees,
+        func(placed, total):
+            if total > 0:
+                _set_loading("Growing forests %d/%d..." % [placed, total], 0.64 + 0.08 * float(placed) / float(total))
+    )
     await get_tree().process_frame
     # Spawn deer and rabbits using the three transparent reference assets.
     _set_loading("Spawning wildlife...", 0.72)
@@ -402,7 +400,10 @@ func _respawn() -> void:
 
 func _on_dawn() -> void:
     spawner.retreat_all()
-    hud.show_message("Dawn breaks. The zombies retreat into caves.")
+    castle.restore()
+    GameState.castle_hp = castle.hp
+    _save(false)
+    hud.show_message("Dawn breaks. The zombies retreat into caves. Your house has been fully repaired.")
 
 
 func _on_wildlife_killed() -> void:

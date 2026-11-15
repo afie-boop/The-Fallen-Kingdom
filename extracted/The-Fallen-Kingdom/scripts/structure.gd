@@ -68,9 +68,6 @@ func _build_visual() -> void:
             else:
                 rect.size = Vector2(18, 54)
                 _shape.position = Vector2(0, -27)
-            _base_scale = Vector2.ONE
-            rect.size = Vector2(30, 14)
-            _shape.position = Vector2(0, -7)
         _:
             _sprite = PixelArt.make_sprite("hut_%d" % level)
             _base_scale = Vector2.ONE

@@ -18,14 +18,22 @@ static func _blocked(p: Vector2, avoid: Array) -> bool:
 
 
 ## avoid: Array of {"pos": Vector2, "r": float}. Trees only grow on the grass (not beach/sea).
-static func spawn_trees(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array, removed: Array) -> int:
+static func spawn_trees(parent: Node2D, island: IslandMap, world_seed: int, count: int, avoid: Array, removed: Array, on_progress: Callable = Callable()) -> int:
     var rng := RandomNumberGenerator.new()
     rng.seed = world_seed
     var placed: Array[Vector2] = []
     var spawned: int = 0
+    var tree := parent.get_tree()
+    var slice_started: int = Time.get_ticks_msec()
     for i in count * 3:
         if placed.size() >= count:
             break
+        # Yield between small batches so large forests do not freeze the browser.
+        if Time.get_ticks_msec() - slice_started >= 8:
+            if on_progress.is_valid():
+                on_progress.call(placed.size(), count)
+            await tree.process_frame
+            slice_started = Time.get_ticks_msec()
         # Always consume the same random numbers per index so removals never shift later trees.
         var p: Vector2 = Vector2(
             rng.randf_range(40.0, island.world_size.x - 40.0),
@@ -47,6 +55,8 @@ static func spawn_trees(parent: Node2D, island: IslandMap, world_seed: int, coun
         t.position = p
         parent.add_child(t)
         spawned += 1
+    if on_progress.is_valid():
+        on_progress.call(placed.size(), count)
     return spawned
 
 
