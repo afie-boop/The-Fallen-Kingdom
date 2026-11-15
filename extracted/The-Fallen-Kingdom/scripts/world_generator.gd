@@ -125,7 +125,15 @@ static func spawn_caves(parent: Node2D, island: IslandMap, world_seed: int, coun
 static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, count: int, home: Vector2, on_killed: Callable = Callable()) -> int:
     var rng := RandomNumberGenerator.new()
     rng.randomize()
-    var trees: Array = parent.get_tree().get_nodes_in_group("trees")
+    var all_trees: Array = parent.get_tree().get_nodes_in_group("trees")
+    var trees: Array = []
+    # Prefer trees within the kingdom's nearby woodland so wildlife is visible near home.
+    for tree_node in all_trees:
+        if tree_node is Node2D and (tree_node as Node2D).global_position.distance_to(home) <= 1250.0:
+            trees.append(tree_node)
+    # If the nearby area has too few trees, use the full forest as a fallback.
+    if trees.size() < 5:
+        trees = all_trees
     if trees.is_empty():
         return 0
     var placed: Array[Vector2] = []
@@ -142,7 +150,7 @@ static func spawn_wildlife(parent: Node2D, island: IslandMap, world_seed: int, c
         var angle: float = rng.randf_range(0.0, TAU)
         var distance: float = rng.randf_range(34.0, 115.0)
         var p: Vector2 = tree_node.global_position + Vector2.from_angle(angle) * distance
-        if not island.is_walkable(p) or p.distance_to(home) < 300.0:
+        if not island.is_walkable(p) or p.distance_to(home) < 220.0:
             continue
         var crowded: bool = false
         for other in placed:
