@@ -119,7 +119,7 @@ func _ready() -> void:
     # Spawn deer and rabbits using the three transparent reference assets.
     _set_loading("Spawning wildlife...", 0.72)
     await get_tree().process_frame
-    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 13, castle.position, Callable(self, "_on_wildlife_killed"))
+    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 17, castle.position, Callable(self, "_on_wildlife_killed"))
     _set_loading("Setting up kingdom...", 0.76)
     await get_tree().process_frame
 
