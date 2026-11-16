@@ -759,41 +759,33 @@ static func _palisade(horizontal: bool) -> Image:
     if horizontal:
         return img
 
-    # Sisi barat/timur: tiang runcing sama seperti pagar utara/selatan,
-    # disusun menegak dan disambung oleh palang menegak.
+    # Sisi barat/timur: bulatan hujung tiang disusun atas-bawah,
+    # disambung oleh batang kayu menegak di tengah.
     var vertical := _new(30, 64)
     _rect(vertical, 0, 61, 30, 3, Color(0.12, 0.10, 0.08, 0.28))
 
-    var rail_v := Color(0.34, 0.22, 0.13)
-    var rail_v_light := Color(0.52, 0.35, 0.21)
-    _rect(vertical, 13, 0, 4, 64, rail_v)
-    _rect(vertical, 13, 0, 1, 64, rail_v_light)
-    _rect(vertical, 16, 0, 1, 64, _shade(rail_v, 0.65))
+    var post_dark := Color(0.25, 0.16, 0.10)
+    var post_mid := Color(0.48, 0.31, 0.18)
+    var post_light := Color(0.63, 0.43, 0.27)
 
-    # Setiap tiang mempunyai hujung runcing, sama seperti tiang sisi utara/selatan.
-    for i in 4:
-        var y: int = 1 + i * 16
-        var wood: Color = woods[i % woods.size()]
-        var dark: Color = _shade(wood, 0.58)
-        var light: Color = _shade(wood, 1.2)
-        # Hujung runcing menghadap ke atas.
-        _rect(vertical, 14, y, 1, 1, dark)
-        _rect(vertical, 13, y + 1, 3, 1, wood)
-        _rect(vertical, 12, y + 2, 5, 2, wood)
-        _rect(vertical, 12, y + 4, 5, 8, wood)
-        _rect(vertical, 12, y + 4, 1, 8, light)
-        _rect(vertical, 16, y + 4, 1, 8, dark)
-        _rect(vertical, 13, y + 6, 1, 4, _shade(wood, 0.82))
-        # Ikatan pada palang.
-        _rect(vertical, 14, y + 8, 2, 1, Color(0.16, 0.14, 0.12))
+    # Batang penghubung menegak.
+    _rect(vertical, 13, 4, 4, 56, post_dark)
+    _rect(vertical, 14, 4, 2, 56, post_mid)
+    _rect(vertical, 14, 5, 1, 54, post_light)
 
-    # Timbunan tanah menegak, dirapatkan dan dipusatkan tepat di bawah tiang.
-    for y in 64:
-        var left_edge: int = 9 + (1 if y % 5 == 0 else 0)
-        var right_edge: int = 21 - (1 if y % 4 == 0 else 0)
-        _rect(vertical, left_edge, y, right_edge - left_edge, 1, soil if y % 4 else soil_light)
-        _rect(vertical, left_edge, y, 1, 1, moss if y % 3 == 0 else soil_dark)
-        _rect(vertical, right_edge - 1, y, 1, 1, soil_dark)
+    # Hujung tiang bulat, berjarak dan bersambung seperti ○ | ○ | ○.
+    for cy in [7, 24, 41, 58]:
+        _disc(vertical, 15, cy, 5, post_dark)
+        _disc(vertical, 14, cy - 1, 4, post_mid)
+        _disc(vertical, 13, cy - 2, 2, post_light)
+        _rect(vertical, 14, cy - 1, 2, 3, _shade(post_mid, 0.78))
+
+    # Tanah dan lumut nipis di pangkal pagar.
+    for x in 30:
+        var bank_y: int = 60 + (x % 2)
+        _rect(vertical, x, bank_y, 1, 64 - bank_y, soil if x % 4 else soil_light)
+        _rect(vertical, x, bank_y, 1, 1, moss if x % 3 else moss_light)
+    _rect(vertical, 0, 62, 30, 2, soil_dark)
     return vertical
 
 
