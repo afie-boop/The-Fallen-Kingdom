@@ -718,10 +718,10 @@ static func _palisade(horizontal: bool) -> Image:
 
     # ---------------- SISI (menegak 22x60) ----------------
     if not horizontal:
-        var vw: int = 22
-        var vh: int = 60
+        var vw: int = 30
+        var vh: int = 64
         var v := _new(vw, vh)
-        var cx: int = 11
+        var cx: int = 15
         var base_y: int = vh - 5
 
         _rect(v, 5, vh - 3, 12, 3, shadow)
@@ -745,11 +745,11 @@ static func _palisade(horizontal: bool) -> Image:
 
             var body_h: int = mini(cell - 4, base_y - (c + 4))
             if body_h > 0:
-                _rect(v, cx - 3, c + 4, 6, body_h, wood)
-                _rect(v, cx - 3, c + 4, 1, body_h, light)
-                _rect(v, cx + 2, c + 4, 1, body_h, dark)
+                _rect(v, cx - 4, c + 4, 8, body_h, wood)
+                _rect(v, cx - 4, c + 4, 1, body_h, light)
+                _rect(v, cx + 3, c + 4, 1, body_h, dark)
                 _rect(v, cx, c + 5, 1, maxi(1, body_h - 2), _shade(wood, 0.82))
-                _rect(v, cx - 3, c + 3 + body_h, 6, 1, dark)
+                _rect(v, cx - 4, c + 3 + body_h, 8, 1, dark)
 
         for x in range(2, vw - 2):
             var by: int = base_y + ((x * 5 + x / 2) % 2)
