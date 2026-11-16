@@ -664,8 +664,17 @@ static func _arrow() -> Image:
 ## Wall segment. Horizontal: 64x30, vertical: 22x60. Level 1 palisade, 2 stone, 3 reinforced stone. Bottom-anchored.
 @warning_ignore("integer_division")
 static func _wall(horizontal: bool, level: int) -> Image:
-    var w: int = 64 if horizontal else 22
-    var h: int = 30 if horizontal else 60
+    # Build one horizontal segment and rotate its pixels manually for the
+    # side walls. This keeps the exact same artwork without Image.rotate_90().
+    if not horizontal:
+        var source: Image = _wall(true, level)
+        var rotated: Image = _new(source.get_height(), source.get_width())
+        for sy in source.get_height():
+            for sx in source.get_width():
+                rotated.set_pixel(source.get_height() - 1 - sy, sx, source.get_pixel(sx, sy))
+        return rotated
+    var w: int = 64
+    var h: int = 30
     var img := _new(w, h)
     _rect(img, 0, h - 2, w, 2, Color(0.12, 0.10, 0.08, 0.24))
 
