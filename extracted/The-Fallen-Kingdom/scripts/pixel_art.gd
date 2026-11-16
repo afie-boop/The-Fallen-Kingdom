@@ -699,120 +699,72 @@ static func _wall(horizontal: bool, level: int) -> Image:
     return img
 
 
-## Pagar kayu runcing: balak rapat, hujung tajam tak sekata, urat kayu,
-## dua palang pengikat, tanah + lumut di bawah.
+## Pagar kayu berjarak: tiang tegak disambung dua palang mendatar.
+## Corak |--|--|--| digunakan pada semua sisi.
 @warning_ignore("integer_division")
 static func _palisade(horizontal: bool) -> Image:
+    var w: int = 64
+    var h: int = 30
+    var img := _new(w, h)
+
     var woods: Array[Color] = [
         Color(0.43, 0.27, 0.16), Color(0.50, 0.32, 0.18),
         Color(0.46, 0.29, 0.16), Color(0.55, 0.36, 0.21),
-        Color(0.40, 0.25, 0.15), Color(0.52, 0.33, 0.19),
-        Color(0.45, 0.28, 0.16), Color(0.48, 0.30, 0.17)
+        Color(0.40, 0.25, 0.15), Color(0.52, 0.33, 0.19)
     ]
+    var rail := Color(0.34, 0.22, 0.13)
+    var rail_light := Color(0.52, 0.35, 0.21)
     var soil := Color(0.31, 0.22, 0.15)
     var soil_light := Color(0.40, 0.29, 0.19)
     var soil_dark := Color(0.20, 0.15, 0.11)
     var moss := Color(0.31, 0.36, 0.22)
     var moss_light := Color(0.47, 0.48, 0.29)
-    var shadow := Color(0.12, 0.10, 0.08, 0.28)
 
-    # ---------------- SISI (menegak 22x60) ----------------
-    if not horizontal:
-        var vw: int = 30
-        var vh: int = 64
-        var v := _new(vw, vh)
-        var cx: int = 15
-        var base_y: int = vh - 5
+    _rect(img, 0, h - 3, w, 3, Color(0.12, 0.10, 0.08, 0.28))
 
-        _rect(v, 5, vh - 3, 12, 3, shadow)
-
-        var cell: int = 10
-        for c in range(0, base_y, cell):
-            var wood: Color = woods[(c / cell * 3) % woods.size()]
-            var dark: Color = _shade(wood, 0.55)
-            var light: Color = _shade(wood, 1.2)
-            var tip_widths: Array[int] = [2, 2, 4, 6]
-
-            for yy in 4:
-                var tw: int = tip_widths[yy]
-                var lx: int = cx - tw / 2
-                if c + yy >= base_y:
-                    break
-                _rect(v, lx, c + yy, tw, 1, wood)
-                _rect(v, lx, c + yy, 1, 1, light)
-                _rect(v, lx + tw - 1, c + yy, 1, 1, dark)
-            _rect(v, cx - 1, c, 2, 1, _shade(wood, 1.35))
-
-            var body_h: int = mini(cell - 4, base_y - (c + 4))
-            if body_h > 0:
-                _rect(v, cx - 4, c + 4, 8, body_h, wood)
-                _rect(v, cx - 4, c + 4, 1, body_h, light)
-                _rect(v, cx + 3, c + 4, 1, body_h, dark)
-                _rect(v, cx, c + 5, 1, maxi(1, body_h - 2), _shade(wood, 0.82))
-                _rect(v, cx - 4, c + 3 + body_h, 8, 1, dark)
-
-        for x in range(2, vw - 2):
-            var by: int = base_y + ((x * 5 + x / 2) % 2)
-            _rect(v, x, by, 1, vh - by, soil if x % 4 else soil_light)
-            _rect(v, x, by, 1, 1, moss if x % 3 else moss_light)
-        _rect(v, 2, vh - 2, vw - 4, 2, soil_dark)
-        return v
-
-    # ---------------- MENDATAR (64x30) ----------------
-    var w: int = 64
-    var h: int = 30
-    var img := _new(w, h)
-    var floor_y: int = 24
-
-    _rect(img, 0, h - 3, w, 3, shadow)
-    _rect(img, 0, 8, w, floor_y - 8, Color(0.14, 0.10, 0.07))
-
-    for i in 16:
-        var x0: int = i * 4
-        var wood: Color = woods[(i * 3) % woods.size()]
-        var dark: Color = _shade(wood, 0.55)
-        var light: Color = _shade(wood, 1.2)
-        var top: int = (i * 5 + i / 3) % 4
-        var tip: int = 5 + (i * 3) % 3
-
-        for yy in tip:
-            var hw: int = 1 if yy < 3 else 2
-            var lx: int = x0 + 2 - hw
-            _rect(img, lx, top + yy, hw * 2, 1, wood)
-            _rect(img, lx, top + yy, 1, 1, light)
-            _rect(img, lx + hw * 2 - 1, top + yy, 1, 1, dark)
-        _rect(img, x0 + 1, top, 2, 1, _shade(wood, 1.35))
-
-        var by0: int = top + tip
-        var blen: int = floor_y + 1 - by0
-        _rect(img, x0, by0, 4, blen, wood)
-        _rect(img, x0, by0, 1, blen, light)
-        _rect(img, x0 + 3, by0, 1, blen, dark)
-        _rect(img, x0 + 2, by0 + (i * 3) % 5, 1, 5 + i % 4, _shade(wood, 0.82))
-        _rect(img, x0 + 1, by0 + 6 + (i * 7) % 6, 1, 4, _shade(wood, 1.1))
-
-        if i % 5 == 2:
-            _rect(img, x0 + 1, by0 + 8, 2, 2, _shade(wood, 0.62))
-            _rect(img, x0 + 1, by0 + 8, 1, 1, _shade(wood, 1.15))
-
+    # Dua palang mendatar menghubungkan tiang-tiang yang berjarak.
     for ry in [12, 19]:
-        _rect(img, 0, ry, w, 2, Color(0.25, 0.17, 0.11))
-        _rect(img, 0, ry, w, 1, Color(0.57, 0.38, 0.23))
-        for i in range(0, 16, 2):
-            _rect(img, i * 4 + 1, ry, 1, 1, Color(0.18, 0.17, 0.17))
+        _rect(img, 0, ry, w, 3, rail)
+        _rect(img, 0, ry, w, 1, rail_light)
+        _rect(img, 0, ry + 2, w, 1, _shade(rail, 0.65))
 
+    # Tiang tegak berasingan, dengan hujung runcing.
+    for i in 6:
+        var x: int = 2 + i * 12
+        var wood: Color = woods[i % woods.size()]
+        var dark: Color = _shade(wood, 0.58)
+        var light: Color = _shade(wood, 1.2)
+        var tip_h: int = 5 + (i % 3)
+
+        for yy in tip_h:
+            var half_width: int = 0 if yy < 2 else (1 if yy < 4 else 2)
+            _rect(img, x + 2 - half_width, 3 + yy, half_width * 2 + 1, 1, wood)
+        _rect(img, x, 3 + tip_h, 5, 18 - tip_h, wood)
+        _rect(img, x, 3 + tip_h, 1, 18 - tip_h, light)
+        _rect(img, x + 4, 3 + tip_h, 1, 18 - tip_h, dark)
+        _rect(img, x + 2, 5 + tip_h, 1, 5, _shade(wood, 0.82))
+        _rect(img, x, 21, 5, 2, dark)
+
+        # Paku/pengikat kecil pada persilangan tiang dan palang.
+        for ry in [13, 20]:
+            _rect(img, x + 2, ry, 1, 1, Color(0.16, 0.14, 0.12))
+
+    # Tanah dan lumut nipis di pangkal pagar.
     for x in w:
-        var bank_y: int = floor_y - 1 + int((x * 5 + x / 2) % 3)
+        var bank_y: int = 25 + ((x * 5 + x / 2) % 2)
         _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
         _rect(img, x, bank_y, 1, 1, moss if x % 3 else moss_light)
-        if x % 7 == 2:
-            _rect(img, x, bank_y - 1, 1, 1, moss_light)
     _rect(img, 0, h - 2, w, 2, soil_dark)
 
-    for x in [5, 17, 31, 46, 58]:
-        _rect(img, x, 26 + (x % 2), 2, 1, Color(0.49, 0.43, 0.34))
+    if horizontal:
+        return img
 
-    return img
+    # Putar keseluruhan corak supaya susunan tiang dan palang konsisten di sisi.
+    var rotated := _new(h, w)
+    for sy in h:
+        for sx in w:
+            rotated.set_pixel(h - 1 - sy, sx, img.get_pixel(sx, sy))
+    return rotated
 
 
 ## Archer post / watchtower (40x64).
