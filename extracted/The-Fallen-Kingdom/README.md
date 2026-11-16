@@ -1,6 +1,8 @@
 # The Fallen Kingdom — Stage 1 (playable foundation)
 
 Original 2D top-down pixel-art kingdom RPG for Android, built with **Godot 4.3+** and GDScript.
+
+**Opening state:** New Game starts with 10 Gold Coins, one extinguished campfire, and exactly two beggars beside it. There are no starting houses, tents, fences, or work buildings. New Game starts immediately without an overwrite confirmation.
 Art comes from PNG files in `assets/` (plus castle and coin generated in code). No plugins are used.
 
 > **Test status — please read:** this project was written without access to the Godot editor.
@@ -40,7 +42,7 @@ Touch-screen laptops show the touch controls as well.
 - The world is a randomly shaped island (different coastline for every new game, derived from the saved world seed)
   surrounded by animated sea, with a sand beach and a grass interior. It is drawn by one shader
   (`assets/shaders/ground.gdshader`) from a mask made by `scripts/island_map.gd`. You cannot walk into the sea.
-- The kingdom "castle" is now a house (`ruin_3`): respawn point, heal, deposit wood, save. The Zombie Castle is unchanged.
+- The old kingdom-house visual is replaced by an extinguished pixel-art campfire, which remains the opening landmark and respawn point while the gameplay systems are being migrated.
 - Grass is one big generated realistic image (not tiled) and some areas are bare soil without grass (patches, a yard around the house and the ruins); sea, sand, trees, ruined houses and characters use the PNG files in `assets/` (see `assets/CREDITS.md`
   about licences). The player uses `char_01` (knight); set `GameState.player_skin` (1-11) to use another one.
   Zombies use a green recolour. Characters are single front-facing sprites (walk = hop + tilt + flip).
@@ -50,15 +52,13 @@ Touch-screen laptops show the touch controls as well.
 
 - Zombies only appear **at night**. They crawl out of **8 small nests** scattered over the island and out of the big
   **Zombie Castle** (which spawns more). At dawn they fade away. Each zombie uses one of 11 zombie sprites.
-- **5-6 poor people's camps** are placed deep inside dense jungle groves, away from the kingdom, for each new world (stored via the world seed). Every camp has exactly
-  **2 tents** at random positions, a campfire, dense surrounding jungle trees and **1-2 beggars**. The four beggars outside the kingdom remain in place.
+- The opening scene has exactly **2 beggars** beside the extinguished campfire. Remote poor camps and their tents are not spawned in the opening world.
 - Walk up to a beggar and press USE / E: it costs 1 Gold Coin from your own wallet and the beggar becomes a citizen
   who wanders in front of the kingdom house. Recruited beggars are saved. Farmer/knight/hunter jobs are Stage 2 (not implemented).
 
 ## Kingdom: BUILD menu, archers and builders
 
-- Press **BUILD** (top-right, or **B** on PC) to open the menu. It pauses the game. All costs are paid from **your own wallet**
-  and are small placeholder numbers in `GameConfig` / `data/game_config.json` (starting gold is 15 so you can try it).
+- Press **BUILD** (top-right, or **B** on PC) to open the current prototype build menu. It pauses the game. All costs are paid from **your own wallet**. The agreed starting wallet is 10 Gold Coins.
 - You can **build and upgrade**: the **Castle** (1, behind the house), **Walls** (8 segment slots around the house),
   **Archer Posts** (3) and **Builder Huts** (2). Buildings go into fixed slots (no free placement yet).
   Upgrades (Lv 1-3) apply to all buildings of that kind; Lv 2/3 of walls, posts and huts need the Castle at that level first.
@@ -80,7 +80,7 @@ Touch-screen laptops show the touch controls as well.
 
 ## Implemented (Stage 1)
 
-Main menu, New Game / Continue / overwrite confirmation, loading flow · top-down movement · mobile joystick and buttons ·
+Main menu, immediate New Game / Continue, loading flow · top-down movement · mobile joystick and buttons ·
 camera with world limits · collision · simple walk animation · player health, death, respawn · Gold Coin wallet (per player id) ·
 inventory foundation (personal) + separate shared kingdom resource stock · trees/wood · basic zombie (object-pooled) ·
 Zombie Castle as spawn origin · kingdom castle (HP, respawn point, heal/deposit/save) · day/night cycle ·
@@ -99,7 +99,7 @@ audio · APK export preset · automated gameplay tests.
 - The kingdom castle cannot be destroyed in Stage 1 (HP floors at 1) and is restored at dawn.
 - Zombie Castle is indestructible in Stage 1. Rebuild behaviour of destroyed bases is undecided and not implemented.
 - Coin reward rule is "whoever picks it up"; real reward distribution is undecided (`reward_distribution_mode`).
-- `starting_gold` (5) is a placeholder so Stage 2 recruitment can be tried.
+- `starting_gold` is set to 10 Gold Coins for the agreed opening state.
 - Placeholder pixel art is simple; a real art pass is expected later.
 
 ## Structure

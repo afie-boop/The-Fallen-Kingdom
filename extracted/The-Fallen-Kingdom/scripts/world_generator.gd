@@ -289,17 +289,15 @@ static func spawn_jungle_trees(parent: Node2D, island: IslandMap, world_seed: in
             spawned += 1
     return spawned
 
-## Four beggars live beside the level-1 kingdom castle (ids 200-203).
-## They remain until recruited; recruited ids are persisted in GameState.
+## Exactly two beggars wait beside the opening campfire (stable ids 100-101).
+## They remain gone after recruitment because their ids are saved in GameState.
 static func spawn_castle_beggars(parent: Node2D, home: Vector2, recruited: Array) -> void:
     var offsets: Array[Vector2] = [
-        Vector2(-82.0, -112.0),
-        Vector2(82.0, -112.0),
-        Vector2(-82.0, -48.0),
-        Vector2(82.0, -48.0),
+        Vector2(-42.0, 42.0),
+        Vector2(42.0, 42.0),
     ]
-    for i in 4:
-        var bid: int = 200 + i
+    for i in 2:
+        var bid: int = 100 + i
         if recruited.has(bid):
             continue
         var already_spawned: bool = false
@@ -309,11 +307,10 @@ static func spawn_castle_beggars(parent: Node2D, home: Vector2, recruited: Array
                 break
         if already_spawned:
             continue
-        # Castle residents are unhoused; only remote poor camps receive tents.
         var b := BEGGAR_SCENE.instantiate() as Beggar
         b.beggar_id = bid
         b.variant = (bid * 7 + 3) % PixelArt.BEGGAR_VARIANTS
-        b.position = home + Vector2(0, -135) + offsets[i]
+        b.position = home + offsets[i]
         parent.add_child(b)
 
 

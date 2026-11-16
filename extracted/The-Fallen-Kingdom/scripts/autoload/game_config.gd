@@ -20,7 +20,7 @@ var player_attack_cooldown: float = 0.45
 var player_attack_range: float = 38.0
 var respawn_delay: float = 2.0
 
-var starting_gold: int = 15   # placeholder so recruiting + building can be tried
+var starting_gold: int = 10
 var death_penalty_percent: float = 0.0     # UNDECIDED. Own wallet only.
 var reward_distribution_mode: String = "pickup"  # UNDECIDED.
 

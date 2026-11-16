@@ -71,11 +71,8 @@ func _ready() -> void:
     var avoid: Array = [
         {"pos": castle.position, "r": 330.0},
     ]
-    # Five unique ruined houses from the supplied reference image mark the starting kingdom.
-    var ruin_spots: Array[Vector2] = WorldGenerator.spawn_kingdom_ruins(
-        entities, GameState.island, GameState.world_seed, castle.position)
-    for rp in ruin_spots:
-        avoid.append({"pos": rp, "r": 190.0})
+    # The starting kingdom is only an extinguished campfire and two beggars.
+    # No houses, fence, tents, or work buildings are placed in a new world.
     # Random caves replace the old zombie nests and Zombie Castle.
     var cave_avoid: Array = [{"pos": castle.position, "r": 1200.0}]
     _set_loading("Placing caves...", 0.38)
@@ -89,23 +86,10 @@ func _ready() -> void:
     await get_tree().process_frame
     for cp in cave_spots:
         avoid.append({"pos": cp, "r": 150.0})
-    var camp_avoid: Array = [
-        {"pos": castle.position, "r": 760.0},
-    ]
-    for cp in cave_spots:
-        camp_avoid.append({"pos": cp, "r": 240.0})
-    _set_loading("Building jungle camps...", 0.48)
-    await get_tree().process_frame
-    var camp_spots: Array[Vector2] = WorldGenerator.spawn_camps(entities, GameState.island, GameState.world_seed, camp_avoid, GameState.recruited_beggars)
-    _set_loading("Growing jungle trees...", 0.56)
-    await get_tree().process_frame
-    WorldGenerator.spawn_jungle_trees(entities, GameState.island, GameState.world_seed, camp_spots, GameState.removed_trees)
-    await get_tree().process_frame
-    for cp in camp_spots:
-        avoid.append({"pos": cp, "r": 130.0})
+    # Remote beggar camps are not part of the opening scene.
     WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
     GameState.island.refresh_texture()
-    # No ruined houses are scattered around the island; tents mark poor camps.
+    # The opening world has no houses or tents.
     _set_loading("Growing forests...", 0.64)
     await get_tree().process_frame
     await WorldGenerator.spawn_trees(
@@ -379,7 +363,7 @@ func _on_interact() -> void:
     if target != null and target.has_method("interact"):
         target.call("interact", player)
     else:
-        hud.show_message("Nothing to use here. Walk up to your house.")
+        hud.show_message("Nothing to use here. Return to the campfire.")
 
 
 func _on_zombie_killed(pos: Vector2) -> void:
@@ -408,7 +392,7 @@ func _on_dawn() -> void:
     castle.restore()
     GameState.castle_hp = castle.hp
     _save(false)
-    hud.show_message("Dawn breaks. The zombies retreat into caves. Your house has been fully repaired.")
+    hud.show_message("Dawn breaks. The zombies retreat into caves.")
 
 
 func _on_wildlife_killed() -> void:
@@ -439,7 +423,7 @@ func _on_build_action(kind: String, action: String) -> void:
 
 
 func _spawn_castle_beggars() -> void:
-    # Four beggars live beside the starting castle before any upgrade.
+    # Two beggars wait beside the starting campfire.
     if entities == null or castle == null:
         return
     WorldGenerator.spawn_castle_beggars(entities, castle.position, GameState.recruited_beggars)

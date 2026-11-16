@@ -5,7 +5,6 @@ const GAME_SCENE: String = "res://scenes/game.tscn"
 
 var _continue_btn: Button
 var _status: Label
-var _confirm: ConfirmationDialog
 
 
 func _ready() -> void:
@@ -60,11 +59,6 @@ func _ready() -> void:
     ver.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
     box.add_child(ver)
 
-    _confirm = ConfirmationDialog.new()
-    _confirm.dialog_text = "Starting a new game will replace your saved game. Continue?"
-    _confirm.ok_button_text = "Replace save"
-    _confirm.confirmed.connect(_start_new)
-    add_child(_confirm)
 
 
 func _make_button(parent: Node, text: String) -> Button:
@@ -77,10 +71,8 @@ func _make_button(parent: Node, text: String) -> Button:
 
 
 func _on_new_pressed() -> void:
-    if SaveManager.has_save():
-        _confirm.popup_centered()
-    else:
-        _start_new()
+    # New Game starts immediately; there is no separate Create/overwrite screen.
+    _start_new()
 
 
 func _start_new() -> void:

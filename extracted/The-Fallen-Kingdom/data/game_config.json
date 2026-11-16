@@ -14,7 +14,7 @@
   "player_attack_range": 38.0,
   "respawn_delay": 2.0,
 
-  "starting_gold": 15,
+  "starting_gold": 10,
   "death_penalty_percent": 0.0,
   "_death_penalty_percent_note": "UNDECIDED in design. 0 = no penalty. Only ever applied to the dead player's own wallet.",
   "reward_distribution_mode": "pickup",
