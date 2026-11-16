@@ -227,24 +227,24 @@ static func spawn_camps(parent: Node2D, island: IslandMap, world_seed: int, avoi
 
 
 ## Four beggars waiting just outside the kingdom (ids 100-103, stable across loads).
+## Exactly two beggars wait close to the opening campfire (stable ids 100-101).
 static func spawn_kingdom_beggars(parent: Node2D, island: IslandMap, world_seed: int, center: Vector2, recruited: Array) -> void:
-    var rng := RandomNumberGenerator.new()
-    rng.seed = world_seed + 9001
-    for k in 4:
-        var pos: Vector2 = center + Vector2(0, 340)
-        for attempt in 30:
-            var ang: float = (float(k) + rng.randf_range(0.15, 0.85)) * (TAU / 4.0)
-            var cand: Vector2 = center + Vector2.from_angle(ang) * rng.randf_range(310.0, 390.0)
-            if island.sample(cand) >= 0.2 and island.dirt_at(cand) < 0.9:
-                pos = cand
-                break
-        var bid: int = 100 + k
+    var offsets: Array[Vector2] = [Vector2(-42.0, 42.0), Vector2(42.0, 42.0)]
+    for i in 2:
+        var bid: int = 100 + i
         if recruited.has(bid):
+            continue
+        var already_spawned: bool = false
+        for existing in parent.get_tree().get_nodes_in_group("beggars"):
+            if int(existing.get("beggar_id")) == bid:
+                already_spawned = true
+                break
+        if already_spawned:
             continue
         var b := BEGGAR_SCENE.instantiate() as Beggar
         b.beggar_id = bid
         b.variant = (bid * 7 + 3) % PixelArt.BEGGAR_VARIANTS
-        b.position = pos
+        b.position = center + offsets[i]
         parent.add_child(b)
 
 
