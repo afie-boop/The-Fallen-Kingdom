@@ -36,7 +36,7 @@ func _rebuild() -> void:
     var vertical_step: float = side_length / float(vertical_count)
     for i in vertical_count:
         var y: float = -half + (float(i) + 0.5) * vertical_step
-        _add_piece(Vector2(-half, y), false, vertical_step)
+        _add_piece(Vector2(-half, y), false, vertical_step, true)
         _add_piece(Vector2(half, y), false, vertical_step)
 
     # Trees caught by the new perimeter are felled automatically.
@@ -72,7 +72,7 @@ func _add_corner_post(at: Vector2) -> void:
     add_child(post)
 
 
-func _add_piece(at: Vector2, horizontal: bool, segment_length: float) -> void:
+func _add_piece(at: Vector2, horizontal: bool, segment_length: float, face_left: bool = false) -> void:
     var body := StaticBody2D.new()
     body.position = at
     # The perimeter is a visual boundary, not a movement barrier. Players
@@ -85,6 +85,8 @@ func _add_piece(at: Vector2, horizontal: bool, segment_length: float) -> void:
     # PixelArt helper is bottom-anchored for characters/buildings.
     sprite.centered = true
     sprite.offset = Vector2.ZERO
+    # West side faces left; east side keeps the original right-facing orientation.
+    sprite.flip_h = face_left
     if horizontal:
         sprite.scale = Vector2((segment_length + 18.0) / HORIZONTAL_LENGTH, 1.0)
     else:
