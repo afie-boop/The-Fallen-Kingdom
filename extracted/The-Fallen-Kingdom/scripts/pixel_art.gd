@@ -787,12 +787,12 @@ static func _palisade(horizontal: bool) -> Image:
         # Ikatan pada palang.
         _rect(vertical, 14, y + 8, 2, 1, Color(0.16, 0.14, 0.12))
 
-    # Tanah dan lumut nipis di pangkal pagar.
-    for x in 30:
-        var bank_y: int = 60 + (x % 2)
-        _rect(vertical, x, bank_y, 1, 64 - bank_y, soil if x % 4 else soil_light)
-        _rect(vertical, x, bank_y, 1, 1, moss if x % 3 else moss_light)
-    _rect(vertical, 0, 62, 30, 2, soil_dark)
+    # Jalur tanah dan lumut menegak di sepanjang pangkal pagar sisi.
+    for y in 64:
+        var bank_x: int = 25 + (y % 2)
+        _rect(vertical, bank_x, y, 30 - bank_x, 1, soil if y % 4 else soil_light)
+        _rect(vertical, bank_x, y, 1, 1, moss if y % 3 else moss_light)
+    _rect(vertical, 28, 0, 2, 64, soil_dark)
     return vertical
 
 
