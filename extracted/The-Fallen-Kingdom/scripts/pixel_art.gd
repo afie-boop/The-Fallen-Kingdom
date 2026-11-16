@@ -759,33 +759,51 @@ static func _palisade(horizontal: bool) -> Image:
     if horizontal:
         return img
 
-    # Sisi barat/timur: bulatan hujung tiang disusun atas-bawah,
-    # disambung oleh batang kayu menegak di tengah.
+    # Sisi barat/timur: tiang kayu runcing, sama gaya dengan utara/selatan.
     var vertical := _new(30, 64)
-    _rect(vertical, 0, 61, 30, 3, Color(0.12, 0.10, 0.08, 0.28))
+    _rect(vertical, 0, 61, 30, 3, Color(0.12, 0.10, 0.08, 0.20))
 
     var post_dark := Color(0.25, 0.16, 0.10)
     var post_mid := Color(0.48, 0.31, 0.18)
     var post_light := Color(0.63, 0.43, 0.27)
+    var moss_dark := Color(0.22, 0.29, 0.16)
+    var moss_light := Color(0.39, 0.43, 0.23)
 
-    # Batang penghubung menegak.
-    _rect(vertical, 13, 4, 4, 56, post_dark)
-    _rect(vertical, 14, 4, 2, 56, post_mid)
-    _rect(vertical, 14, 5, 1, 54, post_light)
+    # Batang penghubung menegak di belakang tiang.
+    _rect(vertical, 13, 0, 4, 64, post_dark)
+    _rect(vertical, 14, 0, 2, 64, post_mid)
+    _rect(vertical, 14, 0, 1, 64, post_light)
 
-    # Hujung tiang bulat, berjarak dan bersambung seperti ○ | ○ | ○.
-    for cy in [7, 24, 41, 58]:
-        _disc(vertical, 15, cy, 5, post_dark)
-        _disc(vertical, 14, cy - 1, 4, post_mid)
-        _disc(vertical, 13, cy - 2, 2, post_light)
-        _rect(vertical, 14, cy - 1, 2, 3, _shade(post_mid, 0.78))
+    # Empat tiang dengan hujung runcing; bentuknya sepadan dengan pagar mendatar.
+    for i in 4:
+        var y: int = i * 16
+        var wood: Color = woods[(i + 1) % woods.size()]
+        var dark: Color = _shade(wood, 0.58)
+        var light: Color = _shade(wood, 1.2)
 
-    # Tanah dan lumut nipis di pangkal pagar.
-    for x in 30:
-        var bank_y: int = 60 + (x % 2)
-        _rect(vertical, x, bank_y, 1, 64 - bank_y, soil if x % 4 else soil_light)
-        _rect(vertical, x, bank_y, 1, 1, moss if x % 3 else moss_light)
-    _rect(vertical, 0, 62, 30, 2, soil_dark)
+        # Hujung runcing dan badan tiang.
+        _rect(vertical, 15, y, 1, 1, dark)
+        _rect(vertical, 14, y + 1, 3, 1, wood)
+        _rect(vertical, 13, y + 2, 5, 2, wood)
+        _rect(vertical, 12, y + 4, 7, 9, wood)
+        _rect(vertical, 12, y + 4, 1, 9, light)
+        _rect(vertical, 18, y + 4, 1, 9, dark)
+        _rect(vertical, 14, y + 6, 1, 4, _shade(wood, 0.82))
+
+        # Pengikat gelap pada batang penghubung.
+        _rect(vertical, 14, y + 10, 3, 1, Color(0.16, 0.14, 0.12))
+
+    # Lumut tumbuh bertompok pada permukaan kayu dan batang penghubung.
+    _rect(vertical, 12, 10, 2, 2, moss_dark)
+    _rect(vertical, 13, 9, 2, 1, moss_light)
+    _rect(vertical, 17, 25, 2, 3, moss_dark)
+    _rect(vertical, 16, 26, 1, 2, moss_light)
+    _rect(vertical, 12, 43, 2, 2, moss_dark)
+    _rect(vertical, 13, 42, 2, 1, moss_light)
+    _rect(vertical, 17, 57, 2, 2, moss_dark)
+    _rect(vertical, 16, 58, 1, 1, moss_light)
+    _rect(vertical, 13, 34, 1, 3, moss_dark)
+    _rect(vertical, 16, 49, 1, 2, moss_light)
     return vertical
 
 
