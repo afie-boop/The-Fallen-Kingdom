@@ -759,12 +759,38 @@ static func _palisade(horizontal: bool) -> Image:
     if horizontal:
         return img
 
-    # Putar keseluruhan corak supaya susunan tiang dan palang konsisten di sisi.
-    var rotated := _new(h, w)
-    for sy in h:
-        for sx in w:
-            rotated.set_pixel(h - 1 - sy, sx, img.get_pixel(sx, sy))
-    return rotated
+    # Sisi barat/timur: segmen memanjang menegak, tiang kekal tegak
+    # dan dua palang kekal melintang (tidak memutar keseluruhan tekstur).
+    var vertical := _new(30, 64)
+    _rect(vertical, 0, 61, 30, 3, Color(0.12, 0.10, 0.08, 0.28))
+
+    # Palang mendatar merentasi lebar pagar.
+    for ry in [20, 42]:
+        _rect(vertical, 0, ry, 30, 3, rail)
+        _rect(vertical, 0, ry, 30, 1, rail_light)
+        _rect(vertical, 0, ry + 2, 30, 1, _shade(rail, 0.65))
+
+    # Tiang-tiang tegak berjarak sepanjang sisi pagar.
+    for i in 4:
+        var py: int = 2 + i * 15
+        var wood: Color = woods[(i + 1) % woods.size()]
+        var dark: Color = _shade(wood, 0.58)
+        var light: Color = _shade(wood, 1.2)
+        for xx in range(2, 7):
+            var inset: int = 2 - mini(xx - 2, 4 - (xx - 2))
+            _rect(vertical, xx, py + inset, 1, 13 - inset, wood)
+        _rect(vertical, 2, py + 3, 1, 10, light)
+        _rect(vertical, 6, py + 3, 1, 10, dark)
+        _rect(vertical, 4, py + 6, 1, 4, _shade(wood, 0.82))
+        _rect(vertical, 2, py + 13, 5, 1, dark)
+
+    # Tanah dan lumut di kaki segmen menegak.
+    for x in 30:
+        var bank_y: int = 59 + (x % 2)
+        _rect(vertical, x, bank_y, 1, 64 - bank_y, soil if x % 4 else soil_light)
+        _rect(vertical, x, bank_y, 1, 1, moss if x % 3 else moss_light)
+    _rect(vertical, 0, 62, 30, 2, soil_dark)
+    return vertical
 
 
 ## Archer post / watchtower (40x64).
