@@ -293,6 +293,14 @@ func sync_state() -> void:
 
 # --- jobs ------------------------------------------------------------------------
 
+func _worker_for(s: Structure) -> Citizen:
+    for c in get_tree().get_nodes_in_group("citizens"):
+        var cz := c as Citizen
+        if cz != null and cz.workplace == s:
+            return cz
+    return null
+
+
 func set_campfire_lit(lit: bool) -> void:
     if not lit or _entities == null:
         return
