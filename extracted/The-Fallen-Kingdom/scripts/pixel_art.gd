@@ -62,7 +62,7 @@ static func file_tex_remove_light_background(path: String) -> Texture2D:
         var idx: int = queue[head]
         head += 1
         var x: int = idx % w
-        var y: int = idx / w
+        var y: int = int(idx / w)
         var c: Color = img.get_pixel(x, y)
         # Remove light edge-connected background, but stop at darker outlines.
         var lightness: float = minf(c.r, minf(c.g, c.b))
@@ -691,7 +691,7 @@ static func _wall(horizontal: bool, level: int) -> Image:
     _rect(img, 0, 8, w, h - 11, stone)
     for y in range(9, h - 3, 5):
         _rect(img, 0, y, w, 1, stone_d)
-        var off: int = 0 if ((y - 8) / 5) % 2 == 0 else 4
+        var off: int = 0 if int((y - 8) / 5) % 2 == 0 else 4
         for x in range(off, w, 8):
             _rect(img, x, y, 1, 5, stone_d)
     if level >= 3:
