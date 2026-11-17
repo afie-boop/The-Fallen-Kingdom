@@ -19,6 +19,9 @@ var kingdom: KingdomManager
 var _world_rect: Rect2
 var _autosave_t: float = 0.0
 var _interact_t: float = 0.0
+var _shop_hold_t: float = 0.0
+var _shop_hold_used: bool = false
+const SHOP_HOLD_SECONDS: float = 0.45
 var _loading_layer: CanvasLayer
 var _loading_label: Label
 var _loading_bar: ProgressBar
@@ -303,6 +306,7 @@ func _process(delta: float) -> void:
         var target: Node2D = _nearest_interactable()
         hud.set_interact_available(target != null and not player.dead)
         hud.set_prompt(_prompt_for(target) if not player.dead else "")
+    _process_shop_hold(delta)
     _autosave_t += delta
     if _autosave_t >= GameConfig.autosave_interval:
         _save(false)
@@ -312,6 +316,20 @@ func _unhandled_input(event: InputEvent) -> void:
     var k := event as InputEventKey
     if k != null and k.pressed and not k.echo and k.physical_keycode == KEY_E:
         _on_interact()
+
+
+func _process_shop_hold(delta: float) -> void:
+    var held: bool = hud.interact_button.held or Input.is_physical_key_pressed(KEY_E)
+    var target: Node2D = _nearest_interactable() if held and not player.dead else null
+    if held and target is EquipmentShop:
+        if not _shop_hold_used:
+            _shop_hold_t += delta
+            if _shop_hold_t >= SHOP_HOLD_SECONDS:
+                target.call("interact", player)
+                _shop_hold_used = true
+    else:
+        _shop_hold_t = 0.0
+        _shop_hold_used = false
 
 
 func _nearest_interactable() -> Node2D:
@@ -350,6 +368,9 @@ func _spawn_citizen(id: int, variant: int, pos: Vector2) -> void:
     c.home = castle.position
     c.position = pos
     entities.add_child(c)
+    var saved_job: String = str(GameState.citizen_jobs.get(id, ""))
+    if saved_job == "archer" or saved_job == "builder":
+        c.set_job(saved_job, null)
 
 
 func _on_beggar_recruited(beggar_id: int, variant: int, pos: Vector2) -> void:
@@ -362,6 +383,8 @@ func _on_interact() -> void:
     if player.dead:
         return
     var target: Node2D = _nearest_interactable()
+    if target != null and target is EquipmentShop:
+        return # Equipment purchases require holding USE / E.
     if target != null and target.has_method("interact"):
         target.call("interact", player)
     else:
