@@ -751,7 +751,7 @@ static func _palisade(horizontal: bool) -> Image:
 
     # Tanah dan lumut nipis di pangkal pagar.
     for x in w:
-        var bank_y: int = 25 + ((x * 5 + x / 2) % 2)
+        var bank_y: int = 25 + ((x * 5 + (x >> 1)) % 2)
         _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
         _rect(img, x, bank_y, 1, 1, moss if x % 3 else moss_light)
     _rect(img, 0, h - 2, w, 2, soil_dark)
