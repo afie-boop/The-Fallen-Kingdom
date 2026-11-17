@@ -21,7 +21,7 @@ var _autosave_t: float = 0.0
 var _interact_t: float = 0.0
 var _shop_hold_t: float = 0.0
 var _shop_hold_used: bool = false
-const SHOP_HOLD_SECONDS: float = 0.45
+const SHOP_COIN_INTERVAL: float = 0.28
 var _loading_layer: CanvasLayer
 var _loading_label: Label
 var _loading_bar: ProgressBar
@@ -324,9 +324,14 @@ func _process_shop_hold(delta: float) -> void:
     if held and target is EquipmentShop:
         if not _shop_hold_used:
             _shop_hold_t += delta
-            if _shop_hold_t >= SHOP_HOLD_SECONDS:
-                target.call("interact", player)
-                _shop_hold_used = true
+            if _shop_hold_t >= SHOP_COIN_INTERVAL:
+                _shop_hold_t -= SHOP_COIN_INTERVAL
+                var result: int = int(target.call("pay_one_coin", player))
+                if result < 0:
+                    _shop_hold_used = true
+                    _shop_hold_t = 0.0
+                elif result > 0:
+                    _shop_hold_t = 0.0
     else:
         _shop_hold_t = 0.0
         _shop_hold_used = false
