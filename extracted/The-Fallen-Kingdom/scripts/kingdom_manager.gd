@@ -319,12 +319,12 @@ func _sync_equipment_shops() -> void:
     if not has_bow:
         var bow_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
         bow_shop.item_kind = "bow"
-        bow_shop.position = home + Vector2(92, 18)
+        bow_shop.position = home + Vector2(150, 18)
         _entities.add_child(bow_shop)
     if not has_hammer:
         var hammer_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
         hammer_shop.item_kind = "hammer"
-        hammer_shop.position = home + Vector2(-92, 18)
+        hammer_shop.position = home + Vector2(-150, 18)
         _entities.add_child(hammer_shop)
 
 
