@@ -4,12 +4,14 @@ extends Node2D
 
 var item_kind: String = "bow"
 var interact_range: float = 82.0
-var prompt_text: String = "Buy equipment"
+var prompt_text: String = "Hold USE / E to pay"
+const MAX_STOCK: int = 4
 
 
 func _ready() -> void:
     add_to_group("interactable")
     add_to_group("equipment_shops")
+    _update_prompt()
     queue_redraw()
 
 
@@ -25,18 +27,43 @@ func has_stock() -> bool:
     return int(GameState.equipment_stock.get(item_kind, 0)) > 0
 
 
-func interact(player: Player) -> void:
+func _update_prompt() -> void:
     var stock: int = int(GameState.equipment_stock.get(item_kind, 0))
-    if stock >= 4:
-        GameState.notice.emit("The %s rack is full (4)." % item_kind.capitalize())
-        return
-    var cost: int = _cost()
-    if not GameState.spend_gold(cost, player.player_id):
-        GameState.notice.emit("A %s costs %d Gold Coins." % [item_kind, cost])
-        return
-    GameState.equipment_stock[item_kind] = stock + 1
-    GameState.notice.emit("%s purchased. Stock: %d/4." % [item_kind.capitalize(), stock + 1])
+    var paid: int = int(GameState.equipment_payment.get(item_kind, 0))
+    if stock >= MAX_STOCK:
+        prompt_text = "Rack full (%d/%d)" % [stock, MAX_STOCK]
+    else:
+        prompt_text = "Hold USE / E to pay %d coins (%d/%d)" % [_cost(), paid, _cost()]
+
+
+## Returns -1 if payment cannot continue, 0 for a partial payment, 1 when one item is bought.
+func pay_one_coin(player: Player) -> int:
+    var stock: int = int(GameState.equipment_stock.get(item_kind, 0))
+    if stock >= MAX_STOCK:
+        _update_prompt()
+        GameState.notice.emit("The %s rack is full (%d)." % [item_kind.capitalize(), MAX_STOCK])
+        return -1
+
+    var paid: int = int(GameState.equipment_payment.get(item_kind, 0))
+    if not GameState.spend_gold(1, player.player_id):
+        _update_prompt()
+        GameState.notice.emit("Not enough Gold Coins. %s costs %d." % [item_kind.capitalize(), _cost()])
+        return -1
+
+    paid += 1
+    if paid >= _cost():
+        GameState.equipment_payment[item_kind] = 0
+        GameState.equipment_stock[item_kind] = stock + 1
+        GameState.notice.emit("%s purchased. Stock: %d/%d." % [item_kind.capitalize(), stock + 1, MAX_STOCK])
+        _update_prompt()
+        queue_redraw()
+        return 1
+
+    GameState.equipment_payment[item_kind] = paid
+    GameState.notice.emit("Paid %d/%d Gold Coins for %s." % [paid, _cost(), item_kind])
+    _update_prompt()
     queue_redraw()
+    return 0
 
 
 func take_tool() -> String:
