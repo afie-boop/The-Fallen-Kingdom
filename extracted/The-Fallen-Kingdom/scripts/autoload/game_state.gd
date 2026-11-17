@@ -22,6 +22,8 @@ var wallets: Dictionary = {}
 var inventories: Dictionary = {}
 var kingdom_resources: Dictionary = {}
 var kingdom_level: int = 1
+var campfire_lit: bool = false
+var equipment_stock: Dictionary = {"bow": 0, "hammer": 0}
 var castle_hp: float = -1.0
 var player_hp: float = -1.0
 var player_pos: Vector2 = Vector2.ZERO
@@ -48,6 +50,8 @@ func reset_new_game() -> void:
     for r in KINGDOM_RESOURCES:
         kingdom_resources[r] = 0
     kingdom_level = 1
+    campfire_lit = false
+    equipment_stock = {"bow": 0, "hammer": 0}
     castle_hp = -1.0
     player_hp = -1.0
     has_player_pos = false
@@ -156,6 +160,8 @@ func to_dict() -> Dictionary:
             "resources": kingdom_resources.duplicate(),
             "level": kingdom_level,
             "castle_hp": castle_hp,
+            "campfire_lit": campfire_lit,
+            "equipment_stock": equipment_stock.duplicate(),
         },
         "time": {"time_of_day": time_of_day, "day": day_count},
         "world": {"removed_trees": removed_trees.duplicate(), "recruited_beggars": recruited_beggars.duplicate()},
@@ -215,6 +221,11 @@ func from_dict(d: Dictionary) -> void:
         var kdict: Dictionary = kd
         kingdom_level = maxi(1, int(_num(kdict.get("level", 1), 1.0)))
         castle_hp = clampf(_num(kdict.get("castle_hp", -1.0), -1.0), -1.0, GameConfig.castle_max_hp)
+        campfire_lit = bool(kdict.get("campfire_lit", false))
+        var stock: Variant = kdict.get("equipment_stock", {})
+        if typeof(stock) == TYPE_DICTIONARY:
+            equipment_stock["bow"] = clampi(int(_num((stock as Dictionary).get("bow", 0), 0.0)), 0, 4)
+            equipment_stock["hammer"] = clampi(int(_num((stock as Dictionary).get("hammer", 0), 0.0)), 0, 4)
         var res: Variant = kdict.get("resources", {})
         if typeof(res) == TYPE_DICTIONARY:
             for r in (res as Dictionary):

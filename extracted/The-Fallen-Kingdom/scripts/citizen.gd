@@ -71,7 +71,7 @@ func _process(delta: float) -> void:
         "builder":
             _builder(delta)
         _:
-            _wander(delta)
+            _seek_equipment(delta)
 
 
 # --- movement helpers ------------------------------------------------------
@@ -130,6 +130,27 @@ func _wander(delta: float) -> void:
         if _wait <= 0.0:
             _wait = randf_range(2.0, 6.0)
             _target = _wander_target()
+
+
+func _seek_equipment(delta: float) -> void:
+    var shop: Node2D = null
+    var best_distance: float = 150.0
+    for node in get_tree().get_nodes_in_group("equipment_shops"):
+        var candidate := node as Node2D
+        if candidate == null or not candidate.has_method("has_stock") or not candidate.call("has_stock"):
+            continue
+        var distance: float = global_position.distance_to(candidate.global_position)
+        if distance < best_distance:
+            best_distance = distance
+            shop = candidate
+    if shop != null:
+        if _step(shop.global_position + Vector2(0, 12), WORK_SPEED, delta):
+            var picked: String = str(shop.call("take_tool"))
+            if picked == "archer" or picked == "builder":
+                set_job(picked, null)
+                GameState.citizen_jobs[citizen_id] = picked
+        return
+    _wander(delta)
 
 
 func _station() -> Vector2:

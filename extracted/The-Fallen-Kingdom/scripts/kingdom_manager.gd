@@ -5,9 +5,9 @@ extends Node
 ## Costs are paid from the acting player's PERSONAL wallet. All numbers live in GameConfig.
 
 const STRUCTURE_SCENE: PackedScene = preload("res://scenes/structure.tscn")
-const KINDS: Array[String] = ["castle", "wall", "bow_rack", "hammer_rack"]
-const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "bow_rack": "Bow Rack", "hammer_rack": "Hammer Rack"}
-const JOBS: Dictionary = {"bow_rack": "archer", "hammer_rack": "builder"}
+const KINDS: Array[String] = ["castle", "wall"]
+const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence"}
+const EQUIPMENT_SHOP_SCRIPT: Script = preload("res://scripts/equipment_shop.gd")
 const MAX_LEVEL: int = 3
 const MAX_FENCE_LEVEL: int = 5
 const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
@@ -21,9 +21,6 @@ const SLOTS: Dictionary = {
         Vector2(-230, 70), Vector2(230, 70),
         Vector2(-120, 130), Vector2(120, 130),
     ],
-    # Equipment racks sit close to the opening campfire, on opposite sides.
-    "bow_rack": [Vector2(-92, 18)],
-    "hammer_rack": [Vector2(92, 18)],
 }
 
 signal changed
@@ -48,6 +45,7 @@ func setup(entities: Node2D, home_pos: Vector2) -> void:
             _spawn(kind, slot, int(d.get("level", 1)), float(d.get("hp", -1.0)))
     if fence_level > 0:
         _create_fence()
+    set_campfire_lit(GameState.campfire_lit)
 
 
 # --- queries -----------------------------------------------------------------
@@ -88,10 +86,6 @@ func _cost(kind: String, level_index: int) -> int:
     match kind:
         "wall":
             arr = GameConfig.cost_wall
-        "archer_post", "bow_rack":
-            arr = GameConfig.cost_archer_post
-        "hammer_rack":
-            arr = GameConfig.cost_builder_hut
         _:
             arr = GameConfig.cost_castle
     return int(arr[clampi(level_index, 0, arr.size() - 1)])
@@ -178,13 +172,10 @@ func menu_rows() -> Array:
             build_info = "%d / %d built" % [n, capacity(kind)]
             if n > 0:
                 build_info += ", Lv %d" % lvl
-            if JOBS.has(kind):
-                build_info += ". Needs a jobless citizen as %s." % JOBS[kind]
         if gold < cost and build_btn.begins_with("Build"):
             build_info += "  (not enough coins)"
         rows.append({"title": "%s" % NAMES[kind], "info": build_info, "button": build_btn, "enabled": build_enabled, "kind": kind, "action": "build"})
-        # Racks are one-time equipment stations, not upgradeable buildings.
-        if n > 0 and kind not in ["bow_rack", "hammer_rack"]:
+        if n > 0:
             var target: int = lvl + 1
             var up_btn: String = "Max level"
             var up_enabled: bool = false
@@ -206,7 +197,6 @@ func menu_rows() -> Array:
 
 ## Performs a menu action for a player. Returns a short result message.
 func do_action(kind: String, action: String, player_id: int) -> String:
-    # Job assignment is driven by completed bow/hammer racks in assign_jobs().
     if not SLOTS.has(kind):
         return ""
     if kind == "wall":
@@ -245,7 +235,6 @@ func do_action(kind: String, action: String, player_id: int) -> String:
         var lvl: int = maxi(1, level_of(kind)) if kind != "castle" else 1
         _spawn(kind, slot, lvl, -1.0)
         sync_state()
-        assign_jobs()
         changed.emit()
         return "%s built." % NAMES[kind]
     if action == "upgrade":
@@ -304,31 +293,33 @@ func sync_state() -> void:
 
 # --- jobs ------------------------------------------------------------------------
 
-func _worker_for(s: Structure) -> Citizen:
-    for c in get_tree().get_nodes_in_group("citizens"):
-        var cz := c as Citizen
-        if cz != null and cz.workplace == s:
-            return cz
-    return null
+func set_campfire_lit(lit: bool) -> void:
+    if not lit or _entities == null:
+        return
+    _sync_equipment_shops()
 
 
-## Gives every workplace a worker: first a citizen who had that job when the game was saved,
-## otherwise any jobless citizen.
+func _sync_equipment_shops() -> void:
+    var has_bow := false
+    var has_hammer := false
+    for node in _entities.get_children():
+        if node is EquipmentShop:
+            if node.item_kind == "bow":
+                has_bow = true
+            elif node.item_kind == "hammer":
+                has_hammer = true
+    if not has_bow:
+        var bow_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
+        bow_shop.item_kind = "bow"
+        bow_shop.position = home + Vector2(92, 18)
+        _entities.add_child(bow_shop)
+    if not has_hammer:
+        var hammer_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
+        hammer_shop.item_kind = "hammer"
+        hammer_shop.position = home + Vector2(-92, 18)
+        _entities.add_child(hammer_shop)
+
+
+## Compatibility hook: citizens now receive jobs only after collecting tools.
 func assign_jobs() -> void:
-    for s in _structures:
-        if not JOBS.has(s.kind) or _worker_for(s) != null:
-            continue
-        var job: String = JOBS[s.kind]
-        var pick: Citizen = null
-        for c in get_tree().get_nodes_in_group("citizens"):
-            var cz := c as Citizen
-            if cz == null or cz.job != "":
-                continue
-            if GameState.citizen_jobs.get(cz.citizen_id, "") == job:
-                pick = cz
-                break
-            if pick == null and not GameState.citizen_jobs.has(cz.citizen_id):
-                pick = cz
-        if pick != null:
-            pick.set_job(job, s)
-    changed.emit()
+    pass

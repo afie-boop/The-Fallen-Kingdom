@@ -6,6 +6,7 @@ extends StaticBody2D
 signal hp_changed(hp: float, max_hp: float)
 signal notice(text: String)
 signal interacted
+signal campfire_upgraded
 
 var hp: float = 500.0
 var max_hp: float = 500.0
@@ -14,6 +15,7 @@ var prompt_text: String = "Extinguished campfire"
 var interact_range: float = 90.0
 var _sprite: Sprite2D
 var _warn_cd: float = 0.0
+var campfire_lit: bool = false
 
 
 func _ready() -> void:
@@ -101,6 +103,34 @@ func set_hp(value: float) -> void:
     queue_redraw()
 
 
-func interact(_player: Player) -> void:
-    notice.emit("The campfire is extinguished. Build the two workstations to light it.")
+func set_lit(value: bool) -> void:
+    campfire_lit = value
+    _sprite.texture = _make_lit_fire_texture() if campfire_lit else _make_unlit_fire_texture()
+    queue_redraw()
+
+
+func _make_lit_fire_texture() -> Texture2D:
+    var img := Image.create(48, 32, false, Image.FORMAT_RGBA8)
+    img.fill(Color(0, 0, 0, 0))
+    _fill_pixels(img, 9, 17, 30, 5, Color("#493329"))
+    _fill_pixels(img, 13, 14, 22, 4, Color("#76513a"))
+    _fill_pixels(img, 16, 16, 16, 3, Color("#29272a"))
+    _fill_pixels(img, 18, 8, 12, 9, Color("#e36b27"))
+    _fill_pixels(img, 21, 3, 7, 9, Color("#ffb83f"))
+    _fill_pixels(img, 23, 7, 3, 8, Color("#fff0a0"))
+    _fill_pixels(img, 6, 14, 6, 6, Color("#68645c"))
+    _fill_pixels(img, 36, 14, 6, 6, Color("#68645c"))
+    return ImageTexture.create_from_image(img)
+
+
+func interact(player: Player) -> void:
+    if campfire_lit:
+        notice.emit("The campfire is already lit. Bow Shop and Hammer Shop are open.")
+    elif GameState.spend_gold(3, player.player_id):
+        set_lit(true)
+        GameState.campfire_lit = true
+        campfire_upgraded.emit()
+        notice.emit("Campfire lit! Bow Shop opened on the right; Hammer Shop opened on the left.")
+    else:
+        notice.emit("Lighting the Campfire costs 3 Gold Coins.")
     interacted.emit()

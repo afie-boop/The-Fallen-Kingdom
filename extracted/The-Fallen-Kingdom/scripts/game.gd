@@ -110,6 +110,8 @@ func _ready() -> void:
     kingdom = KingdomManager.new()
     add_child(kingdom)
     kingdom.setup(entities, castle.position)
+    castle.campfire_upgraded.connect(kingdom.set_campfire_lit)
+    castle.set_lit(GameState.campfire_lit)
     _spawn_castle_beggars()
     _build_player()
     _restore_citizens()
