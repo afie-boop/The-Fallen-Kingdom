@@ -221,7 +221,7 @@ static func _fallback() -> Image:
     var img := _new(16, 16)
     for y in 16:
         for x in 16:
-            _px(img, x, y, Color(1, 0, 1) if (x / 4 + y / 4) % 2 == 0 else Color(0, 0, 0))
+            _px(img, x, y, Color(1, 0, 1) if ((x >> 2) + (y >> 2)) % 2 == 0 else Color(0, 0, 0))
     return img
 
 
