@@ -455,7 +455,8 @@ static func _tent() -> Image:
     for y in range(3, 41):
         var hw: int = int(lerpf(1.0, 29.0, float(y - 3) / 37.0))
         for x in range(32 - hw, 32 + hw + 1):
-            var c: Color = pal[(x / 9 + y / 8) % 4]
+            var palette_index: int = int((x / 9 + y / 8) % 4)
+            var c: Color = pal[palette_index]
             if x <= 32 - hw + 2:
                 c = _shade(c, 0.72)
             elif x >= 32 + hw - 2:
