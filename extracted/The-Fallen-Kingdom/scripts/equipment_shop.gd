@@ -71,6 +71,7 @@ func take_tool() -> String:
     if stock <= 0:
         return ""
     GameState.equipment_stock[item_kind] = stock - 1
+    _update_prompt()
     queue_redraw()
     return _job()
 
