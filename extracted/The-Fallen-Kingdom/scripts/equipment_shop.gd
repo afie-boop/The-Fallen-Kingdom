@@ -58,7 +58,7 @@ func _draw() -> void:
     var parchment := Color("#ead7ae")
 
     # Ground shadow and sturdy timber stall frame.
-    draw_ellipse(Vector2(0.0, -1.0), Vector2(34.0, 5.0), Color(0.0, 0.0, 0.0, 0.24))
+    draw_colored_polygon(PackedVector2Array([Vector2(-34.0, -1.0), Vector2(-27.0, -5.0), Vector2(-15.0, -7.0), Vector2(0.0, -8.0), Vector2(15.0, -7.0), Vector2(27.0, -5.0), Vector2(34.0, -1.0), Vector2(27.0, 2.0), Vector2(15.0, 4.0), Vector2(0.0, 5.0), Vector2(-15.0, 4.0), Vector2(-27.0, 2.0)]), Color(0.0, 0.0, 0.0, 0.24))
     draw_rect(Rect2(-29.0, -43.0, 4.0, 43.0), wood_dark)
     draw_rect(Rect2(25.0, -43.0, 4.0, 43.0), wood_dark)
     draw_rect(Rect2(-27.0, -42.0, 2.0, 39.0), wood_light)
