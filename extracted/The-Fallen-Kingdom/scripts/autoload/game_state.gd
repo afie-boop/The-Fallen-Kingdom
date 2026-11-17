@@ -244,7 +244,7 @@ func from_dict(d: Dictionary) -> void:
                 continue
             var ed: Dictionary = e
             var kind: String = str(ed.get("kind", ""))
-            if not ["castle", "wall", "builder_hut"].has(kind):
+            if not ["castle", "wall", "builder_hut", "bow_rack", "hammer_rack"].has(kind):
                 continue
             buildings.append({
                 "kind": kind,

@@ -5,9 +5,9 @@ extends Node
 ## Costs are paid from the acting player's PERSONAL wallet. All numbers live in GameConfig.
 
 const STRUCTURE_SCENE: PackedScene = preload("res://scenes/structure.tscn")
-const KINDS: Array[String] = ["castle", "wall"]
-const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence"}
-const JOBS: Dictionary = {}
+const KINDS: Array[String] = ["castle", "wall", "bow_rack", "hammer_rack"]
+const NAMES: Dictionary = {"castle": "Castle", "wall": "Kingdom Fence", "bow_rack": "Bow Rack", "hammer_rack": "Hammer Rack"}
+const JOBS: Dictionary = {"bow_rack": "archer", "hammer_rack": "builder"}
 const MAX_LEVEL: int = 3
 const MAX_FENCE_LEVEL: int = 5
 const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
@@ -21,6 +21,9 @@ const SLOTS: Dictionary = {
         Vector2(-230, 70), Vector2(230, 70),
         Vector2(-120, 130), Vector2(120, 130),
     ],
+    # Equipment racks sit close to the opening campfire, on opposite sides.
+    "bow_rack": [Vector2(-92, 18)],
+    "hammer_rack": [Vector2(92, 18)],
 }
 
 signal changed
@@ -85,8 +88,10 @@ func _cost(kind: String, level_index: int) -> int:
     match kind:
         "wall":
             arr = GameConfig.cost_wall
-        "archer_post":
+        "archer_post", "bow_rack":
             arr = GameConfig.cost_archer_post
+        "hammer_rack":
+            arr = GameConfig.cost_builder_hut
         _:
             arr = GameConfig.cost_castle
     return int(arr[clampi(level_index, 0, arr.size() - 1)])
@@ -178,8 +183,8 @@ func menu_rows() -> Array:
         if gold < cost and build_btn.begins_with("Build"):
             build_info += "  (not enough coins)"
         rows.append({"title": "%s" % NAMES[kind], "info": build_info, "button": build_btn, "enabled": build_enabled, "kind": kind, "action": "build"})
-        # upgrade row
-        if n > 0:
+        # Racks are one-time equipment stations, not upgradeable buildings.
+        if n > 0 and kind not in ["bow_rack", "hammer_rack"]:
             var target: int = lvl + 1
             var up_btn: String = "Max level"
             var up_enabled: bool = false
@@ -195,42 +200,13 @@ func menu_rows() -> Array:
                 else:
                     up_enabled = true
             rows.append({"title": "Upgrade %s" % NAMES[kind], "info": up_info, "button": up_btn, "enabled": up_enabled, "kind": kind, "action": "upgrade"})
-    var available_citizens: int = _jobless_count()
-    for job_name in ["archer", "builder"]:
-        var job_title: String = "Archer" if job_name == "archer" else "Builder"
-        var job_cost: int = 1 if job_name == "archer" else 0
-        var can_hire: bool = available_citizens > 0 and gold >= job_cost
-        var hire_button: String = "Assign 1 citizen" if job_cost == 0 else "Assign 1 citizen  %d coin" % job_cost
-        if available_citizens <= 0:
-            hire_button = "No jobless citizens"
-        elif gold < job_cost:
-            hire_button = "Need %d coin" % job_cost
-        rows.append({
-            "title": job_title,
-            "info": "%d bekerja tanpa bangunan khas. Kos: %d Gold Coin setiap pengambilan." % [_job_count(job_name), job_cost],
-            "button": hire_button,
-            "enabled": can_hire,
-            "kind": job_name,
-            "action": "hire"
-        })
+    # Citizens take equipment from a completed rack automatically; there is no job-assignment menu.
     return rows
 
 
 ## Performs a menu action for a player. Returns a short result message.
 func do_action(kind: String, action: String, player_id: int) -> String:
-    if kind in ["archer", "builder"] and action == "hire":
-        if _jobless_count() <= 0:
-            return "No jobless citizens available."
-        var hire_cost: int = 1 if kind == "archer" else 0
-        if hire_cost > 0 and not GameState.spend_gold(hire_cost, player_id):
-            return "Not enough Gold Coins."
-        for c in get_tree().get_nodes_in_group("citizens"):
-            var cz := c as Citizen
-            if cz != null and cz.job == "":
-                cz.set_job(kind, null)
-                changed.emit()
-                return "Citizen assigned as a %s for %d Gold Coin(s)." % [kind, hire_cost]
-        return "No jobless citizens available."
+    # Job assignment is driven by completed bow/hammer racks in assign_jobs().
     if not SLOTS.has(kind):
         return ""
     if kind == "wall":
