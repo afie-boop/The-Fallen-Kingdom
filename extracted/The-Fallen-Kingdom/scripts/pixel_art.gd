@@ -754,7 +754,7 @@ static func _palisade(horizontal: bool) -> Image:
     for x in w:
         var bank_y: int = 25 + (x % 2)
         _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
-        _rect(img, x, bank_y, 1, 1, moss if x % 3 else moss_light)
+        _rect(img, x, bank_y, 1, 1, moss if x % 3 else vertical_moss_light)
     _rect(img, 0, h - 2, w, 2, soil_dark)
 
     if horizontal:
@@ -768,7 +768,7 @@ static func _palisade(horizontal: bool) -> Image:
     var post_mid := Color(0.48, 0.31, 0.18)
     var post_light := Color(0.63, 0.43, 0.27)
     var moss_dark := Color(0.22, 0.29, 0.16)
-    var moss_light := Color(0.39, 0.43, 0.23)
+    var vertical_moss_light := Color(0.39, 0.43, 0.23)
 
     # Batang penghubung menegak di belakang tiang.
     _rect(vertical, 13, 0, 4, 64, post_dark)
@@ -796,15 +796,15 @@ static func _palisade(horizontal: bool) -> Image:
 
     # Lumut tumbuh bertompok pada permukaan kayu dan batang penghubung.
     _rect(vertical, 12, 10, 2, 2, moss_dark)
-    _rect(vertical, 13, 9, 2, 1, moss_light)
+    _rect(vertical, 13, 9, 2, 1, vertical_moss_light)
     _rect(vertical, 17, 25, 2, 3, moss_dark)
-    _rect(vertical, 16, 26, 1, 2, moss_light)
+    _rect(vertical, 16, 26, 1, 2, vertical_moss_light)
     _rect(vertical, 12, 43, 2, 2, moss_dark)
-    _rect(vertical, 13, 42, 2, 1, moss_light)
+    _rect(vertical, 13, 42, 2, 1, vertical_moss_light)
     _rect(vertical, 17, 57, 2, 2, moss_dark)
-    _rect(vertical, 16, 58, 1, 1, moss_light)
+    _rect(vertical, 16, 58, 1, 1, vertical_moss_light)
     _rect(vertical, 13, 34, 1, 3, moss_dark)
-    _rect(vertical, 16, 49, 1, 2, moss_light)
+    _rect(vertical, 16, 49, 1, 2, vertical_moss_light)
     return vertical
 
 
