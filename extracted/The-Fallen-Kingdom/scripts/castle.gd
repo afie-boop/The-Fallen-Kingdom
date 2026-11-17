@@ -6,7 +6,7 @@ extends StaticBody2D
 signal hp_changed(hp: float, max_hp: float)
 signal notice(text: String)
 signal interacted
-signal campfire_upgraded
+signal campfire_upgraded(lit: bool)
 
 var hp: float = 500.0
 var max_hp: float = 500.0
@@ -129,7 +129,7 @@ func interact(player: Player) -> void:
     elif GameState.spend_gold(3, player.player_id):
         set_lit(true)
         GameState.campfire_lit = true
-        campfire_upgraded.emit()
+        campfire_upgraded.emit(campfire_lit)
         notice.emit("Campfire lit! Bow Shop opened on the right; Hammer Shop opened on the left.")
     else:
         notice.emit("Lighting the Campfire costs 3 Gold Coins.")
