@@ -320,13 +320,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_shop_payment_display(target: Node2D) -> void:
-    if target is EquipmentShop and not player.dead:
-        var kind: String = str(target.get("item_kind"))
-        var cost: int = 2 if kind == "bow" else 3
-        var paid: int = int(GameState.equipment_payment.get(kind, 0))
-        player.set_shop_payment_display(true, cost, paid)
-    else:
-        player.set_shop_payment_display(false)
+    for shop_node in get_tree().get_nodes_in_group("equipment_shops"):
+        var shop := shop_node as EquipmentShop
+        if shop != null:
+            var is_target: bool = shop == target and not player.dead
+            var kind: String = shop.item_kind
+            var cost: int = 2 if kind == "bow" else 3
+            var paid: int = int(GameState.equipment_payment.get(kind, 0))
+            shop.set_payment_display(is_target, cost, paid)
 
 
 func _process_shop_hold(delta: float) -> void:
