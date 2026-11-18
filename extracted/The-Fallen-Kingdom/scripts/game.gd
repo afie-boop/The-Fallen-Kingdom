@@ -306,6 +306,7 @@ func _process(delta: float) -> void:
         var target: Node2D = _nearest_interactable()
         hud.set_interact_available(target != null and not player.dead)
         hud.set_prompt(_prompt_for(target) if not player.dead else "")
+        _update_shop_payment_display(target)
     _process_shop_hold(delta)
     _autosave_t += delta
     if _autosave_t >= GameConfig.autosave_interval:
@@ -316,6 +317,16 @@ func _unhandled_input(event: InputEvent) -> void:
     var k := event as InputEventKey
     if k != null and k.pressed and not k.echo and k.physical_keycode == KEY_E:
         _on_interact()
+
+
+func _update_shop_payment_display(target: Node2D) -> void:
+    if target is EquipmentShop and not player.dead:
+        var kind: String = str(target.get("item_kind"))
+        var cost: int = 2 if kind == "bow" else 3
+        var paid: int = int(GameState.equipment_payment.get(kind, 0))
+        player.set_shop_payment_display(true, cost, paid)
+    else:
+        player.set_shop_payment_display(false)
 
 
 func _process_shop_hold(delta: float) -> void:
