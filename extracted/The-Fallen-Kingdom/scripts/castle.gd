@@ -16,6 +16,9 @@ var interact_range: float = 90.0
 var _sprite: Sprite2D
 var _warn_cd: float = 0.0
 var campfire_lit: bool = false
+var payment_visible: bool = false
+var payment_cost: int = 0
+var payment_paid: int = 0
 
 
 func _ready() -> void:
@@ -65,7 +68,53 @@ func _process(delta: float) -> void:
     _warn_cd = maxf(0.0, _warn_cd - delta)
 
 
+func set_payment_display(visible: bool, cost: int = 0, paid: int = 0) -> void:
+    var next_cost: int = maxi(0, cost)
+    var next_paid: int = clampi(paid, 0, next_cost)
+    if payment_visible == visible and payment_cost == next_cost and payment_paid == next_paid:
+        return
+    payment_visible = visible
+    payment_cost = next_cost
+    payment_paid = next_paid
+    queue_redraw()
+
+
+## Returns -1 if payment cannot continue, 0 for partial payment, 1 when the campfire is lit.
+func pay_one_coin(player: Player) -> int:
+    if campfire_lit:
+        return -1
+    if not GameState.spend_gold(1, player.player_id):
+        notice.emit("Not enough Gold Coins. Lighting the Campfire costs 3.")
+        return -1
+    GameState.campfire_payment += 1
+    if GameState.campfire_payment >= 3:
+        GameState.campfire_payment = 0
+        set_lit(true)
+        GameState.campfire_lit = true
+        campfire_upgraded.emit(campfire_lit)
+        notice.emit("Campfire lit! Bow Shop opened on the right; Hammer Shop opened on the left.")
+        interacted.emit()
+        return 1
+    notice.emit("Paid %d/3 Gold Coins to light the Campfire." % GameState.campfire_payment)
+    queue_redraw()
+    return 0
+
+
 func _draw() -> void:
+    if payment_visible and payment_cost > 0:
+        var slot_gap: float = 15.0
+        var total_width: float = float(payment_cost - 1) * slot_gap
+        var start_x: float = -total_width * 0.5
+        var slot_y: float = -43.0
+        for i in range(payment_cost):
+            var center := Vector2(start_x + float(i) * slot_gap, slot_y)
+            draw_circle(center, 6.0, Color("#332719"))
+            draw_circle(center, 4.8, Color("#d7dce2") if i >= payment_paid else Color("#f1c34e"))
+            draw_circle(center, 2.2, Color("#fff0b5") if i < payment_paid else Color("#7b818a"))
+            if i < payment_paid:
+                draw_line(center + Vector2(-2.0, 0.0), center + Vector2(2.0, 0.0), Color("#9a681d"), 1.0)
+        var label: String = "%d/%d" % [payment_paid, payment_cost]
+        draw_string(ThemeDB.fallback_font, Vector2(-13.0, -53.0), label, HORIZONTAL_ALIGNMENT_CENTER, 26.0, 8, Color("#fff0b5"))
     if hp < max_hp:
         var w: float = 48.0
         var bar_y: float = -28.0
@@ -123,14 +172,9 @@ func _make_lit_fire_texture() -> Texture2D:
     return ImageTexture.create_from_image(img)
 
 
-func interact(player: Player) -> void:
+func interact(_player: Player) -> void:
     if campfire_lit:
         notice.emit("The campfire is already lit. Bow Shop and Hammer Shop are open.")
-    elif GameState.spend_gold(3, player.player_id):
-        set_lit(true)
-        GameState.campfire_lit = true
-        campfire_upgraded.emit(campfire_lit)
-        notice.emit("Campfire lit! Bow Shop opened on the right; Hammer Shop opened on the left.")
     else:
-        notice.emit("Lighting the Campfire costs 3 Gold Coins.")
+        notice.emit("Hold USE / E to pay 3 Gold Coins and light the Campfire.")
     interacted.emit()
