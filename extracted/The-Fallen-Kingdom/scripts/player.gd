@@ -19,6 +19,9 @@ var _flash: float = 0.0
 var _anim_t: float = 0.0
 var _sprite: Sprite2D
 var _was_swinging: bool = false
+var shop_payment_visible: bool = false
+var shop_payment_cost: int = 0
+var shop_payment_paid: int = 0
 
 
 func _ready() -> void:
@@ -91,7 +94,33 @@ func _keyboard_vector() -> Vector2:
     return Vector2(x, y)
 
 
+func set_shop_payment_display(visible: bool, cost: int = 0, paid: int = 0) -> void:
+    var next_cost: int = maxi(0, cost)
+    var next_paid: int = clampi(paid, 0, next_cost)
+    if shop_payment_visible == visible and shop_payment_cost == next_cost and shop_payment_paid == next_paid:
+        return
+    shop_payment_visible = visible
+    shop_payment_cost = next_cost
+    shop_payment_paid = next_paid
+    queue_redraw()
+
+
 func _draw() -> void:
+    if shop_payment_visible and shop_payment_cost > 0:
+        # Floating coin slots above the monarch, like Kingdom Two Crowns.
+        var slot_gap: float = 15.0
+        var total_width: float = float(shop_payment_cost - 1) * slot_gap
+        var start_x: float = -total_width * 0.5
+        var slot_y: float = -39.0
+        for i in range(shop_payment_cost):
+            var center := Vector2(start_x + float(i) * slot_gap, slot_y)
+            draw_circle(center, 6.0, Color("#332719"))
+            draw_circle(center, 4.8, Color("#d7dce2") if i >= shop_payment_paid else Color("#f1c34e"))
+            draw_circle(center, 2.2, Color("#fff0b5") if i < shop_payment_paid else Color("#7b818a"))
+            if i < shop_payment_paid:
+                draw_line(center + Vector2(-2.0, 0.0), center + Vector2(2.0, 0.0), Color("#9a681d"), 1.0)
+        var label: String = "%d/%d" % [shop_payment_paid, shop_payment_cost]
+        draw_string(ThemeDB.fallback_font, Vector2(-13.0, -49.0), label, HORIZONTAL_ALIGNMENT_CENTER, 26.0, 8, Color("#fff0b5"))
     if _swing_t > 0.0:
         var a: float = facing.angle()
         draw_arc(Vector2(0, -6) + facing * 10.0, 11.0, a - 0.9, a + 0.9, 8, Color(1, 1, 1, 0.85), 2.0)
