@@ -320,6 +320,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_shop_payment_display(target: Node2D) -> void:
+    var campfire_target: bool = target == castle and not player.dead and not castle.campfire_lit
+    castle.set_payment_display(campfire_target, 3, GameState.campfire_payment)
     for shop_node in get_tree().get_nodes_in_group("equipment_shops"):
         var shop := shop_node as EquipmentShop
         if shop != null:
@@ -333,7 +335,8 @@ func _update_shop_payment_display(target: Node2D) -> void:
 func _process_shop_hold(delta: float) -> void:
     var held: bool = hud.interact_button.held or Input.is_physical_key_pressed(KEY_E)
     var target: Node2D = _nearest_interactable() if held and not player.dead else null
-    if held and target is EquipmentShop:
+    var can_pay: bool = target is EquipmentShop or (target == castle and not castle.campfire_lit)
+    if held and can_pay:
         if not _shop_hold_used:
             _shop_hold_t += delta
             if _shop_hold_t >= SHOP_COIN_INTERVAL:
@@ -400,8 +403,8 @@ func _on_interact() -> void:
     if player.dead:
         return
     var target: Node2D = _nearest_interactable()
-    if target != null and target is EquipmentShop:
-        return # Equipment purchases require holding USE / E.
+    if target != null and (target is EquipmentShop or (target == castle and not castle.campfire_lit)):
+        return # Campfire and equipment purchases require holding USE / E.
     if target != null and target.has_method("interact"):
         target.call("interact", player)
     else:
