@@ -6,12 +6,25 @@ var item_kind: String = "bow"
 var interact_range: float = 82.0
 var prompt_text: String = "Hold USE / E to pay"
 const MAX_STOCK: int = 4
+var payment_visible: bool = false
+var payment_cost: int = 0
+var payment_paid: int = 0
 
 
 func _ready() -> void:
     add_to_group("interactable")
     add_to_group("equipment_shops")
     _update_prompt()
+    queue_redraw()
+
+func set_payment_display(visible: bool, cost: int = 0, paid: int = 0) -> void:
+    var next_cost: int = maxi(0, cost)
+    var next_paid: int = clampi(paid, 0, next_cost)
+    if payment_visible == visible and payment_cost == next_cost and payment_paid == next_paid:
+        return
+    payment_visible = visible
+    payment_cost = next_cost
+    payment_paid = next_paid
     queue_redraw()
 
 
@@ -77,6 +90,22 @@ func take_tool() -> String:
 
 
 func _draw() -> void:
+    if payment_visible and payment_cost > 0:
+        # Payment slots float above the stall being paid for, not above the player.
+        var slot_gap: float = 15.0
+        var total_width: float = float(payment_cost - 1) * slot_gap
+        var start_x: float = -total_width * 0.5
+        var slot_y: float = -72.0
+        for i in range(payment_cost):
+            var center := Vector2(start_x + float(i) * slot_gap, slot_y)
+            draw_circle(center, 6.0, Color("#332719"))
+            draw_circle(center, 4.8, Color("#d7dce2") if i >= payment_paid else Color("#f1c34e"))
+            draw_circle(center, 2.2, Color("#fff0b5") if i < payment_paid else Color("#7b818a"))
+            if i < payment_paid:
+                draw_line(center + Vector2(-2.0, 0.0), center + Vector2(2.0, 0.0), Color("#9a681d"), 1.0)
+        var label: String = "%d/%d" % [payment_paid, payment_cost]
+        draw_string(ThemeDB.fallback_font, Vector2(-13.0, -82.0), label, HORIZONTAL_ALIGNMENT_CENTER, 26.0, 8, Color("#fff0b5"))
+
     var wood := Color("#76502f")
     var wood_light := Color("#a97843")
     var wood_dark := Color("#3d291d")
