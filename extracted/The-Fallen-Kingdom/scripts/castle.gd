@@ -106,6 +106,11 @@ func pay_one_coin(player: Player) -> int:
     if not GameState.spend_gold(1, player.player_id):
         notice.emit("Not enough Gold Coins. Lighting the Campfire costs 3.")
         return -1
+    var payment_coin := COIN_SCENE.instantiate() as CoinPickup
+    get_parent().add_child(payment_coin)
+    payment_coin.global_position = player.global_position + Vector2(0.0, -24.0)
+    payment_coin.start_payment_animation(global_position + Vector2(0.0, -43.0))
+
     payment_paid += 1
     if payment_paid >= 3:
         payment_paid = 0
