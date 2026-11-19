@@ -14,6 +14,8 @@ var spawn_point: Vector2 = Vector2.ZERO
 var prompt_text: String = "Extinguished campfire"
 var interact_range: float = 90.0
 var _sprite: Sprite2D
+var _glow: Sprite2D
+var _fire_light: PointLight2D
 var _warn_cd: float = 0.0
 var campfire_lit: bool = false
 var payment_visible: bool = false
@@ -35,7 +37,23 @@ func _ready() -> void:
     _sprite.texture = _make_unlit_fire_texture()
     _sprite.centered = true
     _sprite.position = Vector2(0, -3)
+    _glow = Sprite2D.new()
+    _glow.texture = _make_glow_texture()
+    _glow.position = Vector2(0, -10)
+    _glow.scale = Vector2(1.8, 1.35)
+    _glow.z_index = -1
+    _glow.visible = false
+    add_child(_glow)
     add_child(_sprite)
+    _fire_light = PointLight2D.new()
+    _fire_light.texture = _make_glow_texture()
+    _fire_light.position = Vector2(0, -10)
+    _fire_light.color = Color(1.0, 0.58, 0.24, 1.0)
+    _fire_light.energy = 1.35
+    _fire_light.texture_scale = 2.8
+    _fire_light.shadow_enabled = false
+    _fire_light.enabled = false
+    add_child(_fire_light)
     var shape := CollisionShape2D.new()
     var circle := CircleShape2D.new()
     circle.radius = 17.0
@@ -57,6 +75,16 @@ func _make_unlit_fire_texture() -> Texture2D:
     _fill_pixels(img, 12, 23, 5, 3, Color("#77716a"))
     _fill_pixels(img, 31, 23, 5, 3, Color("#77716a"))
     _fill_pixels(img, 21, 18, 6, 3, Color("#a39b8d"))
+    return ImageTexture.create_from_image(img)
+
+
+func _make_glow_texture() -> Texture2D:
+    var img := Image.create(96, 96, false, Image.FORMAT_RGBA8)
+    for y in range(96):
+        for x in range(96):
+            var distance: float = Vector2(float(x) - 47.5, float(y) - 47.5).length() / 47.5
+            var alpha: float = pow(maxf(0.0, 1.0 - distance), 2.2) * 0.48
+            img.set_pixel(x, y, Color(1.0, 0.58, 0.22, alpha))
     return ImageTexture.create_from_image(img)
 
 
@@ -183,6 +211,8 @@ func set_hp(value: float) -> void:
 func set_lit(value: bool) -> void:
     campfire_lit = value
     _sprite.texture = _make_lit_fire_texture() if campfire_lit else _make_unlit_fire_texture()
+    _glow.visible = campfire_lit
+    _fire_light.enabled = campfire_lit
     queue_redraw()
 
 
