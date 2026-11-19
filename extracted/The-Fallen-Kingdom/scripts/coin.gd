@@ -14,6 +14,7 @@ var _visual_only: bool = false
 var _payment_from: Vector2 = Vector2.ZERO
 var _payment_to: Vector2 = Vector2.ZERO
 var _payment_t: float = 0.0
+var _base_sprite_scale: Vector2 = Vector2.ONE
 
 
 func _ready() -> void:
@@ -24,6 +25,7 @@ func _ready() -> void:
     var coin_texture: Texture2D = PixelArt.file_tex("res://assets/animals/gold_coin.png")
     _sprite = PixelArt.make_sprite_tex(coin_texture)
     _sprite.scale = Vector2.ONE * (12.0 / float(maxi(coin_texture.get_width(), coin_texture.get_height())))
+    _base_sprite_scale = _sprite.scale
     add_child(_sprite)
     var shape := CollisionShape2D.new()
     var circle := CircleShape2D.new()
@@ -47,15 +49,21 @@ func start_payment_animation(target_position: Vector2) -> void:
     _payment_from = global_position
     _payment_to = target_position
     _payment_t = 0.0
+    _sprite.rotation = 0.0
+    _sprite.scale = _base_sprite_scale
 
 
 func _process(delta: float) -> void:
     _t += delta
     if _visual_only:
-        _payment_t = minf(1.0, _payment_t + delta / 0.32)
+        # A clear tossed-coin arc from the monarch's hand into the payment slot.
+        _payment_t = minf(1.0, _payment_t + delta / 0.46)
         var eased: float = 1.0 - pow(1.0 - _payment_t, 2.0)
-        global_position = _payment_from.lerp(_payment_to, eased) + Vector2(0.0, -10.0 * sin(_payment_t * PI))
-        _sprite.rotation = sin(_payment_t * PI * 2.0) * 0.18
+        var arc_height: float = 34.0 * 4.0 * _payment_t * (1.0 - _payment_t)
+        global_position = _payment_from.lerp(_payment_to, eased) - Vector2(0.0, arc_height)
+        _sprite.rotation = _payment_t * TAU * 2.0
+        var pulse: float = 1.0 + 0.22 * sin(_payment_t * PI)
+        _sprite.scale = _base_sprite_scale * pulse
         if _payment_t >= 1.0:
             queue_free()
         return
