@@ -87,6 +87,11 @@ func pay_one_coin(player: Player) -> int:
         GameState.notice.emit("Not enough Gold Coins. %s costs %d." % [item_kind.capitalize(), _cost()])
         return -1
 
+    var payment_coin := COIN_SCENE.instantiate() as CoinPickup
+    get_parent().add_child(payment_coin)
+    payment_coin.global_position = player.global_position + Vector2(0.0, -24.0)
+    payment_coin.start_payment_animation(global_position + Vector2(0.0, -72.0))
+
     paid += 1
     if paid >= _cost():
         payment_paid = 0
