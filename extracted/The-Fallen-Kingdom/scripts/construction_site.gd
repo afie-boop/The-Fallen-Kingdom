@@ -29,14 +29,18 @@ func _draw() -> void:
     var base := Color("#c9b58a", 0.72)
     var bright := Color("#f3d58b", 0.95)
     if site_kind == "wall":
-        var radius: float = 320.0 + float(maxi(1, target_level) - 1) * 180.0
-        if site_action == "build":
-            radius = 320.0
-        draw_arc(Vector2.ZERO, radius, 0.0, TAU, 96, base, 3.0, true)
-        draw_arc(Vector2.ZERO, radius, -PI * 0.5, -PI * 0.5 + TAU * progress, 96, bright, 4.0, true)
-        for i in range(8):
-            var p := Vector2.from_angle(TAU * float(i) / 8.0) * radius
-            draw_rect(Rect2(p - Vector2(4, 4), Vector2(8, 8)), bright, false, 2.0)
+        var half: float = 360.0 + float(maxi(1, target_level) - 1) * 180.0
+        var corners: Array[Vector2] = [
+            Vector2(-half, -half), Vector2(half, -half),
+            Vector2(half, half), Vector2(-half, half), Vector2(-half, -half)
+        ]
+        for i in range(4):
+            draw_line(corners[i], corners[i + 1], base, 3.0, true)
+            var segment_progress: float = clampf(progress * 4.0 - float(i), 0.0, 1.0)
+            if segment_progress > 0.0:
+                draw_line(corners[i], corners[i].lerp(corners[i + 1], segment_progress), bright, 4.0, true)
+        for i in range(4):
+            draw_rect(Rect2(corners[i] - Vector2(5, 5), Vector2(10, 10)), bright, false, 2.0)
     else:
         var w: float = 74.0
         var h: float = 58.0
