@@ -414,8 +414,9 @@ func _on_interact() -> void:
 func _on_zombie_killed(pos: Vector2) -> void:
     if randf() < GameConfig.zombie_coin_drop_chance:
         var coin := COIN_SCENE.instantiate() as CoinPickup
-        coin.position = pos
+        coin.position = pos + Vector2(0.0, -28.0)
         entities.add_child.call_deferred(coin)
+        coin.start_falling(pos.y)
 
 
 func _on_player_died() -> void:
