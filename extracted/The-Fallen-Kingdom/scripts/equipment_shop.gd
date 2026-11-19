@@ -37,7 +37,7 @@ func _drop_partial_payment() -> void:
         get_parent().add_child(coin)
         var offset_x: float = (float(i) - float(coins_to_drop - 1) * 0.5) * 12.0
         coin.global_position = global_position + Vector2(offset_x, -72.0)
-        coin.start_falling()
+        coin.start_falling(global_position.y)
     GameState.notice.emit("%d Gold Coin(s) fell from the %s rack. Pick them up!" % [coins_to_drop, item_kind])
 
 
