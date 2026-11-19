@@ -346,6 +346,8 @@ func _process_shop_hold(delta: float) -> void:
                     _shop_hold_used = true
                     _shop_hold_t = 0.0
                 elif result > 0:
+                    # One successful purchase per hold; require release before buying again.
+                    _shop_hold_used = true
                     _shop_hold_t = 0.0
     else:
         _shop_hold_t = 0.0
