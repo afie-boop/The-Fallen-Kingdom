@@ -19,6 +19,8 @@ var campfire_lit: bool = false
 var payment_visible: bool = false
 var payment_cost: int = 0
 var payment_paid: int = 0
+var _payment_timeout: float = 0.0
+const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
 
 
 func _ready() -> void:
@@ -66,6 +68,24 @@ func _fill_pixels(img: Image, x: int, y: int, w: int, h: int, color: Color) -> v
 
 func _process(delta: float) -> void:
     _warn_cd = maxf(0.0, _warn_cd - delta)
+    if _payment_timeout > 0.0:
+        _payment_timeout -= delta
+        if _payment_timeout <= 0.0 and payment_paid > 0:
+            _drop_partial_payment()
+
+
+func _drop_partial_payment() -> void:
+    var coins_to_drop: int = payment_paid
+    payment_paid = 0
+    _payment_timeout = 0.0
+    queue_redraw()
+    for i in range(coins_to_drop):
+        var coin := COIN_SCENE.instantiate() as CoinPickup
+        get_parent().add_child(coin)
+        var offset_x: float = (float(i) - float(coins_to_drop - 1) * 0.5) * 12.0
+        coin.global_position = global_position + Vector2(offset_x, -43.0)
+        coin.start_falling()
+    notice.emit("%d Gold Coin(s) fell from the Campfire. Pick them up!" % coins_to_drop)
 
 
 func set_payment_display(visible: bool, cost: int = 0, paid: int = 0) -> void:
@@ -86,16 +106,18 @@ func pay_one_coin(player: Player) -> int:
     if not GameState.spend_gold(1, player.player_id):
         notice.emit("Not enough Gold Coins. Lighting the Campfire costs 3.")
         return -1
-    GameState.campfire_payment += 1
-    if GameState.campfire_payment >= 3:
-        GameState.campfire_payment = 0
+    payment_paid += 1
+    if payment_paid >= 3:
+        payment_paid = 0
+        _payment_timeout = 0.0
         set_lit(true)
         GameState.campfire_lit = true
         campfire_upgraded.emit(campfire_lit)
         notice.emit("Campfire lit! Bow Shop opened on the right; Hammer Shop opened on the left.")
         interacted.emit()
         return 1
-    notice.emit("Paid %d/3 Gold Coins to light the Campfire." % GameState.campfire_payment)
+    _payment_timeout = 1.0
+    notice.emit("Paid %d/3 Gold Coins to light the Campfire." % payment_paid)
     queue_redraw()
     return 0
 
