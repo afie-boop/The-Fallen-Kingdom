@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
         var eased: float = 1.0 - pow(1.0 - _payment_t, 2.0)
         var arc_height: float = 34.0 * 4.0 * _payment_t * (1.0 - _payment_t)
         global_position = _payment_from.lerp(_payment_to, eased) - Vector2(0.0, arc_height)
-        _sprite.rotation = _payment_t * TAU * 2.0
+        _sprite.rotation = 0.0
         var pulse: float = 1.0 + 0.22 * sin(_payment_t * PI)
         _sprite.scale = _base_sprite_scale * pulse
         if _payment_t >= 1.0:
