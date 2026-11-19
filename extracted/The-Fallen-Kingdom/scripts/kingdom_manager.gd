@@ -11,6 +11,7 @@ const EQUIPMENT_SHOP_SCRIPT: Script = preload("res://scripts/equipment_shop.gd")
 const MAX_LEVEL: int = 3
 const MAX_FENCE_LEVEL: int = 5
 const FENCE_SCRIPT: Script = preload("res://scripts/kingdom_fence.gd")
+const CONSTRUCTION_SITE_SCRIPT: Script = preload("res://scripts/construction_site.gd")
 
 ## Slot offsets from the kingdom house position (bottom-anchored buildings).
 const SLOTS: Dictionary = {
@@ -30,6 +31,7 @@ var _entities: Node2D
 var _structures: Array[Structure] = []
 var fence: KingdomFence
 var fence_level: int = 0
+var pending_site: Node2D = null
 
 
 func setup(entities: Node2D, home_pos: Vector2) -> void:
@@ -111,9 +113,11 @@ func info_text() -> String:
         citizens += 1
         if (c as Citizen).job == "":
             jobless += 1
-    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d   Builders: %d" % [
+    var builder_count: int = _job_count("builder")
+    var construction_text: String = "   Construction in progress" if is_instance_valid(pending_site) else ""
+    return "Gold: %d   Citizens: %d (jobless %d)   Archers: %d   Builders: %d%s" % [
         GameState.get_gold(), citizens, jobless,
-        _job_count("archer"), _job_count("builder")]
+        _job_count("archer"), builder_count, construction_text]
 
 
 func _workers(kind: String) -> int:
@@ -149,6 +153,8 @@ func menu_rows() -> Array:
     var rows: Array = []
     var gold: int = GameState.get_gold()
     var cl: int = castle_level()
+    var has_builder: bool = _job_count("builder") > 0
+    var construction_busy: bool = is_instance_valid(pending_site)
     for kind in KINDS:
         var n: int = count(kind)
         var lvl: int = level_of(kind)
@@ -160,7 +166,7 @@ func menu_rows() -> Array:
         if kind == "castle":
             if n == 0:
                 build_btn = "Build  %d coin" % cost
-                build_enabled = gold >= cost
+                build_enabled = gold >= cost and has_builder and not construction_busy
                 build_info = "A strong castle behind your house. Unlocks level 2 upgrades."
             else:
                 build_btn = "Built"
@@ -168,7 +174,7 @@ func menu_rows() -> Array:
         else:
             var free: bool = _free_slot(kind) >= 0
             build_btn = "Build  %d coin" % cost if free else "Full"
-            build_enabled = free and gold >= cost
+            build_enabled = free and gold >= cost and has_builder and not construction_busy
             build_info = "%d / %d built" % [n, capacity(kind)]
             if n > 0:
                 build_info += ", Lv %d" % lvl
@@ -189,8 +195,17 @@ func menu_rows() -> Array:
                 elif gold < up_cost:
                     up_info += "  (not enough coins)"
                 else:
-                    up_enabled = true
+                    up_enabled = has_builder and not construction_busy
             rows.append({"title": "Upgrade %s" % NAMES[kind], "info": up_info, "button": up_btn, "enabled": up_enabled, "kind": kind, "action": "upgrade"})
+    # Construction and upgrades require an equipped builder and only one active site at a time.
+    if not has_builder:
+        for row in rows:
+            if str(row.get("button", "")).begins_with("Build") or str(row.get("button", "")).begins_with("Upgrade"):
+                row["info"] = str(row.get("info", "")) + "  (requires a Builder)"
+    elif construction_busy:
+        for row in rows:
+            if str(row.get("button", "")).begins_with("Build") or str(row.get("button", "")).begins_with("Upgrade"):
+                row["info"] = str(row.get("info", "")) + "  (finish current construction first)"
     # Citizens take equipment from a completed rack automatically; there is no job-assignment menu.
     return rows
 
@@ -199,17 +214,20 @@ func menu_rows() -> Array:
 func do_action(kind: String, action: String, player_id: int) -> String:
     if not SLOTS.has(kind):
         return ""
+    if _job_count("builder") <= 0:
+        return "A Builder is required before construction or upgrades."
+    if is_instance_valid(pending_site):
+        return "A Builder is already working on another construction."
+
     if kind == "wall":
         if action == "build":
             if fence_level > 0:
                 return "The kingdom fence is already built."
-            if not GameState.spend_gold(_cost("wall", 0), player_id):
+            var wall_cost: int = _cost("wall", 0)
+            if not GameState.spend_gold(wall_cost, player_id):
                 return "Not enough Gold Coins."
-            fence_level = 1
-            _create_fence()
-            sync_state()
-            changed.emit()
-            return "A complete fence now surrounds your kingdom."
+            _start_construction("wall", "build", -1, 1, wall_cost)
+            return "Fence blueprint placed. A Builder will come to construct it."
         if action == "upgrade":
             if fence_level <= 0:
                 return "Build the fence first."
@@ -219,12 +237,8 @@ func do_action(kind: String, action: String, player_id: int) -> String:
             var expansion_cost: int = _cost("wall", next_level - 1)
             if not GameState.spend_gold(expansion_cost, player_id):
                 return "Not enough Gold Coins."
-            fence_level = next_level
-            if is_instance_valid(fence):
-                fence.set_level(fence_level)
-            sync_state()
-            changed.emit()
-            return "Kingdom territory expanded. Fence boundary moved outward."
+            _start_construction("wall", "upgrade", -1, next_level, expansion_cost)
+            return "Fence upgrade blueprint placed. A Builder will expand it."
     if action == "build":
         var slot: int = _free_slot(kind)
         if slot < 0 or (kind == "castle" and count("castle") > 0):
@@ -233,10 +247,8 @@ func do_action(kind: String, action: String, player_id: int) -> String:
         if not GameState.spend_gold(cost, player_id):
             return "Not enough Gold Coins."
         var lvl: int = maxi(1, level_of(kind)) if kind != "castle" else 1
-        _spawn(kind, slot, lvl, -1.0)
-        sync_state()
-        changed.emit()
-        return "%s built." % NAMES[kind]
+        _start_construction(kind, "build", slot, lvl, cost)
+        return "%s blueprint placed. A Builder will come to construct it." % NAMES[kind]
     if action == "upgrade":
         var n: int = count(kind)
         if n == 0:
@@ -249,14 +261,58 @@ func do_action(kind: String, action: String, player_id: int) -> String:
         var up_cost: int = _cost(kind, target - 1)
         if not GameState.spend_gold(up_cost, player_id):
             return "Not enough Gold Coins."
-        for s in _structures:
-            if s.kind == kind and s.level < target:
-                s.set_level(target)
-        sync_state()
-        changed.emit()
-        return "%s upgraded to level %d." % [NAMES[kind], target]
+        _start_construction(kind, "upgrade", -1, target, up_cost)
+        return "%s upgrade blueprint placed. A Builder will come to upgrade it." % NAMES[kind]
     return ""
 
+
+func _start_construction(kind: String, action: String, slot: int, target: int, _cost_paid: int) -> void:
+    var site := CONSTRUCTION_SITE_SCRIPT.new() as Node2D
+    site.set("site_kind", kind)
+    site.set("site_action", action)
+    site.set("site_slot", slot)
+    site.set("target_level", target)
+    var duration: float = 7.0 if kind == "wall" else 5.5
+    if action == "upgrade":
+        duration += 1.5
+    site.set("work_required", duration)
+    var site_pos: Vector2 = home
+    if kind != "wall" and slot >= 0:
+        site_pos = home + ((SLOTS[kind] as Array)[slot] as Vector2)
+    site.position = site_pos
+    var work_pos: Vector2 = site_pos + Vector2(0, 28)
+    if kind == "wall":
+        var radius: float = 320.0 + float(maxi(1, target) - 1) * 180.0
+        work_pos = home + Vector2(0, -radius)
+    site.set("work_position", work_pos)
+    _entities.add_child(site)
+    site.finished.connect(_on_construction_finished)
+    pending_site = site
+    changed.emit()
+
+
+func _on_construction_finished(site: Node2D) -> void:
+    if site != pending_site:
+        return
+    var kind: String = str(site.get("site_kind"))
+    var action: String = str(site.get("site_action"))
+    var slot: int = int(site.get("site_slot"))
+    var target: int = int(site.get("target_level"))
+    if kind == "wall":
+        fence_level = target
+        _create_fence()
+        GameState.notice.emit("Kingdom fence %s complete. Level %d." % ["built" if action == "build" else "upgraded", fence_level])
+    elif action == "build":
+        _spawn(kind, slot, target, -1.0)
+        GameState.notice.emit("%s construction complete." % NAMES.get(kind, kind))
+    else:
+        for structure in _structures:
+            if structure.kind == kind and structure.level < target:
+                structure.set_level(target)
+        GameState.notice.emit("%s upgrade complete. Level %d." % [NAMES.get(kind, kind), target])
+    pending_site = null
+    sync_state()
+    changed.emit()
 
 func _create_fence() -> void:
     if is_instance_valid(fence):
