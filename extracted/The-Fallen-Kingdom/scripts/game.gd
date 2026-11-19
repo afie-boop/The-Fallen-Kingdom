@@ -321,14 +321,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _update_shop_payment_display(target: Node2D) -> void:
     var campfire_target: bool = target == castle and not player.dead and not castle.campfire_lit
-    castle.set_payment_display(campfire_target, 3, GameState.campfire_payment)
+    castle.set_payment_display(campfire_target, 3, castle.payment_paid)
     for shop_node in get_tree().get_nodes_in_group("equipment_shops"):
         var shop := shop_node as EquipmentShop
         if shop != null:
             var is_target: bool = shop == target and not player.dead
             var kind: String = shop.item_kind
             var cost: int = 2 if kind == "bow" else 3
-            var paid: int = int(GameState.equipment_payment.get(kind, 0))
+            var paid: int = shop.payment_paid
             shop.set_payment_display(is_target, cost, paid)
 
 
