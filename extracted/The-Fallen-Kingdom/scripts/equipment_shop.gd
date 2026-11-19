@@ -90,7 +90,8 @@ func pay_one_coin(player: Player) -> int:
     var payment_coin := COIN_SCENE.instantiate() as CoinPickup
     get_parent().add_child(payment_coin)
     payment_coin.global_position = player.global_position + Vector2(player.facing.x * 9.0, -17.0)
-    payment_coin.start_payment_animation(global_position + Vector2(0.0, -72.0))
+    var slot_x: float = (float(paid) - float(_cost() - 1) * 0.5) * 15.0
+    payment_coin.start_payment_animation(global_position + Vector2(slot_x, -72.0))
 
     paid += 1
     if paid >= _cost():
