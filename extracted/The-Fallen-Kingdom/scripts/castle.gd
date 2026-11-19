@@ -40,7 +40,7 @@ func _ready() -> void:
     _glow = Sprite2D.new()
     _glow.texture = _make_glow_texture()
     _glow.position = Vector2(0, -10)
-    _glow.scale = Vector2(0.55, 0.45)
+    _glow.scale = Vector2(1.0, 0.85)
     _glow.z_index = -1
     _glow.visible = false
     add_child(_glow)
@@ -49,8 +49,8 @@ func _ready() -> void:
     _fire_light.texture = _make_glow_texture()
     _fire_light.position = Vector2(0, -10)
     _fire_light.color = Color(1.0, 0.58, 0.24, 0.85)
-    _fire_light.energy = 0.35
-    _fire_light.texture_scale = 0.9
+    _fire_light.energy = 1.05
+    _fire_light.texture_scale = 2.1
     _fire_light.shadow_enabled = false
     _fire_light.enabled = false
     add_child(_fire_light)
@@ -83,7 +83,7 @@ func _make_glow_texture() -> Texture2D:
     for y in range(96):
         for x in range(96):
             var distance: float = Vector2(float(x) - 47.5, float(y) - 47.5).length() / 47.5
-            var alpha: float = pow(maxf(0.0, 1.0 - distance), 2.2) * 0.16
+            var alpha: float = pow(maxf(0.0, 1.0 - distance), 1.8) * 0.24
             img.set_pixel(x, y, Color(1.0, 0.58, 0.22, alpha))
     return ImageTexture.create_from_image(img)
 
