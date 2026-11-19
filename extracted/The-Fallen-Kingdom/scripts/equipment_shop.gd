@@ -81,7 +81,7 @@ func pay_one_coin(player: Player) -> int:
         GameState.notice.emit("The %s rack is full (%d)." % [item_kind.capitalize(), MAX_STOCK])
         return -1
 
-    var paid: int = int(GameState.equipment_payment.get(item_kind, 0))
+    var paid: int = payment_paid
     if not GameState.spend_gold(1, player.player_id):
         _update_prompt()
         GameState.notice.emit("Not enough Gold Coins. %s costs %d." % [item_kind.capitalize(), _cost()])
