@@ -9,6 +9,8 @@ const MAX_STOCK: int = 4
 var payment_visible: bool = false
 var payment_cost: int = 0
 var payment_paid: int = 0
+var _payment_timeout: float = 0.0
+const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
 
 
 func _ready() -> void:
@@ -16,6 +18,28 @@ func _ready() -> void:
     add_to_group("equipment_shops")
     _update_prompt()
     queue_redraw()
+
+func _process(delta: float) -> void:
+    if _payment_timeout > 0.0:
+        _payment_timeout -= delta
+        if _payment_timeout <= 0.0 and payment_paid > 0:
+            _drop_partial_payment()
+
+
+func _drop_partial_payment() -> void:
+    var coins_to_drop: int = payment_paid
+    payment_paid = 0
+    _payment_timeout = 0.0
+    _update_prompt()
+    queue_redraw()
+    for i in range(coins_to_drop):
+        var coin := COIN_SCENE.instantiate() as CoinPickup
+        get_parent().add_child(coin)
+        var offset_x: float = (float(i) - float(coins_to_drop - 1) * 0.5) * 12.0
+        coin.global_position = global_position + Vector2(offset_x, -72.0)
+        coin.start_falling()
+    GameState.notice.emit("%d Gold Coin(s) fell from the %s rack. Pick them up!" % [coins_to_drop, item_kind])
+
 
 func set_payment_display(visible: bool, cost: int = 0, paid: int = 0) -> void:
     var next_cost: int = maxi(0, cost)
@@ -42,7 +66,7 @@ func has_stock() -> bool:
 
 func _update_prompt() -> void:
     var stock: int = int(GameState.equipment_stock.get(item_kind, 0))
-    var paid: int = int(GameState.equipment_payment.get(item_kind, 0))
+    var paid: int = payment_paid
     if stock >= MAX_STOCK:
         prompt_text = "Rack full (%d/%d)" % [stock, MAX_STOCK]
     else:
@@ -65,14 +89,16 @@ func pay_one_coin(player: Player) -> int:
 
     paid += 1
     if paid >= _cost():
-        GameState.equipment_payment[item_kind] = 0
+        payment_paid = 0
+        _payment_timeout = 0.0
         GameState.equipment_stock[item_kind] = stock + 1
         GameState.notice.emit("%s purchased. Stock: %d/%d." % [item_kind.capitalize(), stock + 1, MAX_STOCK])
         _update_prompt()
         queue_redraw()
         return 1
 
-    GameState.equipment_payment[item_kind] = paid
+    payment_paid = paid
+    _payment_timeout = 1.0
     GameState.notice.emit("Paid %d/%d Gold Coins for %s." % [paid, _cost(), item_kind])
     _update_prompt()
     queue_redraw()
