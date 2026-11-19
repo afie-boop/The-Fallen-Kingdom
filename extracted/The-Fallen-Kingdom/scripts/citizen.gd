@@ -20,6 +20,8 @@ var _scan_t: float = 0.0
 var _shoot_cd: float = 0.0
 var _zombie: Zombie = null
 var _repair: Node2D = null
+var _construction: Node2D = null
+var _construction_scan_t: float = 0.0
 var _sprite: Sprite2D
 var _wildlife: Wildlife = null
 var _carried_gold: int = 0
@@ -384,6 +386,20 @@ func _builder(delta: float) -> void:
         _repair = null
         _step(_station(), WORK_SPEED, delta)     # builders do not work at night
         return
+
+    # Construction sites always take priority over routine repairs.
+    _construction_scan_t -= delta
+    if (_construction == null or not is_instance_valid(_construction)) and _construction_scan_t <= 0.0:
+        _construction_scan_t = 0.35
+        _construction = _nearest_construction()
+    if _construction != null and is_instance_valid(_construction):
+        var work_pos: Vector2 = _construction.get("work_position")
+        if _step(work_pos, WORK_SPEED, delta):
+            if bool(_construction.call("work_on_site", delta)):
+                _construction = null
+                _repair = null
+        return
+
     _scan_t -= delta
     if (_repair == null or not is_instance_valid(_repair) or not _repair.call("needs_repair")) and _scan_t <= 0.0:
         _scan_t = 0.5
@@ -397,6 +413,20 @@ func _builder(delta: float) -> void:
         var lvl: int = 1
         _repair.call("repair", float(GameConfig.builder_repair_rate[lvl - 1]) * delta)
 
+
+func _nearest_construction() -> Node2D:
+    var best: Node2D = null
+    var best_distance: float = 1000000.0
+    for node in get_tree().get_nodes_in_group("construction_sites"):
+        var site := node as Node2D
+        if site == null:
+            continue
+        var work_pos: Vector2 = site.get("work_position")
+        var distance: float = global_position.distance_to(work_pos)
+        if distance < best_distance:
+            best_distance = distance
+            best = site
+    return best
 
 func _nearest_damaged() -> Node2D:
     var best: Node2D = null
