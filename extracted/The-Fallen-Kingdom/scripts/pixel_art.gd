@@ -685,7 +685,7 @@ static func _wall(horizontal: bool, level: int) -> Image:
     var w: int = 64
     var h: int = 30
     var img := _new(w, h)
-    _rect(img, 0, h - 2, w, 2, Color(0.12, 0.10, 0.08, 0.24))
+    # No dirt mound or ground shadow beneath fence segments.
 
     var stone := Color(0.58, 0.58, 0.63) if level == 2 else Color(0.42, 0.42, 0.5)
     var stone_d := _shade(stone, 0.7)
