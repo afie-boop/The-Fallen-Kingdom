@@ -282,7 +282,7 @@ func _start_construction(kind: String, action: String, slot: int, target: int, _
     site.position = site_pos
     var work_pos: Vector2 = site_pos + Vector2(0, 28)
     if kind == "wall":
-        var radius: float = 320.0 + float(maxi(1, target) - 1) * 180.0
+        var radius: float = 360.0 + float(maxi(1, target) - 1) * 180.0
         work_pos = home + Vector2(0, -radius)
     site.set("work_position", work_pos)
     _entities.add_child(site)
