@@ -286,7 +286,7 @@ func _start_construction(kind: String, action: String, slot: int, target: int, _
         work_pos = home + Vector2(0, -radius)
     site.set("work_position", work_pos)
     _entities.add_child(site)
-    site.finished.connect(_on_construction_finished)
+    site.connect("finished", Callable(self, "_on_construction_finished"))
     pending_site = site
     changed.emit()
 
