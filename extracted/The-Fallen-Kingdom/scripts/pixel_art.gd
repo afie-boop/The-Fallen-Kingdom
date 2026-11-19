@@ -715,13 +715,8 @@ static func _palisade(horizontal: bool) -> Image:
     ]
     var rail := Color(0.34, 0.22, 0.13)
     var rail_light := Color(0.52, 0.35, 0.21)
-    var soil := Color(0.31, 0.22, 0.15)
-    var soil_light := Color(0.40, 0.29, 0.19)
-    var soil_dark := Color(0.20, 0.15, 0.11)
-    var moss := Color(0.31, 0.36, 0.22)
-    var moss_light := Color(0.47, 0.48, 0.29)
-
-    _rect(img, 0, h - 3, w, 3, Color(0.12, 0.10, 0.08, 0.28))
+    # Keep the palisade clean at ground level: no dirt mound, moss bank, or soil shadow.
+    _rect(img, 0, h - 3, w, 3, Color(0.12, 0.10, 0.08, 0.10))
 
     # Dua palang mendatar menghubungkan tiang-tiang yang berjarak.
     for ry in [12, 19]:
@@ -750,12 +745,6 @@ static func _palisade(horizontal: bool) -> Image:
         for ry in [13, 20]:
             _rect(img, x + 2, ry, 1, 1, Color(0.16, 0.14, 0.12))
 
-    # Tanah dan lumut nipis di pangkal pagar.
-    for x in w:
-        var bank_y: int = 25 + (x % 2)
-        _rect(img, x, bank_y, 1, h - bank_y, soil if x % 4 else soil_light)
-        _rect(img, x, bank_y, 1, 1, moss if x % 3 else moss_light)
-    _rect(img, 0, h - 2, w, 2, soil_dark)
 
     if horizontal:
         return img
