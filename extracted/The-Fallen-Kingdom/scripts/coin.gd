@@ -56,15 +56,13 @@ func start_payment_animation(target_position: Vector2) -> void:
 func _process(delta: float) -> void:
     _t += delta
     if _visual_only:
-        # A clear tossed-coin arc from the monarch's hand into the payment slot.
-        _payment_t = minf(1.0, _payment_t + delta / 0.46)
-        var eased: float = 1.0 - pow(1.0 - _payment_t, 2.0)
-        var arc_height: float = 34.0 * 4.0 * _payment_t * (1.0 - _payment_t)
-        global_position = _payment_from.lerp(_payment_to, eased) - Vector2(0.0, arc_height)
+        # Move the coin directly into its assigned empty slot: no bounce, arc, spin, or scale pulse.
+        _payment_t = minf(1.0, _payment_t + delta / 0.24)
+        global_position = _payment_from.lerp(_payment_to, _payment_t)
         _sprite.rotation = 0.0
-        var pulse: float = 1.0 + 0.22 * sin(_payment_t * PI)
-        _sprite.scale = _base_sprite_scale * pulse
+        _sprite.scale = _base_sprite_scale
         if _payment_t >= 1.0:
+            global_position = _payment_to
             queue_free()
         return
     if _falling:
