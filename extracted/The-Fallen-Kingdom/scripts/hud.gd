@@ -13,6 +13,7 @@ signal menu_requested
 signal build_menu_requested
 signal build_closed
 signal build_action(kind: String, action: String)
+signal settings_changed(zoom: float, chunk_distance: int, quality: int)
 
 const BAR_W: float = 170.0
 
@@ -36,6 +37,12 @@ var _death_panel: Control
 var _death_info: Label
 var _respawn_btn: Button
 var _pause_panel: Control
+var _settings_panel: Control
+var _zoom_slider: HSlider
+var _chunk_slider: HSlider
+var _quality_select: OptionButton
+var _zoom_value_label: Label
+var _chunk_value_label: Label
 var _build_btn: Button
 var _build_panel: Control
 var _build_rows: VBoxContainer
@@ -82,6 +89,7 @@ func _ready() -> void:
     _minimap_close_btn.pressed.connect(_close_minimap)
     _build_death_panel()
     _build_pause_panel()
+    _build_settings_panel()
     _build_build_panel()
     _root.resized.connect(_layout)
     _layout()
@@ -164,7 +172,35 @@ func hide_death() -> void:
 
 
 func show_pause(value: bool) -> void:
+    _settings_panel.visible = false
     _pause_panel.visible = value
+
+
+func set_settings_values(zoom: float, chunk_distance: int, quality: int) -> void:
+    _zoom_slider.value = zoom
+    _chunk_slider.value = chunk_distance
+    _quality_select.select(clampi(quality, 0, 2))
+    _update_settings_labels()
+
+
+func _open_settings() -> void:
+    _pause_panel.visible = false
+    _settings_panel.visible = true
+
+
+func _close_settings() -> void:
+    _settings_panel.visible = false
+    _pause_panel.visible = true
+
+
+func _update_settings_labels() -> void:
+    _zoom_value_label.text = "%.2fx" % _zoom_slider.value
+    _chunk_value_label.text = "%d chunks" % int(_chunk_slider.value)
+
+
+func _apply_settings() -> void:
+    settings_changed.emit(float(_zoom_slider.value), int(_chunk_slider.value), _quality_select.selected)
+    _close_settings()
 
 
 # --- building ----------------------------------------------------------------
@@ -362,8 +398,53 @@ func _build_pause_panel() -> void:
     var title := _make_label(box, "Paused", 36)
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _make_button(box, "Resume").pressed.connect(func() -> void: resume_requested.emit())
+    _make_button(box, "Settings").pressed.connect(_open_settings)
     _make_button(box, "Save game").pressed.connect(func() -> void: save_requested.emit())
     _make_button(box, "Save and quit to menu").pressed.connect(func() -> void: menu_requested.emit())
+
+
+func _build_settings_panel() -> void:
+    var parts: Array = _make_overlay()
+    _settings_panel = parts[0]
+    var box: VBoxContainer = parts[1]
+    var title := _make_label(box, "Settings", 30)
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+    box.add_child(_make_label(box, "Camera Zoom", 17))
+    var zoom_row := HBoxContainer.new()
+    box.add_child(zoom_row)
+    _zoom_slider = HSlider.new()
+    _zoom_slider.min_value = 0.7
+    _zoom_slider.max_value = 1.6
+    _zoom_slider.step = 0.05
+    _zoom_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    zoom_row.add_child(_zoom_slider)
+    _zoom_value_label = _make_label(zoom_row, "1.00x", 16)
+    _zoom_slider.value_changed.connect(func(_v: float) -> void: _update_settings_labels())
+
+    box.add_child(_make_label(box, "Chunk Render Distance", 17))
+    var chunk_row := HBoxContainer.new()
+    box.add_child(chunk_row)
+    _chunk_slider = HSlider.new()
+    _chunk_slider.min_value = 1
+    _chunk_slider.max_value = 6
+    _chunk_slider.step = 1
+    _chunk_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    chunk_row.add_child(_chunk_slider)
+    _chunk_value_label = _make_label(chunk_row, "3 chunks", 16)
+    _chunk_slider.value_changed.connect(func(_v: float) -> void: _update_settings_labels())
+
+    box.add_child(_make_label(box, "Graphics Quality", 17))
+    _quality_select = OptionButton.new()
+    _quality_select.add_item("Low")
+    _quality_select.add_item("Medium")
+    _quality_select.add_item("High")
+    _quality_select.custom_minimum_size = Vector2(240, 44)
+    box.add_child(_quality_select)
+
+    _make_button(box, "Apply").pressed.connect(_apply_settings)
+    _make_button(box, "Back").pressed.connect(_close_settings)
+    _settings_panel.visible = false
 
 
 func show_build(rows: Array, info: String, message: String) -> void:
