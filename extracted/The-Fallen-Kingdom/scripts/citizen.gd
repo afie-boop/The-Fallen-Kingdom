@@ -37,6 +37,8 @@ class CitizenActionOverlay extends Node2D:
     var phase: float = 0.0
 
     func play(action: String, duration: float) -> void:
+        if mode == action and timer > 0.0:
+            return
         mode = action
         timer = duration
         queue_redraw()
