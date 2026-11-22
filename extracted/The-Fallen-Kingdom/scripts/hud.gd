@@ -449,7 +449,7 @@ func _build_settings_panel() -> void:
     box.add_child(chunk_row)
     _chunk_slider = HSlider.new()
     _chunk_slider.min_value = 1
-    _chunk_slider.max_value = 6
+    _chunk_slider.max_value = 3
     _chunk_slider.step = 1
     _chunk_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     chunk_row.add_child(_chunk_slider)
