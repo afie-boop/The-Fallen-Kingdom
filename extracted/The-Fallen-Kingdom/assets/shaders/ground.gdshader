@@ -7,7 +7,7 @@ uniform sampler2D grass_tex : source_color, filter_linear, repeat_enable;
 uniform sampler2D dirt_tex : source_color, filter_linear, repeat_enable;     // seamless soil
 uniform sampler2D sand_tex : source_color, filter_nearest, repeat_enable;
 uniform sampler2D water_tex : source_color, filter_nearest, repeat_enable;
-uniform vec2 world_size = vec2(2400.0, 2400.0);
+uniform vec2 world_size = vec2(4800.0, 4800.0);\nuniform vec2 world_origin = vec2(0.0, 0.0);\nuniform vec2 chunk_size = vec2(512.0, 512.0);\nuniform float graphics_quality = 1.0;
 uniform vec2 grass_px = vec2(360.0, 360.0);
 uniform vec2 dirt_px = vec2(768.0, 768.0);
 uniform vec2 sand_px = vec2(240.0, 240.0);
@@ -21,11 +21,11 @@ void fragment() {
 	vec3 grass = texture(grass_tex, wp / grass_px).rgb;
 	vec3 dirt = texture(dirt_tex, wp / dirt_px).rgb;
 	vec3 sand = texture(sand_tex, wp / sand_px).rgb;
-	vec2 wuv = wp / water_px + vec2(TIME * 0.012, TIME * 0.006);
+	vec2 wuv = wp / water_px + vec2(TIME * 0.012, TIME * 0.006) * graphics_quality;
 	vec3 water = texture(water_tex, wuv).rgb;
 
 	// Grass brightness roughens the coastline and the edges of bare-soil patches.
-	float jitter = (grass.g - 0.35) * 0.35;
+	float jitter = (grass.g - 0.35) * 0.35 * graphics_quality;
 	float is_soil = smoothstep(0.62, 0.66, dirt_amount + jitter * 0.25);
 	vec3 ground = mix(grass, dirt, is_soil);
 	ground = mix(ground, ground * 0.85, smoothstep(0.58, 0.64, dirt_amount + jitter * 0.25) * (1.0 - is_soil)); // darkened grass fringe
