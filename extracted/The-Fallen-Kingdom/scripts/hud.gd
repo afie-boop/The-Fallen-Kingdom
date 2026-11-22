@@ -21,6 +21,8 @@ var joystick: TouchJoystick
 var attack_button: TouchActionButton
 var interact_button: TouchActionButton
 var pause_button: TouchActionButton
+var run_button: TouchActionButton
+var horse_stamina_bar: ProgressBar
 var touch_ui: bool = false
 
 var _root: Control
@@ -65,6 +67,14 @@ func _ready() -> void:
     add_child(_root)
     _root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _build_status()
+    horse_stamina_bar = ProgressBar.new()
+    horse_stamina_bar.position = Vector2(12, 108)
+    horse_stamina_bar.size = Vector2(140, 12)
+    horse_stamina_bar.min_value = 0.0
+    horse_stamina_bar.max_value = 100.0
+    horse_stamina_bar.value = 100.0
+    horse_stamina_bar.show_percentage = false
+    _root.add_child(horse_stamina_bar)
     _build_controls()
     _minimap = GameMiniMap.new()
     _minimap.size = Vector2(142, 142)
@@ -131,6 +141,11 @@ func _process(delta: float) -> void:
 func setup_minimap(island: IslandMap, player_node: Node2D, castle_node: Node2D, world_nodes: Node2D, world_size: Vector2) -> void:
     if _minimap != null:
         _minimap.setup(island, player_node, castle_node, world_nodes, world_size)
+
+
+func set_horse_stamina(value: float, maximum: float) -> void:
+    horse_stamina_bar.max_value = maximum
+    horse_stamina_bar.value = clampf(value, 0.0, maximum)
 
 
 func update_hp(hp: float, max_hp: float) -> void:
@@ -273,13 +288,18 @@ func _build_controls() -> void:
     interact_button.pressed.connect(func() -> void: interact_pressed.emit())
     set_interact_available(false)
 
+    run_button = TouchActionButton.new()
+    run_button.label_text = "RUN"
+    _root.add_child(run_button)
+    run_button.visible = touch_ui
+
     pause_button = TouchActionButton.new()
     pause_button.label_text = "II"
     _root.add_child(pause_button)
     pause_button.pressed.connect(func() -> void: pause_pressed.emit())
 
     # PC: show keyboard / mouse help instead of the touch controls.
-    _hint_label = _make_label(_root, "WASD / Arrows: move     Space or Left Click: attack     E: use     Esc: pause", 14)
+    _hint_label = _make_label(_root, "WASD / Arrows: move     Shift: gallop     Space or Left Click: attack     E: use     Esc: pause", 14)
     _hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _hint_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
     _hint_label.offset_top = -34.0
@@ -301,6 +321,8 @@ func _layout() -> void:
     var u: float = 88.0
     interact_button.size = Vector2(u, u)
     interact_button.position = Vector2(attack_button.position.x - u * 0.6, attack_button.position.y - u - 18.0)
+    run_button.size = Vector2(78, 78)
+    run_button.position = Vector2(vs.x - 92.0, vs.y - 238.0)
     pause_button.size = Vector2(52, 52)
     pause_button.position = Vector2(vs.x - 52.0 - 14.0, 10.0)
     if _minimap != null:
