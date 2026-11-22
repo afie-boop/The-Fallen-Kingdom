@@ -209,11 +209,39 @@ func set_hp(value: float) -> void:
 
 
 func set_lit(value: bool) -> void:
+    var ignite_now: bool = value and not campfire_lit
     campfire_lit = value
     _sprite.texture = _make_lit_fire_texture() if campfire_lit else _make_unlit_fire_texture()
-    _glow.visible = campfire_lit
-    _fire_light.enabled = campfire_lit
+
+    if ignite_now:
+        _play_ignition_animation()
+    else:
+        _sprite.scale = Vector2.ONE
+        _sprite.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        _glow.visible = campfire_lit
+        _glow.scale = Vector2(1.0, 0.85)
+        _glow.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        _fire_light.enabled = campfire_lit
+        _fire_light.energy = 1.05 if campfire_lit else 0.0
     queue_redraw()
+
+
+func _play_ignition_animation() -> void:
+    # Flame catches first, then the warm glow and light spread outward.
+    _sprite.scale = Vector2(0.38, 0.38)
+    _sprite.modulate = Color(1.0, 1.0, 1.0, 0.0)
+    _glow.visible = true
+    _glow.scale = Vector2(0.10, 0.10)
+    _glow.modulate = Color(1.0, 1.0, 1.0, 0.0)
+    _fire_light.enabled = true
+    _fire_light.energy = 0.0
+
+    var tween := create_tween().set_parallel(true)
+    tween.tween_property(_sprite, "scale", Vector2.ONE, 0.48).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tween.tween_property(_sprite, "modulate:a", 1.0, 0.30).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    tween.tween_property(_glow, "scale", Vector2(1.0, 0.85), 0.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+    tween.tween_property(_glow, "modulate:a", 1.0, 0.62).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    tween.tween_property(_fire_light, "energy", 1.05, 0.72).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _make_lit_fire_texture() -> Texture2D:
