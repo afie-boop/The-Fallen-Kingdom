@@ -47,7 +47,9 @@ func setup(entities: Node2D, home_pos: Vector2) -> void:
             _spawn(kind, slot, int(d.get("level", 1)), float(d.get("hp", -1.0)))
     if fence_level > 0:
         _create_fence()
-    set_campfire_lit(GameState.campfire_lit)
+    # Existing saves show completed stalls immediately; only a fresh ignition animates them.
+    if GameState.campfire_lit:
+        _sync_equipment_shops(false)
 
 
 # --- queries -----------------------------------------------------------------
@@ -360,10 +362,10 @@ func _worker_for(s: Structure) -> Citizen:
 func set_campfire_lit(lit: bool) -> void:
     if not lit or _entities == null:
         return
-    _sync_equipment_shops()
+    _sync_equipment_shops(true)
 
 
-func _sync_equipment_shops() -> void:
+func _sync_equipment_shops(animate_appearance: bool = true) -> void:
     var has_bow := false
     var has_hammer := false
     for node in _entities.get_children():
@@ -376,28 +378,14 @@ func _sync_equipment_shops() -> void:
         var bow_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
         bow_shop.item_kind = "bow"
         bow_shop.position = home + Vector2(150, 18)
+        bow_shop.animate_on_spawn = animate_appearance
         _entities.add_child(bow_shop)
     if not has_hammer:
         var hammer_shop := EQUIPMENT_SHOP_SCRIPT.new() as EquipmentShop
         hammer_shop.item_kind = "hammer"
         hammer_shop.position = home + Vector2(-150, 18)
+        hammer_shop.animate_on_spawn = animate_appearance
         _entities.add_child(hammer_shop)
-
-    # Job/equipment pickup stalls get their own small timber frame as soon
-    # as the campfire is lit. These frames are decorative and need no Builder.
-    _ensure_employment_scaffold(home + Vector2(150, 18))
-    _ensure_employment_scaffold(home + Vector2(-150, 18))
-
-
-func _ensure_employment_scaffold(at: Vector2) -> void:
-    for node in get_tree().get_nodes_in_group("employment_scaffolds"):
-        if node is Node2D and (node as Node2D).position.distance_to(at + Vector2(0, -18)) < 2.0:
-            return
-    var frame := CONSTRUCTION_SITE_SCRIPT.new() as Node2D
-    frame.set("site_kind", "employment")
-    frame.position = at + Vector2(0, -18)
-    frame.z_index = 1
-    _entities.add_child(frame)
 
 
 ## Compatibility hook: citizens now receive jobs only after collecting tools.
