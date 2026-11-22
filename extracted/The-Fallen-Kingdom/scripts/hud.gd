@@ -45,9 +45,6 @@ var build_open: bool = false
 var _clock_t: float = 0.0
 var _hint_label: Label
 var _minimap: GameMiniMap
-var _clock_panel: Panel
-var _message_panel: Panel
-var _prompt_panel: Panel
 
 
 func _ready() -> void:
@@ -116,20 +113,15 @@ func update_hp(hp: float, max_hp: float) -> void:
 func show_message(text: String, seconds: float = 2.8) -> void:
     _msg_label.text = text
     _msg_label.modulate.a = 1.0
-    _message_panel.visible = true
-    _message_panel.modulate.a = 1.0
     if _msg_tween != null and _msg_tween.is_valid():
         _msg_tween.kill()
     _msg_tween = create_tween()
     _msg_tween.tween_interval(seconds)
-    _msg_tween.tween_property(_msg_label, "modulate:a", 0.0, 0.55)
-    _msg_tween.parallel().tween_property(_message_panel, "modulate:a", 0.0, 0.55)
+    _msg_tween.tween_property(_msg_label, "modulate:a", 0.0, 0.6)
 
 
 func set_prompt(text: String) -> void:
-    var active: bool = text != ""
-    _prompt_label.text = ("Press USE / E: " + text) if active else ""
-    _prompt_panel.visible = active
+    _prompt_label.text = ("Press USE / E: " + text) if text != "" else ""
 
 
 func set_interact_available(available: bool) -> void:
@@ -157,55 +149,6 @@ func show_pause(value: bool) -> void:
 
 # --- building ----------------------------------------------------------------
 
-func _make_card(parent: Node, pos: Vector2, card_size: Vector2, fill: Color = Color(0.035, 0.045, 0.052, 0.88), border: Color = Color(0.68, 0.55, 0.32, 0.72)) -> Panel:
-    var card := Panel.new()
-    card.position = pos
-    card.size = card_size
-    card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var style := StyleBoxFlat.new()
-    style.bg_color = fill
-    style.border_color = border
-    style.set_border_width_all(1)
-    style.set_corner_radius_all(9)
-    style.shadow_color = Color(0.0, 0.0, 0.0, 0.28)
-    style.shadow_size = 7
-    style.shadow_offset = Vector2(0, 3)
-    card.add_theme_stylebox_override("panel", style)
-    parent.add_child(card)
-    return card
-
-
-func _button_style(button: Button) -> void:
-    var normal := StyleBoxFlat.new()
-    normal.bg_color = Color(0.12, 0.15, 0.16, 0.98)
-    normal.border_color = Color(0.55, 0.47, 0.32, 0.9)
-    normal.set_border_width_all(1)
-    normal.set_corner_radius_all(7)
-    var hover := StyleBoxFlat.new()
-    hover.bg_color = Color(0.20, 0.22, 0.19, 1.0)
-    hover.border_color = Color(0.85, 0.68, 0.36, 1.0)
-    hover.set_border_width_all(1)
-    hover.set_corner_radius_all(7)
-    var pressed := StyleBoxFlat.new()
-    pressed.bg_color = Color(0.30, 0.22, 0.12, 1.0)
-    pressed.border_color = Color(0.92, 0.70, 0.34, 1.0)
-    pressed.set_border_width_all(1)
-    pressed.set_corner_radius_all(7)
-    var disabled := StyleBoxFlat.new()
-    disabled.bg_color = Color(0.08, 0.09, 0.09, 0.88)
-    disabled.border_color = Color(0.25, 0.27, 0.25, 0.7)
-    disabled.set_border_width_all(1)
-    disabled.set_corner_radius_all(7)
-    button.add_theme_stylebox_override("normal", normal)
-    button.add_theme_stylebox_override("hover", hover)
-    button.add_theme_stylebox_override("pressed", pressed)
-    button.add_theme_stylebox_override("disabled", disabled)
-    button.add_theme_color_override("font_color", Color(0.93, 0.90, 0.82))
-    button.add_theme_color_override("font_hover_color", Color(1.0, 0.91, 0.68))
-    button.add_theme_color_override("font_pressed_color", Color(1.0, 0.84, 0.52))
-    button.add_theme_color_override("font_disabled_color", Color(0.48, 0.49, 0.46))
-
-
 func _make_label(parent: Node, text: String, font_size: int) -> Label:
     var l := Label.new()
     l.text = text
@@ -228,62 +171,29 @@ func _make_rect(color: Color, pos: Vector2, sz: Vector2) -> ColorRect:
 
 
 func _build_status() -> void:
-    _make_card(_root, Vector2(8, 8), Vector2(206, 112))
-    _make_rect(Color(0.01, 0.015, 0.018, 0.9), Vector2(20, 21), Vector2(BAR_W + 8.0, 18))
-    _hp_fill = _make_rect(Color(0.72, 0.20, 0.16), Vector2(22, 23), Vector2(BAR_W + 4.0, 14))
-    _hp_label = _make_label(_root, "HP", 12)
-    _hp_label.position = Vector2(26, 20)
-    _gold_label = _make_label(_root, "Gold: 0", 16)
-    _gold_label.position = Vector2(20, 45)
-    _wood_label = _make_label(_root, "Wood: 0", 14)
-    _wood_label.position = Vector2(20, 68)
-    _citizen_label = _make_label(_root, "Citizens: 0", 14)
-    _citizen_label.position = Vector2(20, 89)
-
-    _prompt_panel = _make_card(_root, Vector2.ZERO, Vector2.ZERO, Color(0.025, 0.035, 0.04, 0.9), Color(0.65, 0.54, 0.34, 0.75))
-    _prompt_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-    _prompt_panel.offset_left = 40.0
-    _prompt_panel.offset_right = -40.0
-    _prompt_panel.offset_top = -82.0
-    _prompt_panel.offset_bottom = -44.0
-    _prompt_panel.visible = false
-    _prompt_label = _make_label(_root, "", 16)
+    _make_rect(Color(0, 0, 0, 0.55), Vector2(12, 12), Vector2(BAR_W + 4.0, 20))
+    _hp_fill = _make_rect(Color(0.8, 0.15, 0.15), Vector2(14, 14), Vector2(BAR_W, 16))
+    _hp_label = _make_label(_root, "HP", 13)
+    _hp_label.position = Vector2(18, 12)
+    _gold_label = _make_label(_root, "Gold: 0", 17)
+    _gold_label.position = Vector2(12, 36)
+    _wood_label = _make_label(_root, "Wood: 0", 15)
+    _wood_label.position = Vector2(12, 60)
+    _citizen_label = _make_label(_root, "Citizens: 0", 15)
+    _citizen_label.position = Vector2(12, 82)
+    _prompt_label = _make_label(_root, "", 17)
     _prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _prompt_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-    _prompt_label.offset_left = 48.0
-    _prompt_label.offset_right = -48.0
-    _prompt_label.offset_top = -76.0
-    _prompt_label.offset_bottom = -49.0
-
-    _clock_panel = _make_card(_root, Vector2.ZERO, Vector2.ZERO, Color(0.025, 0.035, 0.04, 0.82), Color(0.60, 0.52, 0.36, 0.72))
-    _clock_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-    _clock_panel.offset_left = -112.0
-    _clock_panel.offset_right = 112.0
-    _clock_panel.offset_top = 7.0
-    _clock_panel.offset_bottom = 39.0
-    _clock_label = _make_label(_root, "", 15)
+    _prompt_label.offset_top = -78.0
+    _prompt_label.offset_bottom = -52.0
+    _clock_label = _make_label(_root, "", 16)
     _clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    _clock_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-    _clock_label.offset_left = -104.0
-    _clock_label.offset_right = 104.0
+    _clock_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
     _clock_label.offset_top = 10.0
-    _clock_label.offset_bottom = 36.0
-
-    _message_panel = _make_card(_root, Vector2.ZERO, Vector2.ZERO, Color(0.025, 0.035, 0.04, 0.92), Color(0.75, 0.60, 0.34, 0.82))
-    _message_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-    _message_panel.offset_left = 70.0
-    _message_panel.offset_right = -70.0
-    _message_panel.offset_top = 43.0
-    _message_panel.offset_bottom = 78.0
-    _message_panel.modulate.a = 0.0
-    _message_panel.visible = false
-    _msg_label = _make_label(_root, "", 17)
+    _msg_label = _make_label(_root, "", 18)
     _msg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _msg_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-    _msg_label.offset_left = 78.0
-    _msg_label.offset_right = -78.0
-    _msg_label.offset_top = 47.0
-    _msg_label.offset_bottom = 74.0
+    _msg_label.offset_top = 44.0
     _msg_label.modulate.a = 0.0
 
 
@@ -296,14 +206,12 @@ func _build_controls() -> void:
 
     attack_button = TouchActionButton.new()
     attack_button.label_text = "HIT"
-    attack_button.tint = Color(0.60, 0.22, 0.18)
     _root.add_child(attack_button)
     attack_button.visible = touch_ui
     attack_button.pressed.connect(func() -> void: attack_pressed.emit())
 
     interact_button = TouchActionButton.new()
     interact_button.label_text = "USE"
-    interact_button.tint = Color(0.55, 0.43, 0.20)
     _root.add_child(interact_button)
     interact_button.visible = touch_ui
     interact_button.pressed.connect(func() -> void: interact_pressed.emit())
@@ -311,7 +219,6 @@ func _build_controls() -> void:
 
     pause_button = TouchActionButton.new()
     pause_button.label_text = "II"
-    pause_button.tint = Color(0.28, 0.34, 0.34)
     _root.add_child(pause_button)
     pause_button.pressed.connect(func() -> void: pause_pressed.emit())
 
@@ -329,43 +236,23 @@ func _layout() -> void:
     if _root == null or joystick == null:
         return
     var vs: Vector2 = _root.size
-    var side: float = 26.0
-    var bottom: float = 34.0
+    var side: float = 44.0
+    var bottom: float = 58.0
     joystick.fit_to(vs)
-    var a: float = clampf(vs.x * 0.28, 92.0, 116.0)
+    var a: float = 116.0
     attack_button.size = Vector2(a, a)
     attack_button.position = Vector2(vs.x - a - side, vs.y - a - bottom)
-    var u: float = clampf(vs.x * 0.22, 72.0, 88.0)
+    var u: float = 88.0
     interact_button.size = Vector2(u, u)
-    interact_button.position = Vector2(attack_button.position.x - u * 0.55, attack_button.position.y - u - 12.0)
-    pause_button.size = Vector2(48, 48)
-    pause_button.position = Vector2(vs.x - 48.0 - 12.0, 10.0)
-    var map_size: float = clampf(vs.x * 0.16, 96.0, 142.0)
+    interact_button.position = Vector2(attack_button.position.x - u * 0.6, attack_button.position.y - u - 18.0)
+    pause_button.size = Vector2(52, 52)
+    pause_button.position = Vector2(vs.x - 52.0 - 14.0, 10.0)
     if _minimap != null:
-        _minimap.position = Vector2(vs.x - map_size - 12.0, 68.0)
-        _minimap.size = Vector2(map_size, map_size)
-    if _clock_panel != null and _clock_label != null:
-        if vs.x < 650.0:
-            _clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-            _clock_panel.position = Vector2(8.0, 124.0)
-            _clock_panel.size = Vector2(206.0, 30.0)
-            _clock_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-            _clock_label.position = Vector2(10.0, 126.0)
-            _clock_label.size = Vector2(202.0, 24.0)
-        else:
-            _clock_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-            _clock_panel.offset_left = -112.0
-            _clock_panel.offset_right = 112.0
-            _clock_panel.offset_top = 7.0
-            _clock_panel.offset_bottom = 39.0
-            _clock_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-            _clock_label.offset_left = -104.0
-            _clock_label.offset_right = 104.0
-            _clock_label.offset_top = 10.0
-            _clock_label.offset_bottom = 36.0
+        _minimap.position = Vector2(vs.x - 156.0, 72.0)
+        _minimap.size = Vector2(142.0, 142.0)
     if _build_btn != null:
-        _build_btn.size = Vector2(104, 42)
-        _build_btn.position = Vector2(vs.x - 104.0 - 12.0, 68.0 + map_size + 8.0)
+        _build_btn.size = Vector2(96, 44)
+        _build_btn.position = Vector2(vs.x - 96.0 - 12.0, 72.0)
 
 
 func _make_overlay() -> Array:
@@ -388,7 +275,6 @@ func _make_button(parent: Node, text: String) -> Button:
     b.text = text
     b.custom_minimum_size = Vector2(240, 54)
     b.add_theme_font_size_override("font_size", 20)
-    _button_style(b)
     parent.add_child(b)
     return b
 
@@ -430,9 +316,7 @@ func show_build(rows: Array, info: String, message: String) -> void:
         h.add_theme_constant_override("separation", 10)
         var txt := Label.new()
         txt.text = "%s\n%s" % [row["title"], row["info"]]
-        var row_button_width: float = clampf(get_viewport_rect().size.x * 0.30, 112.0, 190.0)
-        var row_text_width: float = clampf(get_viewport_rect().size.x - row_button_width - 80.0, 130.0, 330.0)
-        txt.custom_minimum_size = Vector2(row_text_width, 0)
+        txt.custom_minimum_size = Vector2(330, 0)
         txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         txt.add_theme_font_size_override("font_size", 14)
@@ -441,9 +325,7 @@ func show_build(rows: Array, info: String, message: String) -> void:
         b.text = str(row["button"])
         b.disabled = not bool(row["enabled"])
         b.custom_minimum_size = Vector2(190, 52)
-        b.add_theme_font_size_override("font_size", 15)
-        b.custom_minimum_size = Vector2(row_button_width, 48.0)
-        _button_style(b)
+        b.add_theme_font_size_override("font_size", 16)
         b.pressed.connect(_on_build_pressed.bind(str(row["kind"]), str(row["action"])))
         h.add_child(b)
         _build_rows.add_child(h)
@@ -462,8 +344,7 @@ func _on_build_pressed(kind: String, action: String) -> void:
 func _build_build_panel() -> void:
     _build_btn = Button.new()
     _build_btn.text = "BUILD"
-    _build_btn.add_theme_font_size_override("font_size", 17)
-    _button_style(_build_btn)
+    _build_btn.add_theme_font_size_override("font_size", 18)
     _root.add_child(_build_btn)
     _build_btn.pressed.connect(func() -> void: build_menu_requested.emit())
 
@@ -477,14 +358,6 @@ func _build_build_panel() -> void:
     dim.add_child(center)
     center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     var frame := PanelContainer.new()
-    var frame_style := StyleBoxFlat.new()
-    frame_style.bg_color = Color(0.055, 0.067, 0.065, 0.98)
-    frame_style.border_color = Color(0.64, 0.52, 0.31, 0.95)
-    frame_style.set_border_width_all(1)
-    frame_style.set_corner_radius_all(12)
-    frame_style.shadow_color = Color(0, 0, 0, 0.42)
-    frame_style.shadow_size = 12
-    frame.add_theme_stylebox_override("panel", frame_style)
     center.add_child(frame)
     var box := VBoxContainer.new()
     box.add_theme_constant_override("separation", 8)
@@ -501,8 +374,7 @@ func _build_build_panel() -> void:
     _build_msg.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
     box.add_child(_build_msg)
     var scroll := ScrollContainer.new()
-    var screen_size: Vector2 = get_viewport_rect().size
-    scroll.custom_minimum_size = Vector2(clampf(screen_size.x - 38.0, 310.0, 580.0), clampf(screen_size.y * 0.48, 170.0, 270.0))
+    scroll.custom_minimum_size = Vector2(580, 270)
     scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
     box.add_child(scroll)
     _build_rows = VBoxContainer.new()
@@ -512,8 +384,7 @@ func _build_build_panel() -> void:
     var close := Button.new()
     close.text = "Close"
     close.custom_minimum_size = Vector2(0, 46)
-    close.add_theme_font_size_override("font_size", 17)
-    _button_style(close)
+    close.add_theme_font_size_override("font_size", 18)
     close.pressed.connect(func() -> void: build_closed.emit())
     box.add_child(close)
 
