@@ -28,8 +28,8 @@ var _loading_bar: ProgressBar
 var _player_camera: Camera2D
 var _terrain_chunks: Array[Sprite2D] = []
 var _terrain_materials: Array[ShaderMaterial] = []
-var _terrain_chunk_size: float = 512.0
-var _chunk_render_distance: int = 3
+var _terrain_chunk_size: float = 1024.0
+var _chunk_render_distance: int = 1
 var _graphics_quality: int = 1
 var _camera_zoom_value: float = 1.0
 var _terrain_update_t: float = 0.0
@@ -277,13 +277,13 @@ func _load_render_settings() -> void:
     var config := ConfigFile.new()
     if config.load("user://render_settings.cfg") == OK:
         _camera_zoom_value = clampf(float(config.get_value("render", "zoom", 1.0)), 0.7, 1.6)
-        _chunk_render_distance = clampi(int(config.get_value("render", "chunks", 3)), 1, 6)
+        _chunk_render_distance = clampi(int(config.get_value("render", "chunks", 1)), 1, 3)
         _graphics_quality = clampi(int(config.get_value("render", "quality", 1)), 0, 2)
 
 
 func _apply_render_settings(zoom_value: float, chunk_distance: int, quality: int) -> void:
     _camera_zoom_value = clampf(zoom_value, 0.7, 1.6)
-    _chunk_render_distance = clampi(chunk_distance, 1, 6)
+    _chunk_render_distance = clampi(chunk_distance, 1, 3)
     _graphics_quality = clampi(quality, 0, 2)
     if is_instance_valid(_player_camera):
         _player_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
