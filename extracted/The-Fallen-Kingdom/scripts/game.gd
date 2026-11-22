@@ -25,6 +25,14 @@ const SHOP_COIN_INTERVAL: float = 0.28
 var _loading_layer: CanvasLayer
 var _loading_label: Label
 var _loading_bar: ProgressBar
+var _player_camera: Camera2D
+var _terrain_chunks: Array[Sprite2D] = []
+var _terrain_materials: Array[ShaderMaterial] = []
+var _terrain_chunk_size: float = 512.0
+var _chunk_render_distance: int = 3
+var _graphics_quality: int = 1
+var _camera_zoom_value: float = 1.0
+var _terrain_update_t: float = 0.0
 
 
 func _ready() -> void:
@@ -33,6 +41,7 @@ func _ready() -> void:
     if not GameState.initialized:
         GameState.reset_new_game()  # e.g. scene started directly from the editor
     _world_rect = Rect2(Vector2.ZERO, GameConfig.world_size())
+    _load_render_settings()
 
     _set_loading("Generating island...", 0.08)
     GameState.island = IslandMap.new()
@@ -133,6 +142,7 @@ func _ready() -> void:
     hud = Hud.new()
     add_child(hud)
     hud.setup_minimap(GameState.island, player, castle, entities, _world_rect.size)
+    hud.set_settings_values(_camera_zoom_value, _chunk_render_distance, _graphics_quality)
     _connect_signals()
     hud.update_hp(player.hp, player.max_hp)
     _set_loading("Finishing world...", 0.92)
@@ -197,23 +207,98 @@ func _place_small_lake() -> void:
 
 
 func _build_ground() -> void:
-    # One full-world rectangle drawn by a shader: sea, beach sand and grass in the shape of the island.
-    var ground := ColorRect.new()
-    ground.name = "Ground"
-    ground.position = Vector2.ZERO
-    ground.size = _world_rect.size
-    ground.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    ground.z_index = -10
-    var mat := ShaderMaterial.new()
-    mat.shader = load("res://assets/shaders/ground.gdshader") as Shader
-    mat.set_shader_parameter("mask_tex", GameState.island.texture)
-    mat.set_shader_parameter("grass_tex", PixelArt.file_tex("res://assets/terrain/Rumput.jpg"))
-    mat.set_shader_parameter("sand_tex", PixelArt.file_tex("res://assets/terrain/sand.png"))
-    mat.set_shader_parameter("water_tex", PixelArt.file_tex("res://assets/terrain/water.png"))
-    mat.set_shader_parameter("dirt_tex", PixelArt.file_tex("res://assets/terrain/dirt.png"))
-    mat.set_shader_parameter("world_size", _world_rect.size)
-    ground.material = mat
-    add_child(ground)
+    # Split the island into independently culled terrain chunks.
+    var ground_root := Node2D.new()
+    ground_root.name = "TerrainChunks"
+    ground_root.z_index = -10
+    add_child(ground_root)
+
+    var white_image := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+    white_image.fill(Color.WHITE)
+    var quad_texture := ImageTexture.create_from_image(white_image)
+    var shader := load("res://assets/shaders/ground.gdshader") as Shader
+    var grass_tex := PixelArt.file_tex("res://assets/terrain/Rumput.jpg")
+    var sand_tex := PixelArt.file_tex("res://assets/terrain/sand.png")
+    var water_tex := PixelArt.file_tex("res://assets/terrain/water.png")
+    var dirt_tex := PixelArt.file_tex("res://assets/terrain/dirt.png")
+
+    var y := 0.0
+    while y < _world_rect.size.y:
+        var x := 0.0
+        while x < _world_rect.size.x:
+            var chunk_size := Vector2(
+                minf(_terrain_chunk_size, _world_rect.size.x - x),
+                minf(_terrain_chunk_size, _world_rect.size.y - y)
+            )
+            var mat := ShaderMaterial.new()
+            mat.shader = shader
+            mat.set_shader_parameter("mask_tex", GameState.island.texture)
+            mat.set_shader_parameter("grass_tex", grass_tex)
+            mat.set_shader_parameter("sand_tex", sand_tex)
+            mat.set_shader_parameter("water_tex", water_tex)
+            mat.set_shader_parameter("dirt_tex", dirt_tex)
+            mat.set_shader_parameter("world_size", _world_rect.size)
+            mat.set_shader_parameter("world_origin", Vector2(x, y))
+            mat.set_shader_parameter("chunk_size", chunk_size)
+            mat.set_shader_parameter("graphics_quality", _quality_shader_value())
+
+            var chunk := Sprite2D.new()
+            chunk.texture = quad_texture
+            chunk.centered = true
+            chunk.position = Vector2(x, y) + chunk_size * 0.5
+            chunk.scale = chunk_size
+            chunk.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if _graphics_quality == 0 else CanvasItem.TEXTURE_FILTER_LINEAR
+            chunk.material = mat
+            ground_root.add_child(chunk)
+            _terrain_chunks.append(chunk)
+            _terrain_materials.append(mat)
+            x += _terrain_chunk_size
+        y += _terrain_chunk_size
+    _update_terrain_chunks()
+
+
+func _quality_shader_value() -> float:
+    return 0.0 if _graphics_quality == 0 else (0.5 if _graphics_quality == 1 else 1.0)
+
+
+func _update_terrain_chunks() -> void:
+    if _terrain_chunks.is_empty() or not is_instance_valid(player):
+        return
+    var viewport_size := get_viewport_rect().size
+    var view_radius := maxf(viewport_size.x, viewport_size.y) / maxf(0.5, _camera_zoom_value) * 0.65
+    var radius := view_radius + _terrain_chunk_size * float(_chunk_render_distance)
+    var radius_sq := radius * radius
+    for chunk in _terrain_chunks:
+        if is_instance_valid(chunk):
+            chunk.visible = chunk.position.distance_squared_to(player.global_position) <= radius_sq
+
+
+func _load_render_settings() -> void:
+    var config := ConfigFile.new()
+    if config.load("user://render_settings.cfg") == OK:
+        _camera_zoom_value = clampf(float(config.get_value("render", "zoom", 1.0)), 0.7, 1.6)
+        _chunk_render_distance = clampi(int(config.get_value("render", "chunks", 3)), 1, 6)
+        _graphics_quality = clampi(int(config.get_value("render", "quality", 1)), 0, 2)
+
+
+func _apply_render_settings(zoom_value: float, chunk_distance: int, quality: int) -> void:
+    _camera_zoom_value = clampf(zoom_value, 0.7, 1.6)
+    _chunk_render_distance = clampi(chunk_distance, 1, 6)
+    _graphics_quality = clampi(quality, 0, 2)
+    if is_instance_valid(_player_camera):
+        _player_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
+    for i in _terrain_chunks.size():
+        var chunk := _terrain_chunks[i]
+        if is_instance_valid(chunk):
+            chunk.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if _graphics_quality == 0 else CanvasItem.TEXTURE_FILTER_LINEAR
+        if i < _terrain_materials.size() and is_instance_valid(_terrain_materials[i]):
+            _terrain_materials[i].set_shader_parameter("graphics_quality", _quality_shader_value())
+    var config := ConfigFile.new()
+    config.set_value("render", "zoom", _camera_zoom_value)
+    config.set_value("render", "chunks", _chunk_render_distance)
+    config.set_value("render", "quality", _graphics_quality)
+    config.save("user://render_settings.cfg")
+    _update_terrain_chunks()
 
 
 func _build_bounds() -> void:
@@ -253,7 +338,8 @@ func _build_player() -> void:
     if GameState.player_hp > 0.0:
         player.set_hp(GameState.player_hp)
     var cam := Camera2D.new()
-    cam.zoom = Vector2(GameConfig.camera_zoom, GameConfig.camera_zoom)
+    cam.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
+    _player_camera = cam
     cam.position = Vector2(0, -8)
     cam.limit_left = 0
     cam.limit_top = 0
@@ -275,6 +361,7 @@ func _connect_signals() -> void:
     hud.build_menu_requested.connect(_open_build)
     hud.build_closed.connect(_close_build)
     hud.build_action.connect(_on_build_action)
+    hud.settings_changed.connect(_apply_render_settings)
     player.hp_changed.connect(hud.update_hp)
     player.died.connect(_on_player_died)
     castle.notice.connect(hud.show_message)
@@ -285,6 +372,10 @@ func _connect_signals() -> void:
 
 
 func _process(delta: float) -> void:
+    _terrain_update_t -= delta
+    if _terrain_update_t <= 0.0:
+        _terrain_update_t = 0.25
+        _update_terrain_chunks()
     if not is_instance_valid(player):
         return
     player.touch_move = hud.joystick.value
