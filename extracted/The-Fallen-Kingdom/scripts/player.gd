@@ -114,25 +114,67 @@ func _draw() -> void:
 
 
 func _draw_horse() -> void:
-    # Procedural side-view mount, drawn beneath the rider sprite.
-    var bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.7)
+    # Clear side-profile horse silhouette with a neck, head, mane, saddle and animated legs.
+    var bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.45)
+    var dark := Color(0.16, 0.085, 0.045)
+    var coat := Color(0.48, 0.25, 0.12)
+    var coat_light := Color(0.66, 0.39, 0.20)
+    var mane := Color(0.12, 0.075, 0.045)
+    var y: float = bob
+    # Tail behind the body.
+    draw_line(Vector2(-19, -9 + y), Vector2(-27, -3 + y + sin(_horse_t * 1.4) * 3.0), dark, 4.0, true)
+    draw_line(Vector2(-20, -8 + y), Vector2(-27, -3 + y + sin(_horse_t * 1.4) * 3.0), coat_light, 1.2, true)
+    # Far legs, then the broad barrel of the horse.
+    var stride: float = sin(_horse_t * (2.8 if horse_running else 1.4)) * (5.0 if horse_running else 1.3)
+    draw_line(Vector2(-10, 1 + y), Vector2(-13 - stride, 17 + y), dark, 4.0, true)
+    draw_line(Vector2(8, 1 + y), Vector2(11 + stride, 17 + y), dark, 4.0, true)
     var body := PackedVector2Array([
-        Vector2(-19, -1 + bob), Vector2(-15, -10 + bob),
-        Vector2(-3, -13 + bob), Vector2(12, -8 + bob),
-        Vector2(17, -1 + bob), Vector2(10, 5 + bob),
-        Vector2(-12, 5 + bob)
+        Vector2(-23, -8 + y), Vector2(-19, -17 + y), Vector2(-7, -20 + y),
+        Vector2(8, -17 + y), Vector2(17, -9 + y), Vector2(13, 1 + y),
+        Vector2(-13, 3 + y), Vector2(-22, -1 + y)
     ])
-    draw_colored_polygon(body, Color(0.43, 0.22, 0.12))
-    draw_circle(Vector2(17, -9 + bob), 5.0, Color(0.49, 0.27, 0.15))
-    draw_line(Vector2(18, -13 + bob), Vector2(21, -17 + bob), Color(0.24, 0.13, 0.08), 2.0)
-    draw_line(Vector2(14, -13 + bob), Vector2(13, -17 + bob), Color(0.24, 0.13, 0.08), 2.0)
-    draw_line(Vector2(-17, -4 + bob), Vector2(-24, -9 + bob + sin(_horse_t) * 2.0), Color(0.24, 0.13, 0.08), 3.0)
-    draw_line(Vector2(-8, 3 + bob), Vector2(-10 + sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
-    draw_line(Vector2(7, 3 + bob), Vector2(9 - sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
-    draw_line(Vector2(-2, 3 + bob), Vector2(-4 - sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
-    draw_line(Vector2(13, 1 + bob), Vector2(15 + sin(_horse_t) * 3.0, 12 + bob), Color(0.20, 0.12, 0.08), 3.0)
-    draw_line(Vector2(-11, -8 + bob), Vector2(9, -8 + bob), Color(0.72, 0.49, 0.25), 2.0)
-    draw_circle(Vector2(0, -9 + bob), 2.0, Color(0.15, 0.09, 0.06))
+    draw_colored_polygon(body, dark)
+    var inner_body := PackedVector2Array([
+        Vector2(-21, -9 + y), Vector2(-17, -15 + y), Vector2(-7, -18 + y),
+        Vector2(7, -15 + y), Vector2(14, -9 + y), Vector2(11, -1 + y),
+        Vector2(-12, 1 + y), Vector2(-20, -2 + y)
+    ])
+    draw_colored_polygon(inner_body, coat)
+    draw_line(Vector2(-14, -13 + y), Vector2(7, -14 + y), coat_light, 2.0, true)
+    # Near legs with animated knee bends and dark hooves.
+    draw_line(Vector2(-8, 0 + y), Vector2(-8 + stride, 12 + y), coat, 5.0, true)
+    draw_line(Vector2(-8 + stride, 12 + y), Vector2(-11 + stride, 18 + y), dark, 3.5, true)
+    draw_line(Vector2(9, -1 + y), Vector2(9 - stride, 11 + y), coat_light, 5.0, true)
+    draw_line(Vector2(9 - stride, 11 + y), Vector2(13 - stride, 18 + y), dark, 3.5, true)
+    # Neck, cheek and muzzle make the head clearly horse-shaped.
+    var neck := PackedVector2Array([
+        Vector2(7, -16 + y), Vector2(12, -26 + y), Vector2(20, -31 + y),
+        Vector2(25, -26 + y), Vector2(20, -15 + y), Vector2(15, -7 + y)
+    ])
+    draw_colored_polygon(neck, dark)
+    var neck_inner := PackedVector2Array([
+        Vector2(10, -17 + y), Vector2(14, -25 + y), Vector2(20, -28 + y),
+        Vector2(22, -25 + y), Vector2(18, -16 + y), Vector2(14, -10 + y)
+    ])
+    draw_colored_polygon(neck_inner, coat_light)
+    draw_circle(Vector2(23, -29 + y), 5.0, dark)
+    draw_circle(Vector2(23, -29 + y), 3.7, coat)
+    draw_colored_polygon(PackedVector2Array([
+        Vector2(25, -30 + y), Vector2(31, -27 + y), Vector2(29, -23 + y),
+        Vector2(23, -24 + y), Vector2(20, -27 + y)
+    ]), coat_light)
+    # Ears, forelock, eye and nostril.
+    draw_colored_polygon(PackedVector2Array([Vector2(19, -32 + y), Vector2(17, -40 + y), Vector2(23, -34 + y)]), dark)
+    draw_colored_polygon(PackedVector2Array([Vector2(24, -32 + y), Vector2(27, -38 + y), Vector2(27, -31 + y)]), dark)
+    draw_line(Vector2(12, -28 + y), Vector2(19, -35 + y), mane, 4.0, true)
+    draw_circle(Vector2(26, -29 + y), 1.1, Color(0.98, 0.88, 0.55))
+    draw_circle(Vector2(30, -25 + y), 0.9, dark)
+    # Saddle and reins.
+    draw_colored_polygon(PackedVector2Array([
+        Vector2(-7, -19 + y), Vector2(5, -19 + y), Vector2(9, -12 + y),
+        Vector2(-5, -11 + y), Vector2(-10, -15 + y)
+    ]), Color(0.25, 0.12, 0.07))
+    draw_line(Vector2(7, -17 + y), Vector2(20, -26 + y), Color(0.86, 0.68, 0.35), 1.2, true)
 
 
 func try_attack() -> void:
