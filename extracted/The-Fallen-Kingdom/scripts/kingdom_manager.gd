@@ -383,6 +383,22 @@ func _sync_equipment_shops() -> void:
         hammer_shop.position = home + Vector2(-150, 18)
         _entities.add_child(hammer_shop)
 
+    # Job/equipment pickup stalls get their own small timber frame as soon
+    # as the campfire is lit. These frames are decorative and need no Builder.
+    _ensure_employment_scaffold(home + Vector2(150, 18))
+    _ensure_employment_scaffold(home + Vector2(-150, 18))
+
+
+func _ensure_employment_scaffold(at: Vector2) -> void:
+    for node in _entities.get_nodes_in_group("employment_scaffolds"):
+        if node is Node2D and (node as Node2D).position.distance_to(at + Vector2(0, -18)) < 2.0:
+            return
+    var frame := CONSTRUCTION_SITE_SCRIPT.new() as Node2D
+    frame.set("site_kind", "employment")
+    frame.position = at + Vector2(0, -18)
+    frame.z_index = -1
+    _entities.add_child(frame)
+
 
 ## Compatibility hook: citizens now receive jobs only after collecting tools.
 func assign_jobs() -> void:
