@@ -19,6 +19,11 @@ var _flash: float = 0.0
 var _anim_t: float = 0.0
 var _sprite: Sprite2D
 var _was_swinging: bool = false
+var sprint_requested: bool = false
+var horse_stamina: float = 100.0
+var horse_max_stamina: float = 100.0
+var horse_running: bool = false
+var _horse_t: float = 0.0
 
 
 func _ready() -> void:
@@ -29,6 +34,7 @@ func _ready() -> void:
     max_hp = GameConfig.player_max_hp
     hp = max_hp
     _sprite = PixelArt.make_sprite_tex(PixelArt.char_tex(GameState.player_skin))
+    _sprite.z_index = 2
     add_child(_sprite)
     var shape := CollisionShape2D.new()
     var circle := CircleShape2D.new()
@@ -47,7 +53,15 @@ func _physics_process(delta: float) -> void:
         return
     var dir: Vector2 = _keyboard_vector() + touch_move
     dir = dir.limit_length(1.0)
-    velocity = dir * GameConfig.player_speed
+    horse_running = sprint_requested and dir.length() > 0.1 and horse_stamina > 0.0
+    if horse_running:
+        horse_stamina = maxf(0.0, horse_stamina - 24.0 * delta)
+        _horse_t += delta * 15.0
+    else:
+        horse_stamina = minf(horse_max_stamina, horse_stamina + 13.0 * delta)
+        _horse_t += delta * (7.0 if dir.length() > 0.1 else 2.0)
+    var horse_speed: float = GameConfig.player_speed * (1.85 if horse_running else 1.0)
+    velocity = dir * horse_speed
     var before: Vector2 = global_position
     move_and_slide()
     if GameState.island != null:
@@ -72,6 +86,7 @@ func _physics_process(delta: float) -> void:
         _sprite.modulate = Color(1, 1, 1, 0.55 + 0.35 * sin(_invuln * 24.0))
     else:
         _sprite.modulate = Color.WHITE
+    queue_redraw()
     if _swing_t > 0.0 or _was_swinging:
         queue_redraw()
     _was_swinging = _swing_t > 0.0
@@ -92,9 +107,32 @@ func _keyboard_vector() -> Vector2:
 
 
 func _draw() -> void:
+    _draw_horse()
     if _swing_t > 0.0:
         var a: float = facing.angle()
         draw_arc(Vector2(0, -6) + facing * 10.0, 11.0, a - 0.9, a + 0.9, 8, Color(1, 1, 1, 0.85), 2.0)
+
+
+func _draw_horse() -> void:
+    # Procedural side-view mount, drawn beneath the rider sprite.
+    var bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.7)
+    var body := PackedVector2Array([
+        Vector2(-19, -1 + bob), Vector2(-15, -10 + bob),
+        Vector2(-3, -13 + bob), Vector2(12, -8 + bob),
+        Vector2(17, -1 + bob), Vector2(10, 5 + bob),
+        Vector2(-12, 5 + bob)
+    ])
+    draw_colored_polygon(body, Color(0.43, 0.22, 0.12))
+    draw_circle(Vector2(17, -9 + bob), 5.0, Color(0.49, 0.27, 0.15))
+    draw_line(Vector2(18, -13 + bob), Vector2(21, -17 + bob), Color(0.24, 0.13, 0.08), 2.0)
+    draw_line(Vector2(14, -13 + bob), Vector2(13, -17 + bob), Color(0.24, 0.13, 0.08), 2.0)
+    draw_line(Vector2(-17, -4 + bob), Vector2(-24, -9 + bob + sin(_horse_t) * 2.0), Color(0.24, 0.13, 0.08), 3.0)
+    draw_line(Vector2(-8, 3 + bob), Vector2(-10 + sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
+    draw_line(Vector2(7, 3 + bob), Vector2(9 - sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
+    draw_line(Vector2(-2, 3 + bob), Vector2(-4 - sin(_horse_t) * 3.0, 13 + bob), Color(0.20, 0.12, 0.08), 3.0)
+    draw_line(Vector2(13, 1 + bob), Vector2(15 + sin(_horse_t) * 3.0, 12 + bob), Color(0.20, 0.12, 0.08), 3.0)
+    draw_line(Vector2(-11, -8 + bob), Vector2(9, -8 + bob), Color(0.72, 0.49, 0.25), 2.0)
+    draw_circle(Vector2(0, -9 + bob), 2.0, Color(0.15, 0.09, 0.06))
 
 
 func try_attack() -> void:
@@ -146,6 +184,8 @@ func respawn(pos: Vector2) -> void:
     dead = false
     _invuln = 2.0
     _sprite.visible = true
+    horse_stamina = horse_max_stamina
+    horse_running = false
     hp_changed.emit(hp, max_hp)
 
 
