@@ -7,15 +7,19 @@ uniform sampler2D grass_tex : source_color, filter_linear, repeat_enable;
 uniform sampler2D dirt_tex : source_color, filter_linear, repeat_enable;     // seamless soil
 uniform sampler2D sand_tex : source_color, filter_nearest, repeat_enable;
 uniform sampler2D water_tex : source_color, filter_nearest, repeat_enable;
-uniform vec2 world_size = vec2(4800.0, 4800.0);\nuniform vec2 world_origin = vec2(0.0, 0.0);\nuniform vec2 chunk_size = vec2(512.0, 512.0);\nuniform float graphics_quality = 1.0;
+uniform vec2 world_size = vec2(4800.0, 4800.0);
+uniform vec2 world_origin = vec2(0.0, 0.0);
+uniform vec2 chunk_size = vec2(512.0, 512.0);
+uniform float graphics_quality = 1.0;
 uniform vec2 grass_px = vec2(360.0, 360.0);
 uniform vec2 dirt_px = vec2(768.0, 768.0);
 uniform vec2 sand_px = vec2(240.0, 240.0);
 uniform vec2 water_px = vec2(144.0, 144.0);
 
 void fragment() {
-	vec2 wp = UV * world_size;
-	vec4 m = texture(mask_tex, UV);
+	vec2 wp = world_origin + UV * chunk_size;
+	vec2 mask_uv = clamp(wp / world_size, vec2(0.0), vec2(1.0));
+	vec4 m = texture(mask_tex, mask_uv);
 	float v = m.r * 2.0 - 1.0;
 	float dirt_amount = m.g;
 	vec3 grass = texture(grass_tex, wp / grass_px).rgb;
