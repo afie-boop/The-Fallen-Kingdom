@@ -390,13 +390,13 @@ func _sync_equipment_shops() -> void:
 
 
 func _ensure_employment_scaffold(at: Vector2) -> void:
-    for node in _entities.get_nodes_in_group("employment_scaffolds"):
+    for node in get_tree().get_nodes_in_group("employment_scaffolds"):
         if node is Node2D and (node as Node2D).position.distance_to(at + Vector2(0, -18)) < 2.0:
             return
     var frame := CONSTRUCTION_SITE_SCRIPT.new() as Node2D
     frame.set("site_kind", "employment")
     frame.position = at + Vector2(0, -18)
-    frame.z_index = -1
+    frame.z_index = 1
     _entities.add_child(frame)
 
 
