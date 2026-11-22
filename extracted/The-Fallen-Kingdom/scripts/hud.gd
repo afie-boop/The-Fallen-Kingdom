@@ -122,9 +122,8 @@ func show_message(text: String, seconds: float = 2.8) -> void:
         _msg_tween.kill()
     _msg_tween = create_tween()
     _msg_tween.tween_interval(seconds)
-    _msg_tween.set_parallel(true)
     _msg_tween.tween_property(_msg_label, "modulate:a", 0.0, 0.55)
-    _msg_tween.tween_property(_message_panel, "modulate:a", 0.0, 0.55)
+    _msg_tween.parallel().tween_property(_message_panel, "modulate:a", 0.0, 0.55)
 
 
 func set_prompt(text: String) -> void:
@@ -341,10 +340,29 @@ func _layout() -> void:
     interact_button.position = Vector2(attack_button.position.x - u * 0.55, attack_button.position.y - u - 12.0)
     pause_button.size = Vector2(48, 48)
     pause_button.position = Vector2(vs.x - 48.0 - 12.0, 10.0)
-    var map_size: float = clampf(vs.x * 0.16, 104.0, 142.0)
+    var map_size: float = clampf(vs.x * 0.16, 96.0, 142.0)
     if _minimap != null:
         _minimap.position = Vector2(vs.x - map_size - 12.0, 68.0)
         _minimap.size = Vector2(map_size, map_size)
+    if _clock_panel != null and _clock_label != null:
+        if vs.x < 650.0:
+            _clock_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+            _clock_panel.position = Vector2(8.0, 124.0)
+            _clock_panel.size = Vector2(206.0, 30.0)
+            _clock_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+            _clock_label.position = Vector2(10.0, 126.0)
+            _clock_label.size = Vector2(202.0, 24.0)
+        else:
+            _clock_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+            _clock_panel.offset_left = -112.0
+            _clock_panel.offset_right = 112.0
+            _clock_panel.offset_top = 7.0
+            _clock_panel.offset_bottom = 39.0
+            _clock_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+            _clock_label.offset_left = -104.0
+            _clock_label.offset_right = 104.0
+            _clock_label.offset_top = 10.0
+            _clock_label.offset_bottom = 36.0
     if _build_btn != null:
         _build_btn.size = Vector2(104, 42)
         _build_btn.position = Vector2(vs.x - 104.0 - 12.0, 68.0 + map_size + 8.0)
@@ -412,7 +430,9 @@ func show_build(rows: Array, info: String, message: String) -> void:
         h.add_theme_constant_override("separation", 10)
         var txt := Label.new()
         txt.text = "%s\n%s" % [row["title"], row["info"]]
-        txt.custom_minimum_size = Vector2(330, 0)
+        var row_button_width: float = clampf(get_viewport_rect().size.x * 0.30, 112.0, 190.0)
+        var row_text_width: float = clampf(get_viewport_rect().size.x - row_button_width - 80.0, 130.0, 330.0)
+        txt.custom_minimum_size = Vector2(row_text_width, 0)
         txt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         txt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         txt.add_theme_font_size_override("font_size", 14)
@@ -422,7 +442,7 @@ func show_build(rows: Array, info: String, message: String) -> void:
         b.disabled = not bool(row["enabled"])
         b.custom_minimum_size = Vector2(190, 52)
         b.add_theme_font_size_override("font_size", 15)
-        b.custom_minimum_size = Vector2(clampf(get_viewport_rect().size.x * 0.30, 112.0, 190.0), 48.0)
+        b.custom_minimum_size = Vector2(row_button_width, 48.0)
         _button_style(b)
         b.pressed.connect(_on_build_pressed.bind(str(row["kind"]), str(row["action"])))
         h.add_child(b)
