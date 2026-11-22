@@ -10,6 +10,7 @@ var payment_visible: bool = false
 var payment_cost: int = 0
 var payment_paid: int = 0
 var _payment_timeout: float = 0.0
+var animate_on_spawn: bool = true
 const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
 
 
@@ -17,7 +18,22 @@ func _ready() -> void:
     add_to_group("interactable")
     add_to_group("equipment_shops")
     _update_prompt()
+    if animate_on_spawn:
+        _play_appearance_animation()
     queue_redraw()
+
+
+func _play_appearance_animation() -> void:
+    var final_position: Vector2 = position
+    modulate = Color(1.0, 1.0, 1.0, 0.0)
+    scale = Vector2(0.72, 0.72)
+    position = final_position + Vector2(0.0, 13.0)
+
+    var tween := create_tween().set_parallel(true)
+    tween.tween_property(self, "modulate:a", 1.0, 0.42).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    tween.tween_property(self, "scale", Vector2.ONE, 0.52).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tween.tween_property(self, "position", final_position, 0.52).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 
 func _process(delta: float) -> void:
     if _payment_timeout > 0.0:
