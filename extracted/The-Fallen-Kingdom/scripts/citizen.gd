@@ -29,6 +29,39 @@ var _coin_target: HuntingCoin = null
 var _coin_scan_t: float = 0.0
 var _patrol_target: Vector2 = Vector2.ZERO
 var _stuck_time: float = 0.0
+var _action_overlay: CitizenActionOverlay
+
+class CitizenActionOverlay extends Node2D:
+    var mode: String = ""
+    var timer: float = 0.0
+    var phase: float = 0.0
+
+    func play(action: String, duration: float) -> void:
+        mode = action
+        timer = duration
+        queue_redraw()
+
+    func _process(delta: float) -> void:
+        if timer > 0.0:
+            timer = maxf(0.0, timer - delta)
+            phase += delta
+            queue_redraw()
+        elif mode != "":
+            mode = ""
+            queue_redraw()
+
+    func _draw() -> void:
+        if mode == "archer":
+            var pull: float = 5.0 * sin(clampf(timer / 0.34, 0.0, 1.0) * PI)
+            draw_arc(Vector2(7, -17), 8.0, -1.15, 1.15, 12, Color(0.42, 0.22, 0.10), 2.0)
+            draw_line(Vector2(0, -24), Vector2(0, -10), Color(0.86, 0.77, 0.58), 1.0)
+            draw_line(Vector2(0, -17), Vector2(-5.0 - pull, -17), Color(0.72, 0.55, 0.32), 2.0)
+        elif mode == "builder":
+            var swing: float = sin((1.0 - timer / 0.62) * PI) * 0.9
+            var hand := Vector2(5, -14)
+            var head := hand + Vector2(5.0 + swing * 8.0, -8.0 + swing * 5.0)
+            draw_line(hand, head, Color(0.48, 0.27, 0.12), 3.0)
+            draw_line(head + Vector2(-3, -2), head + Vector2(4, 2), Color(0.55, 0.58, 0.60), 4.0)
 
 
 func _ready() -> void:
@@ -37,6 +70,9 @@ func _ready() -> void:
     _sprite.centered = false
     add_child(_sprite)
     _apply_texture()
+    _action_overlay = CitizenActionOverlay.new()
+    _action_overlay.z_index = 3
+    add_child(_action_overlay)
     _t = randf() * 6.0
     _target = _wander_target()
 
@@ -223,6 +259,7 @@ func _archer(delta: float) -> void:
                 var arrow := Arrow.new()
                 get_parent().add_child(arrow)
                 arrow.launch(global_position + Vector2(0, -14), _wildlife, 12.0)
+                _action_overlay.play("archer", 0.34)
         return
 
     # No prey nearby: patrol randomly, remaining safely inside the fence.
@@ -324,6 +361,7 @@ func _engage_zombie(zombie: Zombie, delta: float, radius: float) -> void:
         var arrow := Arrow.new()
         get_parent().add_child(arrow)
         arrow.launch(global_position + Vector2(0, -14), zombie, float(GameConfig.archer_damage[lvl - 1]))
+        _action_overlay.play("archer", 0.34)
 
 
 func _nearest_wildlife(radius: float) -> Wildlife:
@@ -395,6 +433,7 @@ func _builder(delta: float) -> void:
     if _construction != null and is_instance_valid(_construction):
         var work_pos: Vector2 = _construction.get("work_position")
         if _step(work_pos, WORK_SPEED, delta):
+            _action_overlay.play("builder", 0.62)
             if bool(_construction.call("work_on_site", delta)):
                 _construction = null
                 _repair = null
@@ -411,6 +450,7 @@ func _builder(delta: float) -> void:
     var spot: Vector2 = _repair.global_position + Vector2(0, 18)
     if _step(spot, WORK_SPEED, delta):
         var lvl: int = 1
+        _action_overlay.play("builder", 0.62)
         _repair.call("repair", float(GameConfig.builder_repair_rate[lvl - 1]) * delta)
 
 
