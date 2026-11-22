@@ -35,6 +35,8 @@ func _draw() -> void:
         _draw_group("trees", Color(0.08, 0.25, 0.11), 1.4, pad)
         _draw_group("zombie_caves", Color(0.78, 0.25, 0.82), 2.8, pad)
         _draw_group("wildlife", Color(0.96, 0.88, 0.53), 1.7, pad)
+    if castle != null and is_instance_valid(castle):
+        _dot(_to_map(castle.global_position, pad), Color(1.0, 0.72, 0.22), 3.5)
     if player != null and is_instance_valid(player):
         var p := _to_map(player.global_position, pad)
         _dot(p, Color(0.98, 0.98, 1.0), 3.0)
