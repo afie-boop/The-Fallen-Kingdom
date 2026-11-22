@@ -57,11 +57,15 @@ func _release() -> void:
 func _draw() -> void:
     var c: Vector2 = size / 2.0
     var r: float = minf(size.x, size.y) / 2.0 - 2.0
-    var fill: Color = tint.lerp(Color.WHITE, 0.2)
-    fill.a = 0.55 if held else 0.3
-    draw_circle(c, r, Color(0, 0, 0, 0.35))
-    draw_circle(c, r, fill)
-    draw_arc(c, r, 0.0, TAU, 40, Color(1, 1, 1, 0.9), 3.0)
+    var fill: Color = tint.lerp(Color.WHITE, 0.16)
+    fill.a = 0.78 if held else 0.52
+    draw_circle(c + Vector2(0, 3), r, Color(0, 0, 0, 0.42))
+    draw_circle(c, r, Color(0.035, 0.045, 0.048, 0.96))
+    draw_circle(c, r - 5.0, fill)
+    draw_arc(c, r - 1.0, PI * 1.08, PI * 1.92, 28, Color(1.0, 0.91, 0.70, 0.88), 2.0)
+    draw_arc(c, r - 5.0, 0.0, TAU, 40, Color(0.04, 0.05, 0.05, 0.9), 2.0)
+    if held:
+        draw_circle(c, r * 0.52, Color(1.0, 0.92, 0.70, 0.08))
     var font: Font = ThemeDB.fallback_font
     var ts: Vector2 = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
     var pos := Vector2(c.x - ts.x / 2.0, c.y + ts.y / 4.0)
