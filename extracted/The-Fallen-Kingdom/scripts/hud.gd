@@ -45,6 +45,9 @@ var build_open: bool = false
 var _clock_t: float = 0.0
 var _hint_label: Label
 var _minimap: GameMiniMap
+var _minimap_overlay: ColorRect
+var _minimap_close_btn: Button
+var _minimap_open: bool = false
 
 
 func _ready() -> void:
@@ -58,8 +61,25 @@ func _ready() -> void:
     _build_controls()
     _minimap = GameMiniMap.new()
     _minimap.size = Vector2(142, 142)
-    _minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _minimap.mouse_filter = Control.MOUSE_FILTER_STOP
+    _minimap.gui_input.connect(_on_minimap_gui_input)
     _root.add_child(_minimap)
+    _minimap_overlay = ColorRect.new()
+    _minimap_overlay.color = Color(0, 0, 0, 0.78)
+    _minimap_overlay.visible = false
+    _minimap_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+    _minimap_overlay.gui_input.connect(_on_minimap_overlay_input)
+    _root.add_child(_minimap_overlay)
+    _minimap_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _minimap_overlay.z_index = 5
+    _minimap.z_index = 6
+    _minimap_close_btn = Button.new()
+    _minimap_close_btn.text = "CLOSE MAP"
+    _minimap_close_btn.custom_minimum_size = Vector2(130, 44)
+    _minimap_close_btn.visible = false
+    _minimap_close_btn.z_index = 7
+    _root.add_child(_minimap_close_btn)
+    _minimap_close_btn.pressed.connect(_close_minimap)
     _build_death_panel()
     _build_pause_panel()
     _build_build_panel()
@@ -248,11 +268,54 @@ func _layout() -> void:
     pause_button.size = Vector2(52, 52)
     pause_button.position = Vector2(vs.x - 52.0 - 14.0, 10.0)
     if _minimap != null:
-        _minimap.position = Vector2(vs.x - 156.0, 72.0)
-        _minimap.size = Vector2(142.0, 142.0)
+        if _minimap_open:
+            var map_side: float = maxf(180.0, minf(vs.x - 36.0, vs.y - 120.0))
+            map_side = minf(map_side, 560.0)
+            _minimap.size = Vector2(map_side, map_side)
+            _minimap.position = (vs - _minimap.size) * 0.5
+            _minimap_overlay.size = vs
+            _minimap_close_btn.position = Vector2((vs.x - 130.0) * 0.5, _minimap.position.y + map_side + 12.0)
+        else:
+            _minimap.position = Vector2(vs.x - 156.0, 72.0)
+            _minimap.size = Vector2(142.0, 142.0)
     if _build_btn != null:
         _build_btn.size = Vector2(96, 44)
-        _build_btn.position = Vector2(vs.x - 96.0 - 12.0, 72.0)
+        var build_y: float = minf(224.0, vs.y - 56.0)
+        _build_btn.position = Vector2(vs.x - 96.0 - 12.0, maxf(72.0, build_y))
+
+
+func _on_minimap_gui_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        _open_minimap()
+        _minimap.accept_event()
+    elif event is InputEventScreenTouch and event.pressed:
+        _open_minimap()
+        _minimap.accept_event()
+
+
+func _on_minimap_overlay_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        _close_minimap()
+    elif event is InputEventScreenTouch and event.pressed:
+        _close_minimap()
+
+
+func _open_minimap() -> void:
+    if _minimap_open:
+        return
+    _minimap_open = true
+    _minimap_overlay.visible = true
+    _minimap_close_btn.visible = true
+    _layout()
+
+
+func _close_minimap() -> void:
+    if not _minimap_open:
+        return
+    _minimap_open = false
+    _minimap_overlay.visible = false
+    _minimap_close_btn.visible = false
+    _layout()
 
 
 func _make_overlay() -> Array:
