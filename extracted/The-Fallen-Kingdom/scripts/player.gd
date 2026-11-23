@@ -72,13 +72,15 @@ func _physics_process(delta: float) -> void:
     else:
         _anim_t = 0.0
     # One front-facing sprite: animate with a hop/tilt while walking and flip towards the move direction.
+    # Keep the rider seated on the saddle instead of standing in front of the horse.
+    var horse_bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.45)
     if dir.length() > 0.1:
-        _sprite.position.y = -absf(sin(_anim_t * 1.6)) * 2.5
-        _sprite.rotation = sin(_anim_t * 1.6) * 0.07
+        _sprite.position = Vector2(-2.0, -24.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (1.0 if horse_running else 0.5))
+        _sprite.rotation = sin(_anim_t * 1.6) * (0.035 if horse_running else 0.02)
         if absf(facing.x) > 0.2:
             _sprite.flip_h = facing.x < 0.0
     else:
-        _sprite.position.y = 0.0
+        _sprite.position = Vector2(-2.0, -24.0 + horse_bob)
         _sprite.rotation = 0.0
     if _flash > 0.0:
         _sprite.modulate = Color(1.0, 0.4, 0.4)
