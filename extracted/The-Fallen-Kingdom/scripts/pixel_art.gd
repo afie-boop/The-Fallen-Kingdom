@@ -146,6 +146,8 @@ static func make_sprite(key: String) -> Sprite2D:
 
 
 static func _build(key: String) -> Image:
+    if key.begins_with("horse_"):
+        return _horse(int(key.substr(6)))
     if key == "ground":
         return _ground()
     if key == "tree":
@@ -275,6 +277,76 @@ static func _ground() -> Image:
     # A few dark earth pixels suggest damp soil beneath the grass.
     for p in [Vector2i(17, 5), Vector2i(19, 6), Vector2i(18, 7), Vector2i(8, 28)]:
         _px(img, p.x, p.y, Color(0.14, 0.27, 0.17))
+    return img
+
+
+## Side-view pixel horse. Four frames cycle the legs for walk/gallop.
+static func _horse(frame: int) -> Image:
+    var img := _new(48, 32)
+    var outline := Color(0.20, 0.10, 0.07)
+    var coat := Color(0.48, 0.23, 0.13)
+    var coat_mid := Color(0.62, 0.32, 0.18)
+    var coat_light := Color(0.76, 0.46, 0.27)
+    var mane := Color(0.16, 0.085, 0.055)
+    var hoof := Color(0.13, 0.10, 0.09)
+    var phase: int = posmod(frame, 4)
+    _rect(img, 7, 29, 36, 2, Color(0, 0, 0, 0.22))
+    # Tail, with a small swish between frames.
+    _rect(img, 7, 11, 4, 3, outline)
+    _rect(img, 5, 12 + (1 if phase == 2 else 0), 4, 3, mane)
+    _rect(img, 4, 14 + (1 if phase == 2 else 0), 3, 3, coat_mid)
+    # Far-side legs, visible behind the barrel.
+    var far_a: int = [0, 2, 4, 2][phase]
+    var far_b: int = [0, -1, -3, -1][phase]
+    _rect(img, 16 + far_a, 20, 3, 8, outline)
+    _rect(img, 17 + far_a, 21, 1, 6, coat_mid)
+    _rect(img, 30 + far_b, 19, 3, 9, outline)
+    _rect(img, 31 + far_b, 20, 1, 6, coat_mid)
+    # Main body with pixel-stepped silhouette.
+    _rect(img, 10, 10, 4, 3, outline)
+    _rect(img, 12, 8, 23, 15, outline)
+    _rect(img, 14, 9, 19, 12, coat)
+    _rect(img, 15, 9, 15, 2, coat_mid)
+    _rect(img, 14, 12, 2, 7, coat_mid)
+    _rect(img, 18, 20, 13, 2, coat_mid)
+    _rect(img, 29, 10, 4, 3, coat_light)
+    # Neck rises from the shoulder and slopes toward the head.
+    _rect(img, 31, 7, 5, 12, outline)
+    _rect(img, 33, 5, 5, 13, outline)
+    _rect(img, 34, 6, 3, 10, coat_mid)
+    _rect(img, 36, 4, 5, 7, outline)
+    _rect(img, 38, 6, 6, 4, outline)
+    _rect(img, 39, 7, 5, 2, coat_mid)
+    _rect(img, 41, 8, 3, 1, coat_light)
+    # Ears, forehead and mane.
+    _rect(img, 36, 1, 2, 5, outline)
+    _rect(img, 37, 2, 1, 3, coat_light)
+    _rect(img, 40, 2, 2, 4, outline)
+    _rect(img, 41, 3, 1, 2, coat_mid)
+    _rect(img, 32, 5, 3, 4, mane)
+    _rect(img, 30, 7, 3, 5, mane)
+    _rect(img, 28, 9, 3, 3, mane)
+    _px(img, 41, 7, Color(0.96, 0.86, 0.62))
+    _px(img, 44, 8, outline)
+    # Saddle and strap, clearly visible under the rider.
+    _rect(img, 19, 7, 11, 5, outline)
+    _rect(img, 20, 7, 9, 3, Color(0.38, 0.20, 0.12))
+    _rect(img, 22, 8, 5, 1, Color(0.83, 0.65, 0.34))
+    _rect(img, 29, 10, 2, 8, outline)
+    _rect(img, 30, 11, 1, 6, Color(0.78, 0.61, 0.31))
+    # Near-side animated legs; hoof positions alternate for walk/run.
+    var near_a: int = [-2, 2, 5, 1][phase]
+    var near_b: int = [2, -2, -5, -1][phase]
+    _rect(img, 14 + near_a, 20, 3, 8, outline)
+    _rect(img, 15 + near_a, 21, 1, 6, coat_mid)
+    _rect(img, 14 + near_a, 28, 4, 2, hoof)
+    _rect(img, 29 + near_b, 19, 3, 9, outline)
+    _rect(img, 30 + near_b, 20, 1, 6, coat_mid)
+    _rect(img, 29 + near_b, 28, 4, 2, hoof)
+    # Small highlights make the chestnut coat read like a hand-made sprite.
+    _rect(img, 17, 11, 4, 1, coat_light)
+    _px(img, 23, 13, coat_mid)
+    _px(img, 26, 17, coat_light)
     return img
 
 
