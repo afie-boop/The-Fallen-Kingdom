@@ -22,7 +22,6 @@ var attack_button: TouchActionButton
 var interact_button: TouchActionButton
 var pause_button: TouchActionButton
 var run_button: TouchActionButton
-var horse_stamina_bar: ProgressBar
 var touch_ui: bool = false
 
 var _root: Control
@@ -67,14 +66,6 @@ func _ready() -> void:
     add_child(_root)
     _root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _build_status()
-    horse_stamina_bar = ProgressBar.new()
-    horse_stamina_bar.position = Vector2(12, 108)
-    horse_stamina_bar.size = Vector2(140, 12)
-    horse_stamina_bar.min_value = 0.0
-    horse_stamina_bar.max_value = 100.0
-    horse_stamina_bar.value = 100.0
-    horse_stamina_bar.show_percentage = false
-    _root.add_child(horse_stamina_bar)
     _build_controls()
     _minimap = GameMiniMap.new()
     _minimap.size = Vector2(142, 142)
@@ -142,10 +133,6 @@ func setup_minimap(island: IslandMap, player_node: Node2D, castle_node: Node2D, 
     if _minimap != null:
         _minimap.setup(island, player_node, castle_node, world_nodes, world_size)
 
-
-func set_horse_stamina(value: float, maximum: float) -> void:
-    horse_stamina_bar.max_value = maximum
-    horse_stamina_bar.value = clampf(value, 0.0, maximum)
 
 
 func update_hp(hp: float, max_hp: float) -> void:
@@ -289,7 +276,7 @@ func _build_controls() -> void:
     set_interact_available(false)
 
     run_button = TouchActionButton.new()
-    run_button.label_text = "RUN"
+    run_button.label_text = "SPRINT"
     _root.add_child(run_button)
     run_button.visible = touch_ui
 
