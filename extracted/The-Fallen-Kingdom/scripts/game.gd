@@ -380,7 +380,6 @@ func _process(delta: float) -> void:
         return
     player.touch_move = hud.joystick.value
     player.sprint_requested = Input.is_physical_key_pressed(KEY_SHIFT) or hud.run_button.held
-    hud.set_horse_stamina(player.horse_stamina, player.horse_max_stamina)
     if hud.attack_button.held or Input.is_physical_key_pressed(KEY_SPACE):
         player.try_attack()
     elif not hud.touch_ui and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not get_tree().paused:
