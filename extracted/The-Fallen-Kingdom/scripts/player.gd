@@ -18,6 +18,9 @@ var _invuln: float = 0.0
 var _flash: float = 0.0
 var _anim_t: float = 0.0
 var _sprite: Sprite2D
+var _horse_sprite: Sprite2D
+var _horse_frame: int = -1
+var _horse_anim_t: float = 0.0
 var _was_swinging: bool = false
 var sprint_requested: bool = false
 var horse_stamina: float = 100.0
@@ -33,6 +36,12 @@ func _ready() -> void:
     add_to_group("players")
     max_hp = GameConfig.player_max_hp
     hp = max_hp
+    _horse_sprite = Sprite2D.new()
+    _horse_sprite.centered = false
+    _horse_sprite.offset = Vector2(-24, -32)
+    _horse_sprite.z_index = 1
+    _horse_sprite.texture = PixelArt.get_tex("horse_0")
+    add_child(_horse_sprite)
     _sprite = PixelArt.make_sprite_tex(PixelArt.char_tex(GameState.player_skin))
     _sprite.z_index = 2
     add_child(_sprite)
@@ -72,16 +81,23 @@ func _physics_process(delta: float) -> void:
     else:
         _anim_t = 0.0
     # One front-facing sprite: animate with a hop/tilt while walking and flip towards the move direction.
-    # Keep the rider seated on the saddle instead of standing in front of the horse.
-    var horse_bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.45)
-    if dir.length() > 0.1:
-        _sprite.position = Vector2(-2.0, -24.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (1.0 if horse_running else 0.5))
-        _sprite.rotation = sin(_anim_t * 1.6) * (0.035 if horse_running else 0.02)
-        if absf(facing.x) > 0.2:
-            _sprite.flip_h = facing.x < 0.0
-    else:
-        _sprite.position = Vector2(-2.0, -24.0 + horse_bob)
-        _sprite.rotation = 0.0
+    # Animate the pixel horse legs; the rider stays seated on its saddle.
+    _horse_anim_t += delta
+    var frame_duration: float = 0.10 if horse_running else (0.20 if dir.length() > 0.1 else 0.0)
+    if frame_duration > 0.0:
+        var next_frame: int = int(floor(_horse_anim_t / frame_duration)) % 4
+        if next_frame != _horse_frame:
+            _horse_frame = next_frame
+            _horse_sprite.texture = PixelArt.get_tex("horse_%d" % _horse_frame)
+    elif _horse_frame != 0:
+        _horse_frame = 0
+        _horse_sprite.texture = PixelArt.get_tex("horse_0")
+    var horse_bob: float = sin(_horse_t * 2.0) * (1.0 if horse_running else 0.35)
+    _sprite.position = Vector2(-1.0, -22.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (0.8 if horse_running else 0.3))
+    _sprite.rotation = sin(_anim_t * 1.6) * (0.025 if horse_running else 0.012) if dir.length() > 0.1 else 0.0
+    if absf(facing.x) > 0.2:
+        _sprite.flip_h = facing.x < 0.0
+    _horse_sprite.flip_h = facing.x < 0.0 if absf(facing.x) > 0.2 else false
     if _flash > 0.0:
         _sprite.modulate = Color(1.0, 0.4, 0.4)
     elif _invuln > 0.0:
@@ -109,74 +125,9 @@ func _keyboard_vector() -> Vector2:
 
 
 func _draw() -> void:
-    _draw_horse()
     if _swing_t > 0.0:
         var a: float = facing.angle()
         draw_arc(Vector2(0, -6) + facing * 10.0, 11.0, a - 0.9, a + 0.9, 8, Color(1, 1, 1, 0.85), 2.0)
-
-
-func _draw_horse() -> void:
-    # Clear side-profile horse silhouette with a neck, head, mane, saddle and animated legs.
-    var bob: float = sin(_horse_t * 2.0) * (1.8 if horse_running else 0.45)
-    var dark := Color(0.16, 0.085, 0.045)
-    var coat := Color(0.48, 0.25, 0.12)
-    var coat_light := Color(0.66, 0.39, 0.20)
-    var mane := Color(0.12, 0.075, 0.045)
-    var y: float = bob
-    # Tail behind the body.
-    draw_line(Vector2(-19, -9 + y), Vector2(-27, -3 + y + sin(_horse_t * 1.4) * 3.0), dark, 4.0, true)
-    draw_line(Vector2(-20, -8 + y), Vector2(-27, -3 + y + sin(_horse_t * 1.4) * 3.0), coat_light, 1.2, true)
-    # Far legs, then the broad barrel of the horse.
-    var stride: float = sin(_horse_t * (2.8 if horse_running else 1.4)) * (5.0 if horse_running else 1.3)
-    draw_line(Vector2(-10, 1 + y), Vector2(-13 - stride, 17 + y), dark, 4.0, true)
-    draw_line(Vector2(8, 1 + y), Vector2(11 + stride, 17 + y), dark, 4.0, true)
-    var body := PackedVector2Array([
-        Vector2(-23, -8 + y), Vector2(-19, -17 + y), Vector2(-7, -20 + y),
-        Vector2(8, -17 + y), Vector2(17, -9 + y), Vector2(13, 1 + y),
-        Vector2(-13, 3 + y), Vector2(-22, -1 + y)
-    ])
-    draw_colored_polygon(body, dark)
-    var inner_body := PackedVector2Array([
-        Vector2(-21, -9 + y), Vector2(-17, -15 + y), Vector2(-7, -18 + y),
-        Vector2(7, -15 + y), Vector2(14, -9 + y), Vector2(11, -1 + y),
-        Vector2(-12, 1 + y), Vector2(-20, -2 + y)
-    ])
-    draw_colored_polygon(inner_body, coat)
-    draw_line(Vector2(-14, -13 + y), Vector2(7, -14 + y), coat_light, 2.0, true)
-    # Near legs with animated knee bends and dark hooves.
-    draw_line(Vector2(-8, 0 + y), Vector2(-8 + stride, 12 + y), coat, 5.0, true)
-    draw_line(Vector2(-8 + stride, 12 + y), Vector2(-11 + stride, 18 + y), dark, 3.5, true)
-    draw_line(Vector2(9, -1 + y), Vector2(9 - stride, 11 + y), coat_light, 5.0, true)
-    draw_line(Vector2(9 - stride, 11 + y), Vector2(13 - stride, 18 + y), dark, 3.5, true)
-    # Neck, cheek and muzzle make the head clearly horse-shaped.
-    var neck := PackedVector2Array([
-        Vector2(7, -16 + y), Vector2(12, -26 + y), Vector2(20, -31 + y),
-        Vector2(25, -26 + y), Vector2(20, -15 + y), Vector2(15, -7 + y)
-    ])
-    draw_colored_polygon(neck, dark)
-    var neck_inner := PackedVector2Array([
-        Vector2(10, -17 + y), Vector2(14, -25 + y), Vector2(20, -28 + y),
-        Vector2(22, -25 + y), Vector2(18, -16 + y), Vector2(14, -10 + y)
-    ])
-    draw_colored_polygon(neck_inner, coat_light)
-    draw_circle(Vector2(23, -29 + y), 5.0, dark)
-    draw_circle(Vector2(23, -29 + y), 3.7, coat)
-    draw_colored_polygon(PackedVector2Array([
-        Vector2(25, -30 + y), Vector2(31, -27 + y), Vector2(29, -23 + y),
-        Vector2(23, -24 + y), Vector2(20, -27 + y)
-    ]), coat_light)
-    # Ears, forelock, eye and nostril.
-    draw_colored_polygon(PackedVector2Array([Vector2(19, -32 + y), Vector2(17, -40 + y), Vector2(23, -34 + y)]), dark)
-    draw_colored_polygon(PackedVector2Array([Vector2(24, -32 + y), Vector2(27, -38 + y), Vector2(27, -31 + y)]), dark)
-    draw_line(Vector2(12, -28 + y), Vector2(19, -35 + y), mane, 4.0, true)
-    draw_circle(Vector2(26, -29 + y), 1.1, Color(0.98, 0.88, 0.55))
-    draw_circle(Vector2(30, -25 + y), 0.9, dark)
-    # Saddle and reins.
-    draw_colored_polygon(PackedVector2Array([
-        Vector2(-7, -19 + y), Vector2(5, -19 + y), Vector2(9, -12 + y),
-        Vector2(-5, -11 + y), Vector2(-10, -15 + y)
-    ]), Color(0.25, 0.12, 0.07))
-    draw_line(Vector2(7, -17 + y), Vector2(20, -26 + y), Color(0.86, 0.68, 0.35), 1.2, true)
 
 
 func try_attack() -> void:
