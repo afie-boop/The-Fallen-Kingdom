@@ -93,8 +93,11 @@ func _physics_process(delta: float) -> void:
         _horse_frame = 0
         _horse_sprite.texture = PixelArt.get_tex("horse_0")
     var horse_bob: float = sin(_horse_t * 2.0) * (1.0 if horse_running else 0.35)
-    _sprite.position = Vector2(-1.0, -22.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (0.8 if horse_running else 0.3))
-    _sprite.rotation = sin(_anim_t * 1.6) * (0.025 if horse_running else 0.012) if dir.length() > 0.1 else 0.0
+    # Riding pose: lower and compact the hero so the hips sit on the saddle,
+    # rather than placing the full standing sprite upright above the horse.
+    _sprite.position = Vector2(-1.0, -19.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (0.6 if horse_running else 0.2))
+    _sprite.scale = Vector2(0.88, 0.72)
+    _sprite.rotation = sin(_anim_t * 1.6) * (0.018 if horse_running else 0.008) if dir.length() > 0.1 else 0.0
     if absf(facing.x) > 0.2:
         _sprite.flip_h = facing.x < 0.0
     _horse_sprite.flip_h = facing.x < 0.0 if absf(facing.x) > 0.2 else false
