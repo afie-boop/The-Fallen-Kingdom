@@ -18,15 +18,8 @@ var _invuln: float = 0.0
 var _flash: float = 0.0
 var _anim_t: float = 0.0
 var _sprite: Sprite2D
-var _horse_sprite: Sprite2D
-var _horse_frame: int = -1
-var _horse_anim_t: float = 0.0
 var _was_swinging: bool = false
 var sprint_requested: bool = false
-var horse_stamina: float = 100.0
-var horse_max_stamina: float = 100.0
-var horse_running: bool = false
-var _horse_t: float = 0.0
 
 
 func _ready() -> void:
@@ -36,12 +29,6 @@ func _ready() -> void:
     add_to_group("players")
     max_hp = GameConfig.player_max_hp
     hp = max_hp
-    _horse_sprite = Sprite2D.new()
-    _horse_sprite.centered = false
-    _horse_sprite.offset = Vector2(-24, -32)
-    _horse_sprite.z_index = 1
-    _horse_sprite.texture = PixelArt.get_tex("horse_0")
-    add_child(_horse_sprite)
     _sprite = PixelArt.make_sprite_tex(PixelArt.char_tex(GameState.player_skin))
     _sprite.z_index = 2
     add_child(_sprite)
@@ -62,15 +49,8 @@ func _physics_process(delta: float) -> void:
         return
     var dir: Vector2 = _keyboard_vector() + touch_move
     dir = dir.limit_length(1.0)
-    horse_running = sprint_requested and dir.length() > 0.1 and horse_stamina > 0.0
-    if horse_running:
-        horse_stamina = maxf(0.0, horse_stamina - 24.0 * delta)
-        _horse_t += delta * 15.0
-    else:
-        horse_stamina = minf(horse_max_stamina, horse_stamina + 13.0 * delta)
-        _horse_t += delta * (7.0 if dir.length() > 0.1 else 2.0)
-    var horse_speed: float = GameConfig.player_speed * (1.85 if horse_running else 1.0)
-    velocity = dir * horse_speed
+    var sprinting: bool = sprint_requested and dir.length() > 0.1
+    velocity = dir * GameConfig.player_speed * (1.55 if sprinting else 1.0)
     var before: Vector2 = global_position
     move_and_slide()
     if GameState.island != null:
@@ -80,27 +60,10 @@ func _physics_process(delta: float) -> void:
         _anim_t += delta * 8.0
     else:
         _anim_t = 0.0
-    # One front-facing sprite: animate with a hop/tilt while walking and flip towards the move direction.
-    # Animate the pixel horse legs; the rider stays seated on its saddle.
-    _horse_anim_t += delta
-    var frame_duration: float = 0.10 if horse_running else (0.20 if dir.length() > 0.1 else 0.0)
-    if frame_duration > 0.0:
-        var next_frame: int = int(floor(_horse_anim_t / frame_duration)) % 4
-        if next_frame != _horse_frame:
-            _horse_frame = next_frame
-            _horse_sprite.texture = PixelArt.get_tex("horse_%d" % _horse_frame)
-    elif _horse_frame != 0:
-        _horse_frame = 0
-        _horse_sprite.texture = PixelArt.get_tex("horse_0")
-    var horse_bob: float = sin(_horse_t * 2.0) * (1.0 if horse_running else 0.35)
-    # Riding pose: lower and compact the hero so the hips sit on the saddle,
-    # rather than placing the full standing sprite upright above the horse.
-    _sprite.position = Vector2(-1.0, -19.0 + horse_bob - absf(sin(_anim_t * 1.6)) * (0.6 if horse_running else 0.2))
-    _sprite.scale = Vector2(0.88, 0.72)
-    _sprite.rotation = sin(_anim_t * 1.6) * (0.018 if horse_running else 0.008) if dir.length() > 0.1 else 0.0
-    if absf(facing.x) > 0.2:
-        _sprite.flip_h = facing.x < 0.0
-    _horse_sprite.flip_h = facing.x < 0.0 if absf(facing.x) > 0.2 else false
+    # On-foot movement animation.
+    _sprite.position = Vector2(0, -6.0 - absf(sin(_anim_t)) * (1.2 if dir.length() > 0.1 else 0.0))
+    _sprite.scale = Vector2.ONE
+    _sprite.rotation = 0.0
     if _flash > 0.0:
         _sprite.modulate = Color(1.0, 0.4, 0.4)
     elif _invuln > 0.0:
@@ -182,8 +145,6 @@ func respawn(pos: Vector2) -> void:
     dead = false
     _invuln = 2.0
     _sprite.visible = true
-    horse_stamina = horse_max_stamina
-    horse_running = false
     hp_changed.emit(hp, max_hp)
 
 
