@@ -32,7 +32,6 @@ func _draw() -> void:
     var pad := Rect2(Vector2(5, 5), size - Vector2(10, 10))
     draw_texture_rect(island.texture, pad, false, Color(0.75, 0.88, 0.76))
     if entities != null and is_instance_valid(entities):
-        _draw_group("trees", Color(0.08, 0.25, 0.11), 1.4, pad)
         _draw_group("zombie_caves", Color(0.78, 0.25, 0.82), 2.8, pad)
         _draw_group("wildlife", Color(0.96, 0.88, 0.53), 1.7, pad)
     if castle != null and is_instance_valid(castle):
