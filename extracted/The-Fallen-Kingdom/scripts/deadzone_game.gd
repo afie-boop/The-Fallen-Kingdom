@@ -282,7 +282,7 @@ func _on_zombie_killed(zombie: DeadzoneZombie) -> void:
     kills += 1
     coins += 8
     if randf() < 0.28:
-        var drop := PICKUP_SCRIPT.new()
+        var drop: DeadzonePickup = PICKUP_SCRIPT.new() as DeadzonePickup
         drop.position = zombie.global_position
         drop.value = 1
         drop.collected.connect(_on_diamond_collected)
@@ -312,7 +312,7 @@ func _buy_turret() -> void:
         return
     diamonds -= 5
     _turret_count += 1
-    var turret := TURRET_SCRIPT.new()
+    var turret: DeadzoneTurret = TURRET_SCRIPT.new() as DeadzoneTurret
     turret.position = player.position + Vector2.from_angle(randf_range(0.0, TAU)) * 75.0
     turret.configure(damage * 0.65, 0.65)
     add_child(turret)
