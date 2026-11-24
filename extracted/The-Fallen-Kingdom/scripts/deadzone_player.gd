@@ -35,11 +35,10 @@ func _set_character_sprite() -> void:
     add_child(_sprite)
 
 func set_class_stats(health: float, speed: float, _unused: float = 1.0) -> void:
+    var health_ratio := hp / maxf(1.0, max_hp)
     max_hp = health
-    hp = minf(max_hp, hp + maxf(0.0, health - max_hp))
+    hp = clampf(health_ratio * max_hp, 1.0, max_hp)
     move_speed = speed
-    if _sprite != null:
-        _sprite.queue_free()
     _class_texture_index = 1 if health <= 105.0 else (3 if health <= 120.0 else 7)
     _set_character_sprite()
     hp_changed.emit(hp, max_hp)
