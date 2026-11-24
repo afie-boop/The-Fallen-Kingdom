@@ -109,75 +109,71 @@ static func survivor_tex() -> Texture2D:
 
 
 static func _survivor() -> Image:
+    # Chunky top-down survivor silhouette: oversized square head, broad torso,
+    # short legs and a clearly readable rifle, matching the game's compact pixel scale.
     var img := _new(24, 24)
     var outline := Color("#171b20")
-    var hair := Color("#34251e")
-    var skin := Color("#d5a17a")
+    var hair := Color("#252a30")
+    var skin := Color("#d7a27b")
     var skin_shadow := Color("#a96f55")
-    var shirt := Color("#394b43")
-    var shirt_light := Color("#617365")
+    var shirt := Color("#485b50")
     var vest := Color("#263b32")
-    var vest_light := Color("#53654a")
-    var pants := Color("#303943")
-    var pants_light := Color("#4c5960")
+    var vest_light := Color("#65734e")
+    var pants := Color("#343d45")
     var boot := Color("#1c2025")
-    var metal := Color("#66717a")
-    var gun := Color("#252a2d")
-    var sight := Color("#a9b5a7")
+    var gun := Color("#20262b")
+    var metal := Color("#687782")
 
-    # Shadow and boots.
-    _rect(img, 4, 21, 16, 2, Color(0.02, 0.03, 0.03, 0.38))
-    _rect(img, 6, 19, 4, 4, outline)
-    _rect(img, 14, 19, 4, 4, outline)
-    _rect(img, 7, 20, 3, 2, boot)
-    _rect(img, 14, 20, 3, 2, boot)
+    # Compact shadow and separated boots.
+    _rect(img, 3, 21, 18, 2, Color(0.02, 0.03, 0.03, 0.38))
+    _rect(img, 6, 18, 5, 5, outline)
+    _rect(img, 13, 18, 5, 5, outline)
+    _rect(img, 7, 19, 3, 3, boot)
+    _rect(img, 14, 19, 3, 3, boot)
 
-    # Cargo trousers and belt.
-    _rect(img, 6, 13, 12, 7, outline)
-    _rect(img, 7, 14, 10, 5, pants)
-    _rect(img, 8, 15, 3, 3, pants_light)
-    _rect(img, 13, 15, 3, 3, pants_light)
-    _rect(img, 10, 13, 4, 2, Color("#171d21"))
+    # Short cargo legs and belt.
+    _rect(img, 5, 13, 14, 7, outline)
+    _rect(img, 6, 14, 12, 5, pants)
+    _rect(img, 7, 15, 3, 3, Color("#505b62"))
+    _rect(img, 14, 15, 3, 3, Color("#505b62"))
+    _rect(img, 10, 13, 4, 2, Color("#b18b4d"))
 
-    # Sleeves and arms.
-    _rect(img, 3, 8, 4, 7, outline)
-    _rect(img, 4, 9, 3, 5, shirt)
-    _rect(img, 17, 8, 4, 7, outline)
-    _rect(img, 17, 9, 3, 5, shirt)
-    _rect(img, 4, 13, 3, 2, skin_shadow)
-    _rect(img, 17, 13, 3, 2, skin)
+    # Wide shoulders, blocky sleeves and hands.
+    _rect(img, 2, 8, 6, 8, outline)
+    _rect(img, 3, 9, 4, 6, shirt)
+    _rect(img, 16, 8, 6, 8, outline)
+    _rect(img, 17, 9, 4, 6, shirt)
+    _rect(img, 3, 14, 4, 2, skin)
+    _rect(img, 17, 14, 4, 2, skin_shadow)
 
-    # Tactical shirt, vest and magazine pouches.
-    _rect(img, 6, 7, 12, 8, outline)
-    _rect(img, 7, 8, 10, 6, shirt)
-    _rect(img, 8, 8, 8, 6, vest)
-    _rect(img, 8, 9, 2, 4, vest_light)
-    _rect(img, 14, 9, 2, 4, vest_light)
+    # Broad tactical torso and vest with visible pouches.
+    _rect(img, 5, 7, 14, 9, outline)
+    _rect(img, 6, 8, 12, 7, shirt)
+    _rect(img, 7, 8, 10, 7, vest)
+    _rect(img, 7, 9, 2, 5, vest_light)
+    _rect(img, 15, 9, 2, 5, vest_light)
     _rect(img, 10, 10, 2, 3, Color("#b18b4d"))
     _rect(img, 13, 10, 2, 3, Color("#b18b4d"))
     _rect(img, 11, 8, 2, 2, Color("#87927c"))
 
-    # Neck and head with short dark hair.
-    _rect(img, 10, 5, 4, 3, skin_shadow)
-    _rect(img, 7, 1, 10, 6, outline)
-    _rect(img, 8, 2, 8, 5, skin)
-    _rect(img, 8, 1, 8, 2, hair)
-    _rect(img, 7, 2, 2, 3, hair)
-    _rect(img, 15, 2, 2, 3, hair)
-    _rect(img, 9, 4, 1, 1, outline)
-    _rect(img, 14, 4, 1, 1, outline)
-    _rect(img, 11, 6, 3, 1, skin_shadow)
+    # Large square head, short hair and simple readable face.
+    _rect(img, 6, 0, 12, 8, outline)
+    _rect(img, 7, 2, 10, 5, skin)
+    _rect(img, 7, 1, 10, 3, hair)
+    _rect(img, 6, 2, 2, 4, hair)
+    _rect(img, 16, 2, 2, 4, hair)
+    _rect(img, 9, 5, 1, 1, outline)
+    _rect(img, 14, 5, 1, 1, outline)
 
-    # Compact rifle held across the chest; no sword or medieval equipment.
-    _rect(img, 14, 11, 8, 2, outline)
-    _rect(img, 16, 10, 6, 1, gun)
-    _rect(img, 17, 11, 4, 1, metal)
-    _rect(img, 20, 10, 2, 2, gun)
-    _rect(img, 15, 13, 2, 2, gun)
-    _rect(img, 18, 9, 1, 2, sight)
-    _rect(img, 14, 12, 2, 2, skin)
+    # Short rifle held across the front, with stock, receiver and barrel.
+    _rect(img, 14, 11, 9, 3, outline)
+    _rect(img, 16, 10, 7, 2, gun)
+    _rect(img, 18, 11, 4, 1, metal)
+    _rect(img, 20, 10, 3, 2, gun)
+    _rect(img, 15, 13, 3, 3, gun)
+    _rect(img, 18, 9, 1, 2, metal)
+    _rect(img, 14, 13, 2, 2, skin)
     return img
-
 
 const ZOMBIE_VARIANTS: int = 11
 const BEGGAR_VARIANTS: int = 11
