@@ -96,6 +96,12 @@ if [[ ! -f "$PROJECT_DIR/export_presets.cfg" ]]; then
   exit 1
 fi
 
+# Build Manhattan map geometry from official NYC Open Data before the Godot import.
+if [[ -f "$ROOT_DIR/scripts/build_manhattan_data.py" ]]; then
+  echo "Preparing official Manhattan GIS data..."
+  python3 "$ROOT_DIR/scripts/build_manhattan_data.py" "$PROJECT_DIR/data/nyc/manhattan.json"
+fi
+
 echo "Importing project resources..."
 GODOT_SILENCE_ROOT_WARNING=1 "$GODOT_BIN" --headless --editor --path "$PROJECT_DIR" --import
 
