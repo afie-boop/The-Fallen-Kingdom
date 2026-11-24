@@ -7,8 +7,8 @@ var value := 1
 var _pulse := 0.0
 
 func _ready() -> void:
-    collision_layer = 0
-    collision_mask = 0
+    collision_layer = 4
+    collision_mask = 2
     var shape := CollisionShape2D.new()
     var circle := CircleShape2D.new()
     circle.radius = 18.0
