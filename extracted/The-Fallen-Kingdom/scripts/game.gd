@@ -1,203 +1,52 @@
 extends Node2D
-## Main gameplay scene: builds the world, wires systems together, handles
-## pause / save / respawn. Systems themselves live in their own scripts.
-
-const PLAYER_SCENE: PackedScene = preload("res://scenes/player.tscn")
-const CASTLE_SCENE: PackedScene = preload("res://scenes/castle.tscn")
-const COIN_SCENE: PackedScene = preload("res://scenes/coin.tscn")
-const CITIZEN_SCENE: PackedScene = preload("res://scenes/citizen.tscn")
-const MENU_SCENE: String = "res://scenes/main_menu.tscn"
-
-var entities: Node2D
-var player: Player
-var castle: KingdomCastle
-var hud: Hud
-var day_night: DayNight
-var spawner: ZombieSpawner
-var kingdom: KingdomManager
+## Minimal world viewer: preserve the island map, forest and passive wildlife only.
 
 var _world_rect: Rect2
-var _autosave_t: float = 0.0
-var _interact_t: float = 0.0
-var _shop_hold_t: float = 0.0
-var _shop_hold_used: bool = false
-const SHOP_COIN_INTERVAL: float = 0.28
-var _loading_layer: CanvasLayer
-var _loading_label: Label
-var _loading_bar: ProgressBar
-var _player_camera: Camera2D
 var _terrain_chunks: Array[Sprite2D] = []
-var _terrain_materials: Array[ShaderMaterial] = []
-var _terrain_chunk_size: float = 1024.0
-var _chunk_render_distance: int = 1
-var _graphics_quality: int = 1
-var _camera_zoom_value: float = 1.0
-var _terrain_update_t: float = 0.0
-
+const CHUNK_SIZE := 1024.0
 
 func _ready() -> void:
-    _create_loading_screen()
-    await get_tree().process_frame
     if not GameState.initialized:
-        GameState.reset_new_game()  # e.g. scene started directly from the editor
+        GameState.reset_new_game()
     _world_rect = Rect2(Vector2.ZERO, GameConfig.world_size())
-    _load_render_settings()
 
-    _set_loading("Generating island...", 0.08)
     GameState.island = IslandMap.new()
     await GameState.island.build(GameState.world_seed, _world_rect.size)
-    _set_loading("Preparing terrain...", 0.30)
-    await get_tree().process_frame
-    _set_loading("Shaping coastline...", 0.32)
     _place_small_lake()
-    await get_tree().process_frame
-    _set_loading("Rendering terrain...", 0.34)
     _build_ground()
-    await get_tree().process_frame
-    _set_loading("Finishing terrain setup...", 0.36)
-    # The island itself constrains player movement; giant 10,000px physics
-    # boundary shapes are unnecessary in the web build and can stall physics setup.
-    await get_tree().process_frame
-    _set_loading("Creating entities node...", 0.361)
-    entities = Node2D.new()
-    entities.name = "Entities"
-    entities.y_sort_enabled = true
-    _set_loading("Adding entities to scene...", 0.363)
-    await get_tree().process_frame
-    add_child(entities)
-    _set_loading("Entities added to scene...", 0.364)
-    await get_tree().process_frame
 
-    _set_loading("Creating castle object...", 0.367)
-    await get_tree().process_frame
-    castle = CASTLE_SCENE.instantiate() as KingdomCastle
-    _set_loading("Positioning castle...", 0.369)
-    castle.position = GameState.island.center_pos
-    _set_loading("Adding castle to world...", 0.37)
-    await get_tree().process_frame
-    entities.add_child(castle)
-    _set_loading("Castle added to world...", 0.372)
-    await get_tree().process_frame
-    _set_loading("Castle ready...", 0.375)
+    var world := Node2D.new()
+    world.name = "World"
+    world.y_sort_enabled = true
+    add_child(world)
 
-    var avoid: Array = [
-        {"pos": castle.position, "r": 330.0},
-    ]
-    # The starting kingdom is only an extinguished campfire and two beggars.
-    # No houses, fence, tents, or work buildings are placed in a new world.
-    # Random caves replace the old zombie nests and Zombie Castle.
-    var cave_avoid: Array = [{"pos": castle.position, "r": 1200.0}]
-    _set_loading("Placing caves...", 0.38)
-    await get_tree().process_frame
-    var cave_spots: Array[Vector2] = await WorldGenerator.spawn_caves(
-        entities, GameState.island, GameState.world_seed, 8, cave_avoid,
-        func(n, total):
-            if total > 0:
-                _set_loading("Placing caves %d/%d..." % [n, total], 0.38 + 0.08 * float(n) / float(total))
-    )
-    await get_tree().process_frame
-    for cp in cave_spots:
-        avoid.append({"pos": cp, "r": 150.0})
-    # Remote beggar camps are not part of the opening scene.
-    WorldGenerator.spawn_kingdom_beggars(entities, GameState.island, GameState.world_seed, castle.position, GameState.recruited_beggars)
-    GameState.island.refresh_texture()
-    # The opening world has no houses or tents.
-    _set_loading("Growing forests...", 0.64)
-    await get_tree().process_frame
+    # Trees are part of the natural map; no buildings, characters or enemies.
     await WorldGenerator.spawn_trees(
-        entities, GameState.island, GameState.world_seed, GameConfig.tree_count,
-        avoid, GameState.removed_trees,
-        func(placed, total):
-            if total > 0:
-                _set_loading("Growing forests %d/%d..." % [placed, total], 0.64 + 0.08 * float(placed) / float(total))
+        world, GameState.island, GameState.world_seed,
+        GameConfig.tree_count, [], [], Callable()
     )
-    await get_tree().process_frame
-    # Spawn deer and rabbits using the three transparent reference assets.
-    _set_loading("Spawning wildlife...", 0.72)
-    await get_tree().process_frame
-    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 17, castle.position, Callable(self, "_on_wildlife_killed"))
-    _set_loading("Setting up kingdom...", 0.76)
-    await get_tree().process_frame
+    GameState.island.refresh_texture()
 
-    kingdom = KingdomManager.new()
-    add_child(kingdom)
-    kingdom.setup(entities, castle.position)
-    castle.campfire_upgraded.connect(kingdom.set_campfire_lit)
-    castle.set_lit(GameState.campfire_lit)
-    _spawn_castle_beggars()
-    _build_player()
-    _restore_citizens()
-    kingdom.assign_jobs()
-    GameState.beggar_recruited.connect(_on_beggar_recruited)
+    # Passive deer and rabbits only.
+    WorldGenerator.spawn_wildlife(
+        world, GameState.island, GameState.world_seed, 24,
+        GameState.island.center_pos, Callable()
+    )
 
-    day_night = DayNight.new()
-    add_child(day_night)
-    day_night.set_time(GameState.time_of_day)
-
-    spawner = ZombieSpawner.new()
-    add_child(spawner)
-    spawner.setup(entities, castle)
-    spawner.zombie_killed.connect(_on_zombie_killed)
-
-    hud = Hud.new()
-    add_child(hud)
-    hud.setup_minimap(GameState.island, player, castle, entities, _world_rect.size)
-    hud.set_settings_values(_camera_zoom_value, _chunk_render_distance, _graphics_quality)
-    _connect_signals()
-    hud.update_hp(player.hp, player.max_hp)
-    _set_loading("Finishing world...", 0.92)
-    await get_tree().process_frame
-
-    if GameState.castle_hp > 0.0:
-        castle.set_hp(GameState.castle_hp)
-    hud.show_message("Loaded saved game." if GameState.loaded_from_save else "Defend the kingdom. Chop trees, fight zombies, collect coins.", 4.0)
-    if is_instance_valid(_loading_layer):
-        _loading_layer.queue_free()
-
-
-func _create_loading_screen() -> void:
-    _loading_layer = CanvasLayer.new()
-    _loading_layer.layer = 100
-    add_child(_loading_layer)
-    var bg := ColorRect.new()
-    bg.color = Color(0.035, 0.045, 0.065, 1.0)
-    bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    _loading_layer.add_child(bg)
-    var center := CenterContainer.new()
-    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    _loading_layer.add_child(center)
-    var box := VBoxContainer.new()
-    box.custom_minimum_size = Vector2(280, 0)
-    box.add_theme_constant_override("separation", 14)
-    center.add_child(box)
-    _loading_label = Label.new()
-    _loading_label.text = "Preparing new world..."
-    _loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    _loading_label.add_theme_font_size_override("font_size", 20)
-    box.add_child(_loading_label)
-    _loading_bar = ProgressBar.new()
-    _loading_bar.custom_minimum_size = Vector2(280, 16)
-    _loading_bar.min_value = 0.0
-    _loading_bar.max_value = 1.0
-    _loading_bar.value = 0.02
-    _loading_bar.show_percentage = true
-    box.add_child(_loading_bar)
-
-
-func _set_loading(message: String, progress: float) -> void:
-    if is_instance_valid(_loading_label):
-        _loading_label.text = message
-    if is_instance_valid(_loading_bar):
-        _loading_bar.value = progress
-
+    var camera := Camera2D.new()
+    camera.position = GameState.island.center_pos
+    camera.zoom = Vector2(0.8, 0.8)
+    camera.enabled = true
+    add_child(camera)
+    camera.make_current()
 
 func _place_small_lake() -> void:
     var rng := RandomNumberGenerator.new()
     rng.seed = GameState.world_seed + 481516
-    for attempt in 120:
-        var angle: float = rng.randf_range(0.0, TAU)
-        var radius: float = rng.randf_range(760.0, 1450.0)
-        var p: Vector2 = GameState.island.center_pos + Vector2.from_angle(angle) * radius
+    for _attempt in 120:
+        var angle := rng.randf_range(0.0, TAU)
+        var radius := rng.randf_range(760.0, 1450.0)
+        var p := GameState.island.center_pos + Vector2.from_angle(angle) * radius
         if GameState.island.sample(p) < 0.28:
             continue
         if p.distance_to(GameState.island.far_inland_pos) < 650.0:
@@ -205,11 +54,9 @@ func _place_small_lake() -> void:
         GameState.island.add_lake(p, rng.randf_range(110.0, 155.0))
         return
 
-
 func _build_ground() -> void:
-    # Split the island into independently culled terrain chunks.
     var ground_root := Node2D.new()
-    ground_root.name = "TerrainChunks"
+    ground_root.name = "Terrain"
     ground_root.z_index = -10
     add_child(ground_root)
 
@@ -227,8 +74,8 @@ func _build_ground() -> void:
         var x := 0.0
         while x < _world_rect.size.x:
             var chunk_size := Vector2(
-                minf(_terrain_chunk_size, _world_rect.size.x - x),
-                minf(_terrain_chunk_size, _world_rect.size.y - y)
+                minf(CHUNK_SIZE, _world_rect.size.x - x),
+                minf(CHUNK_SIZE, _world_rect.size.y - y)
             )
             var mat := ShaderMaterial.new()
             mat.shader = shader
@@ -240,370 +87,16 @@ func _build_ground() -> void:
             mat.set_shader_parameter("world_size", _world_rect.size)
             mat.set_shader_parameter("world_origin", Vector2(x, y))
             mat.set_shader_parameter("chunk_size", chunk_size)
-            mat.set_shader_parameter("graphics_quality", _quality_shader_value())
+            mat.set_shader_parameter("graphics_quality", 0.5)
 
             var chunk := Sprite2D.new()
             chunk.texture = quad_texture
             chunk.centered = true
             chunk.position = Vector2(x, y) + chunk_size * 0.5
             chunk.scale = chunk_size
-            chunk.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if _graphics_quality == 0 else CanvasItem.TEXTURE_FILTER_LINEAR
+            chunk.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
             chunk.material = mat
             ground_root.add_child(chunk)
             _terrain_chunks.append(chunk)
-            _terrain_materials.append(mat)
-            x += _terrain_chunk_size
-        y += _terrain_chunk_size
-    _update_terrain_chunks()
-
-
-func _quality_shader_value() -> float:
-    return 0.0 if _graphics_quality == 0 else (0.5 if _graphics_quality == 1 else 1.0)
-
-
-func _update_terrain_chunks() -> void:
-    if _terrain_chunks.is_empty() or not is_instance_valid(player):
-        return
-    var viewport_size := get_viewport_rect().size
-    var view_radius := maxf(viewport_size.x, viewport_size.y) / maxf(0.5, _camera_zoom_value) * 0.65
-    var radius := view_radius + _terrain_chunk_size * float(_chunk_render_distance)
-    var radius_sq := radius * radius
-    for chunk in _terrain_chunks:
-        if is_instance_valid(chunk):
-            chunk.visible = chunk.position.distance_squared_to(player.global_position) <= radius_sq
-
-
-func _load_render_settings() -> void:
-    var config := ConfigFile.new()
-    if config.load("user://render_settings.cfg") == OK:
-        _camera_zoom_value = clampf(float(config.get_value("render", "zoom", 1.0)), 0.7, 1.6)
-        _chunk_render_distance = clampi(int(config.get_value("render", "chunks", 1)), 1, 3)
-        _graphics_quality = clampi(int(config.get_value("render", "quality", 1)), 0, 2)
-
-
-func _apply_render_settings(zoom_value: float, chunk_distance: int, quality: int) -> void:
-    _camera_zoom_value = clampf(zoom_value, 0.7, 1.6)
-    _chunk_render_distance = clampi(chunk_distance, 1, 3)
-    _graphics_quality = clampi(quality, 0, 2)
-    if is_instance_valid(_player_camera):
-        _player_camera.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
-    for i in _terrain_chunks.size():
-        var chunk := _terrain_chunks[i]
-        if is_instance_valid(chunk):
-            chunk.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if _graphics_quality == 0 else CanvasItem.TEXTURE_FILTER_LINEAR
-        if i < _terrain_materials.size() and is_instance_valid(_terrain_materials[i]):
-            _terrain_materials[i].set_shader_parameter("graphics_quality", _quality_shader_value())
-    var config := ConfigFile.new()
-    config.set_value("render", "zoom", _camera_zoom_value)
-    config.set_value("render", "chunks", _chunk_render_distance)
-    config.set_value("render", "quality", _graphics_quality)
-    config.save("user://render_settings.cfg")
-    _update_terrain_chunks()
-
-
-func _build_bounds() -> void:
-    var body := StaticBody2D.new()
-    body.name = "WorldBounds"
-    body.collision_layer = 1
-    body.collision_mask = 0
-    add_child(body)
-    var t: float = 64.0
-    var w: float = _world_rect.size.x
-    var h: float = _world_rect.size.y
-    var rects: Array[Rect2] = [
-        Rect2(-t, -t, w + 2.0 * t, t),
-        Rect2(-t, h, w + 2.0 * t, t),
-        Rect2(-t, 0.0, t, h),
-        Rect2(w, 0.0, t, h),
-    ]
-    for r in rects:
-        var cs := CollisionShape2D.new()
-        var rs := RectangleShape2D.new()
-        rs.size = r.size
-        cs.shape = rs
-        cs.position = r.position + r.size / 2.0
-        body.add_child(cs)
-
-
-func _build_player() -> void:
-    player = PLAYER_SCENE.instantiate() as Player
-    var pos: Vector2 = castle.spawn_point
-    if GameState.loaded_from_save and GameState.has_player_pos:
-        pos = GameState.player_pos
-    if not GameState.island.is_walkable(pos):
-        pos = castle.spawn_point  # e.g. an old save made before the island shape existed
-    player.position = pos
-    player.player_id = GameState.local_player_id
-    entities.add_child(player)
-    if GameState.player_hp > 0.0:
-        player.set_hp(GameState.player_hp)
-    var cam := Camera2D.new()
-    cam.zoom = Vector2(_camera_zoom_value, _camera_zoom_value)
-    _player_camera = cam
-    cam.position = Vector2(0, -8)
-    cam.limit_left = 0
-    cam.limit_top = 0
-    cam.limit_right = int(_world_rect.size.x)
-    cam.limit_bottom = int(_world_rect.size.y)
-    cam.position_smoothing_enabled = true
-    cam.position_smoothing_speed = 8.0
-    player.add_child(cam)
-
-
-func _connect_signals() -> void:
-    hud.attack_pressed.connect(player.try_attack)
-    hud.interact_pressed.connect(_on_interact)
-    hud.pause_pressed.connect(_toggle_pause)
-    hud.resume_requested.connect(_toggle_pause)
-    hud.save_requested.connect(_save.bind(true))
-    hud.menu_requested.connect(_to_menu)
-    hud.respawn_requested.connect(_respawn)
-    hud.build_menu_requested.connect(_open_build)
-    hud.build_closed.connect(_close_build)
-    hud.build_action.connect(_on_build_action)
-    hud.settings_changed.connect(_apply_render_settings)
-    player.hp_changed.connect(hud.update_hp)
-    player.died.connect(_on_player_died)
-    castle.notice.connect(hud.show_message)
-    castle.interacted.connect(_save.bind(false))
-    GameState.notice.connect(hud.show_message)
-    day_night.day_started.connect(_on_dawn)
-    day_night.night_started.connect(_on_dusk)
-
-
-func _process(delta: float) -> void:
-    _terrain_update_t -= delta
-    if _terrain_update_t <= 0.0:
-        _terrain_update_t = 0.25
-        _update_terrain_chunks()
-    if not is_instance_valid(player):
-        return
-    player.touch_move = hud.joystick.value
-    player.sprint_requested = Input.is_physical_key_pressed(KEY_SHIFT) or hud.run_button.held
-    if hud.attack_button.held or Input.is_physical_key_pressed(KEY_SPACE):
-        player.try_attack()
-    elif not hud.touch_ui and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not get_tree().paused:
-        # PC: left click attacks towards the mouse pointer.
-        var aim: Vector2 = get_global_mouse_position() - player.global_position - Vector2(0, -6)
-        if aim.length() > 4.0:
-            player.facing = aim.normalized()
-        player.try_attack()
-    if not player.dead:
-        GameState.player_pos = player.global_position
-        GameState.player_hp = player.hp
-    GameState.castle_hp = castle.hp
-    _interact_t -= delta
-    if _interact_t <= 0.0:
-        _interact_t = 0.2
-        var target: Node2D = _nearest_interactable()
-        hud.set_interact_available(target != null and not player.dead)
-        hud.set_prompt(_prompt_for(target) if not player.dead else "")
-        _update_shop_payment_display(target)
-    _process_shop_hold(delta)
-    _autosave_t += delta
-    if _autosave_t >= GameConfig.autosave_interval:
-        _save(false)
-
-
-func _unhandled_input(event: InputEvent) -> void:
-    var k := event as InputEventKey
-    if k != null and k.pressed and not k.echo and k.physical_keycode == KEY_E:
-        _on_interact()
-
-
-func _update_shop_payment_display(target: Node2D) -> void:
-    var campfire_target: bool = target == castle and not player.dead and not castle.campfire_lit
-    castle.set_payment_display(campfire_target, 3, castle.payment_paid)
-    for shop_node in get_tree().get_nodes_in_group("equipment_shops"):
-        var shop := shop_node as EquipmentShop
-        if shop != null:
-            var is_target: bool = shop == target and not player.dead
-            var kind: String = shop.item_kind
-            var cost: int = 2 if kind == "bow" else 3
-            var paid: int = shop.payment_paid
-            shop.set_payment_display(is_target, cost, paid)
-
-
-func _process_shop_hold(delta: float) -> void:
-    var held: bool = hud.interact_button.held or Input.is_physical_key_pressed(KEY_E)
-    var target: Node2D = _nearest_interactable() if held and not player.dead else null
-    var can_pay: bool = target is EquipmentShop or (target == castle and not castle.campfire_lit)
-    if held and can_pay:
-        if not _shop_hold_used:
-            _shop_hold_t += delta
-            if _shop_hold_t >= SHOP_COIN_INTERVAL:
-                _shop_hold_t -= SHOP_COIN_INTERVAL
-                var result: int = int(target.call("pay_one_coin", player))
-                if result < 0:
-                    _shop_hold_used = true
-                    _shop_hold_t = 0.0
-                elif result > 0:
-                    # One successful purchase per hold; require release before buying again.
-                    _shop_hold_used = true
-                    _shop_hold_t = 0.0
-    else:
-        _shop_hold_t = 0.0
-        _shop_hold_used = false
-
-
-func _nearest_interactable() -> Node2D:
-    var best: Node2D = null
-    var best_d: float = 1000000.0
-    for n in get_tree().get_nodes_in_group("interactable"):
-        var node := n as Node2D
-        if node == null:
-            continue
-        var rv: Variant = node.get("interact_range")
-        var reach: float = float(rv) if rv != null else 96.0
-        var d: float = player.global_position.distance_to(node.global_position)
-        if d < reach and d < best_d:
-            best_d = d
-            best = node
-    return best
-
-
-func _prompt_for(node: Node2D) -> String:
-    if node == null:
-        return ""
-    var pv: Variant = node.get("prompt_text")
-    return str(pv) if pv != null else "Use"
-
-
-func _restore_citizens() -> void:
-    for id in GameState.recruited_beggars:
-        var b: int = int(id)
-        _spawn_citizen(b, (b * 7 + 3) % PixelArt.BEGGAR_VARIANTS, castle.position + Vector2(randf_range(-90.0, 90.0), randf_range(40.0, 110.0)))
-
-
-func _spawn_citizen(id: int, variant: int, pos: Vector2) -> void:
-    var c := CITIZEN_SCENE.instantiate() as Citizen
-    c.citizen_id = id
-    c.variant = variant
-    c.home = castle.position
-    c.position = pos
-    entities.add_child(c)
-    var saved_job: String = str(GameState.citizen_jobs.get(id, ""))
-    if saved_job == "archer" or saved_job == "builder":
-        c.set_job(saved_job, null)
-
-
-func _on_beggar_recruited(beggar_id: int, variant: int, pos: Vector2) -> void:
-    _spawn_citizen(beggar_id, variant, pos)
-    kingdom.assign_jobs()
-    hud.show_message("A beggar joined your kingdom as a citizen! Citizens: %d" % GameState.recruited_beggars.size())
-
-
-func _on_interact() -> void:
-    if player.dead:
-        return
-    var target: Node2D = _nearest_interactable()
-    if target != null and (target is EquipmentShop or (target == castle and not castle.campfire_lit)):
-        return # Campfire and equipment purchases require holding USE / E.
-    if target != null and target.has_method("interact"):
-        target.call("interact", player)
-    else:
-        hud.show_message("Nothing to use here. Return to the campfire.")
-
-
-func _on_zombie_killed(pos: Vector2) -> void:
-    if randf() < GameConfig.zombie_coin_drop_chance:
-        var coin := COIN_SCENE.instantiate() as CoinPickup
-        coin.position = pos + Vector2(0.0, -28.0)
-        entities.add_child.call_deferred(coin)
-        coin.start_falling(pos.y)
-
-
-func _on_player_died() -> void:
-    # Death only ever affects this player's own wallet. Percentage is configurable (default 0).
-    var lost: int = floori(float(GameState.get_gold(player.player_id)) * GameConfig.death_penalty_percent / 100.0)
-    if lost > 0:
-        GameState.spend_gold(lost, player.player_id)
-    hud.show_death(GameConfig.respawn_delay, lost)
-
-
-func _respawn() -> void:
-    hud.hide_death()
-    player.respawn(castle.spawn_point)
-    _save(false)
-
-
-func _on_dawn() -> void:
-    spawner.retreat_all()
-    castle.restore()
-    GameState.castle_hp = castle.hp
-    _save(false)
-    hud.show_message("Dawn breaks. The zombies retreat into caves.")
-
-
-func _on_wildlife_killed() -> void:
-    # Replace each hunted animal immediately, at a new random forest location.
-    WorldGenerator.spawn_wildlife(entities, GameState.island, GameState.world_seed, 1, castle.position, Callable(self, "_on_wildlife_killed"))
-
-
-func _on_dusk() -> void:
-    hud.show_message("Night falls. Zombies emerge from caves...")
-
-
-func _open_build() -> void:
-    if player.dead or get_tree().paused:
-        return
-    get_tree().paused = true
-    hud.show_build(kingdom.menu_rows(), kingdom.info_text(), "")
-
-
-func _close_build() -> void:
-    hud.hide_build()
-    get_tree().paused = false
-
-
-func _on_build_action(kind: String, action: String) -> void:
-    var msg: String = kingdom.do_action(kind, action, player.player_id)
-    _spawn_castle_beggars()
-    hud.show_build(kingdom.menu_rows(), kingdom.info_text(), msg)
-
-
-func _spawn_castle_beggars() -> void:
-    # Two beggars wait beside the starting campfire.
-    if entities == null or castle == null:
-        return
-    WorldGenerator.spawn_castle_beggars(entities, castle.position, GameState.recruited_beggars)
-
-
-func _toggle_pause() -> void:
-    if hud.build_open:
-        _close_build()
-        return
-    var p: bool = not get_tree().paused
-    get_tree().paused = p
-    hud.show_pause(p)
-
-
-func _save(show_message: bool) -> void:
-    if not is_instance_valid(player):
-        return
-    _autosave_t = 0.0
-    if player.dead:
-        GameState.player_hp = player.max_hp
-        GameState.player_pos = castle.spawn_point
-        GameState.has_player_pos = true
-    else:
-        GameState.has_player_pos = true
-    GameState.castle_hp = castle.hp
-    kingdom.sync_state()
-    var ok: bool = SaveManager.save_game(GameState.to_dict())
-    if show_message:
-        hud.show_message("Game saved." if ok else "Saving failed!")
-
-
-func _to_menu() -> void:
-    _save(false)
-    get_tree().paused = false
-    get_tree().change_scene_to_file(MENU_SCENE)
-
-
-func _notification(what: int) -> void:
-    if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
-        _save(false)
-    elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
-        if hud != null:
-            _toggle_pause()
+            x += CHUNK_SIZE
+        y += CHUNK_SIZE
