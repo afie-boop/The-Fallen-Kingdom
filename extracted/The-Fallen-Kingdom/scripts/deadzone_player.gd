@@ -39,8 +39,6 @@ func set_class_stats(health: float, speed: float, _unused: float = 1.0) -> void:
     max_hp = health
     hp = clampf(health_ratio * max_hp, 1.0, max_hp)
     move_speed = speed
-    _class_texture_index = 1 if health <= 105.0 else (3 if health <= 120.0 else 7)
-    _set_character_sprite()
     hp_changed.emit(hp, max_hp)
 
 func _physics_process(delta: float) -> void:
