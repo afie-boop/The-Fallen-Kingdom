@@ -75,120 +75,217 @@ func _spawn_player() -> void:
 
 func _spawn_modern_city() -> Array:
     var center: Vector2 = GameState.island.center_pos
-    var road := Node2D.new()
-    road.name = "ManhattanCity"
-    road.position = center
-    road.z_index = -2
-    _world.add_child(road)
-    _draw_city_roads(road)
-    _draw_central_park(road)
+    var city := Node2D.new()
+    city.name = "NewYorkInspiredCity"
+    city.position = center
+    city.z_index = -2
+    _world.add_child(city)
 
-    # Manhattan-style grid: dense blocks, varied building footprints and rooflines.
+    _draw_city_roads(city)
+    _draw_broadway(city)
+    _draw_central_park(city)
+    _draw_times_square(city)
+
     var rng := RandomNumberGenerator.new()
     rng.seed = GameState.world_seed + 192837
-    var x_blocks: Array[float] = [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]
-    var y_blocks: Array[float] = [-800.0, -480.0, -160.0, 160.0, 480.0, 800.0]
-    var styles: Array[String] = ["glass_tower", "art_deco", "brick_apartment", "office", "brownstone", "hotel"]
-    var names: Array[String] = ["MIDTOWN", "HUDSON", "LEXINGTON", "BROADWAY", "PARK VIEW", "METRO", "GRAND", "EMPIRE"]
-    var avoid: Array = [{"pos": center, "r": 1510.0}]
+    var avoid: Array = [{"pos": center, "r": 1840.0}]
+    var landmarks: Array[Dictionary] = [
+        {"name": "ONE WORLD TRADE", "pos": Vector2(-900, 900), "style": "glass_tower", "type": "office", "size": Vector2(144, 164)},
+        {"name": "EMPIRE STATE", "pos": Vector2(-150, 0), "style": "art_deco", "type": "office", "size": Vector2(132, 154)},
+        {"name": "CHRYSLER", "pos": Vector2(150, -300), "style": "art_deco", "type": "office", "size": Vector2(112, 142)},
+        {"name": "FLATIRON", "pos": Vector2(-1200, 600), "style": "brownstone", "type": "office", "size": Vector2(92, 146)},
+        {"name": "WOOLWORTH", "pos": Vector2(-900, 1200), "style": "art_deco", "type": "office", "size": Vector2(108, 132)},
+        {"name": "GRAND CENTRAL", "pos": Vector2(0, -600), "style": "store", "type": "station", "size": Vector2(168, 112)},
+        {"name": "GUGGENHEIM", "pos": Vector2(600, -900), "style": "modern", "type": "museum", "size": Vector2(128, 116)},
+        {"name": "THE MET", "pos": Vector2(600, -600), "style": "modern", "type": "museum", "size": Vector2(164, 116)}
+    ]
 
-    for x in x_blocks:
-        for y in y_blocks:
-            # A long rectangular green space forms a Central Park-inspired landmark.
-            if absf(x - 320.0) < 1.0 and absf(y) <= 480.0:
+    # Each city block gets a different mix of rooftops, not one identical building.
+    var block_centers: Array[float] = [-1200.0, -900.0, -600.0, -300.0, 0.0, 300.0, 600.0, 900.0, 1200.0]
+    for bx in block_centers:
+        for by in block_centers:
+            # Central Park occupies several full blocks in the east-centre of Manhattan.
+            if absf(bx - 300.0) < 1.0 and absf(by) <= 600.0:
                 continue
-            var b := BUILDING_SCRIPT.new() as ModernBuilding
-            var roll := rng.randf()
-            if roll < 0.25:
-                b.building_type = "office"
-                b.building_name = names[rng.randi_range(0, names.size() - 1)]
-                b.building_style = "glass_tower"
-                b.footprint = Vector2(220.0, 238.0)
-            elif roll < 0.43:
-                b.building_type = "apartment"
-                b.building_name = "APARTMENTS"
-                b.building_style = "brick_apartment"
-                b.footprint = Vector2(210.0, 224.0)
-            elif roll < 0.59:
-                b.building_type = "office"
-                b.building_name = "FINANCIAL"
-                b.building_style = "art_deco"
-                b.footprint = Vector2(202.0, 232.0)
-            elif roll < 0.73:
-                b.building_type = "market"
-                b.building_name = "DELI & MARKET"
-                b.building_style = "store"
-                b.footprint = Vector2(188.0, 205.0)
-            elif roll < 0.86:
-                b.building_type = "cafe"
-                b.building_name = "CITY CAFE"
-                b.building_style = "brownstone"
-                b.footprint = Vector2(180.0, 205.0)
-            else:
-                b.building_type = "clinic"
-                b.building_name = "MEDICAL"
-                b.building_style = "modern"
-                b.footprint = Vector2(196.0, 218.0)
-            b.position = center + Vector2(x, y)
-            _world.add_child(b)
-            GameState.island.add_dirt_spot(b.position, 145.0)
-    GameState.island.add_dirt_spot(center, 1510.0)
+            var landmark_block := false
+            for landmark in landmarks:
+                if Vector2(bx, by).distance_to(landmark["pos"]) < 145.0:
+                    landmark_block = true
+                    break
+            if landmark_block:
+                continue
+
+            var highrise_zone := (bx >= -600.0 and bx <= 300.0 and by >= -450.0 and by <= 450.0)
+            var residential_zone := (by < -450.0 or bx < -900.0 or bx > 900.0)
+            var count := rng.randi_range(2, 3)
+            if highrise_zone:
+                count = rng.randi_range(1, 2)
+            var offsets: Array[Vector2] = [
+                Vector2(-54, -42), Vector2(54, -42), Vector2(0, 54)
+            ]
+            for i in count:
+                var b := BUILDING_SCRIPT.new() as ModernBuilding
+                var roll := rng.randf()
+                if highrise_zone and roll < 0.62:
+                    b.building_type = "office"
+                    b.building_style = "glass_tower" if roll < 0.34 else "art_deco"
+                    b.footprint = Vector2(rng.randi_range(112, 138), rng.randi_range(118, 150))
+                    b.building_name = "OFFICE"
+                elif residential_zone and roll < 0.72:
+                    b.building_type = "apartment"
+                    b.building_style = "brownstone" if roll < 0.34 else "brick_apartment"
+                    b.footprint = Vector2(rng.randi_range(76, 104), rng.randi_range(88, 116))
+                    b.building_name = "APARTMENTS"
+                elif roll < 0.20:
+                    b.building_type = "market"
+                    b.building_style = "store"
+                    b.footprint = Vector2(92, 82)
+                    b.building_name = "DELI"
+                elif roll < 0.42:
+                    b.building_type = "cafe"
+                    b.building_style = "brownstone"
+                    b.footprint = Vector2(82, 94)
+                    b.building_name = "CAFE"
+                elif roll < 0.68:
+                    b.building_type = "apartment"
+                    b.building_style = "brick_apartment"
+                    b.footprint = Vector2(92, 108)
+                    b.building_name = "APARTMENTS"
+                else:
+                    b.building_type = "office"
+                    b.building_style = "modern"
+                    b.footprint = Vector2(104, 112)
+                    b.building_name = "OFFICE"
+                b.position = center + Vector2(bx, by) + offsets[i]
+                _world.add_child(b)
+                GameState.island.add_dirt_spot(b.position, 72.0)
+
+    # Distinctive landmarks give the skyline a New York identity.
+    for landmark in landmarks:
+        var b := BUILDING_SCRIPT.new() as ModernBuilding
+        b.building_name = landmark["name"]
+        b.building_type = landmark["type"]
+        b.building_style = landmark["style"]
+        b.footprint = landmark["size"]
+        b.position = center + landmark["pos"]
+        _world.add_child(b)
+        GameState.island.add_dirt_spot(b.position, 96.0)
+
+    GameState.island.add_dirt_spot(center, 1840.0)
     return avoid
 
+
 func _draw_city_roads(parent: Node2D) -> void:
-    var city_extent := 1190.0
-    var asphalt := Color("#343b42")
-    var sidewalk := Color("#aeb3b4")
-    var concrete := Color("#d2d0c8")
-    var lane_yellow := Color("#f1c84b")
-    var lane_white := Color("#e9e9e3")
+    var extent := 1510.0
+    var asphalt := Color("#343b40")
+    var sidewalk := Color("#a8a7a0")
+    var curb := Color("#d4d0c4")
+    var lane_yellow := Color("#e7bd45")
+    var lane_white := Color("#e4e1d7")
 
-    # Broad avenues running north-south.
-    for x in [-1120.0, -800.0, -480.0, -160.0, 160.0, 480.0, 800.0, 1120.0]:
-        _add_city_rect(parent, Rect2(Vector2(x - 58.0, -city_extent), Vector2(116.0, city_extent * 2.0)), sidewalk)
-        _add_city_rect(parent, Rect2(Vector2(x - 46.0, -city_extent), Vector2(92.0, city_extent * 2.0)), asphalt)
-        _add_city_rect(parent, Rect2(Vector2(x - 1.5, -city_extent), Vector2(3.0, city_extent * 2.0)), lane_yellow)
-        for y in range(-960, 961, 320):
-            for stripe in range(6):
-                _add_city_rect(parent, Rect2(Vector2(x - 43.0 + float(stripe) * 14.0, float(y) - 62.0), Vector2(7.0, 28.0)), lane_white)
+    # Manhattan-style avenues and cross streets, with sidewalks and broad crossings.
+    for x in range(-1350, 1351, 300):
+        _add_city_rect(parent, Rect2(Vector2(float(x) - 47, -extent), Vector2(94, extent * 2)), sidewalk)
+        _add_city_rect(parent, Rect2(Vector2(float(x) - 36, -extent), Vector2(72, extent * 2)), asphalt)
+        _add_city_rect(parent, Rect2(Vector2(float(x) - 1, -extent), Vector2(2, extent * 2)), lane_yellow)
+        _add_city_rect(parent, Rect2(Vector2(float(x) - 47, -extent), Vector2(3, extent * 2)), curb)
+        _add_city_rect(parent, Rect2(Vector2(float(x) + 44, -extent), Vector2(3, extent * 2)), curb)
 
-    # Cross streets and zebra crossings.
-    for y in [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]:
-        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 54.0), Vector2(city_extent * 2.0, 108.0)), sidewalk)
-        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 42.0), Vector2(city_extent * 2.0, 84.0)), asphalt)
-        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 1.5), Vector2(city_extent * 2.0, 3.0)), lane_yellow)
-        for x in range(-1120, 1121, 320):
-            for stripe in range(6):
-                _add_city_rect(parent, Rect2(Vector2(float(x) - 62.0, y - 39.0 + float(stripe) * 13.0), Vector2(28.0, 6.0)), lane_white)
+    for y in range(-1350, 1351, 300):
+        _add_city_rect(parent, Rect2(Vector2(-extent, float(y) - 43), Vector2(extent * 2, 86)), sidewalk)
+        _add_city_rect(parent, Rect2(Vector2(-extent, float(y) - 32), Vector2(extent * 2, 64)), asphalt)
+        _add_city_rect(parent, Rect2(Vector2(-extent, float(y) - 1), Vector2(extent * 2, 2)), lane_yellow)
+        _add_city_rect(parent, Rect2(Vector2(-extent, float(y) - 43), Vector2(extent * 2, 3)), curb)
+        _add_city_rect(parent, Rect2(Vector2(-extent, float(y) + 40), Vector2(extent * 2, 3)), curb)
 
-    # Smaller curb and sidewalk details give the grid a recognisable city scale.
-    for x in [-1120.0, -800.0, -480.0, -160.0, 160.0, 480.0, 800.0, 1120.0]:
-        _add_city_rect(parent, Rect2(Vector2(x - 58.0, -city_extent), Vector2(4.0, city_extent * 2.0)), concrete)
-        _add_city_rect(parent, Rect2(Vector2(x + 54.0, -city_extent), Vector2(4.0, city_extent * 2.0)), concrete)
-    for y in [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]:
-        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 54.0), Vector2(city_extent * 2.0, 4.0)), concrete)
-        _add_city_rect(parent, Rect2(Vector2(-city_extent, y + 50.0), Vector2(city_extent * 2.0, 4.0)), concrete)
+    # Short zebra-crossing bars at intersections.
+    for x in range(-1350, 1351, 300):
+        for y in range(-1350, 1351, 300):
+            for stripe in range(5):
+                _add_city_rect(parent, Rect2(Vector2(float(x) - 30 + stripe * 13, float(y) - 30), Vector2(7, 18)), lane_white)
+                _add_city_rect(parent, Rect2(Vector2(float(x) - 30 + stripe * 13, float(y) + 12), Vector2(7, 18)), lane_white)
+
+
+func _draw_broadway(parent: Node2D) -> void:
+    # Broadway cuts diagonally across the otherwise regular street grid.
+    var a := Vector2(-1450, 1320)
+    var b := Vector2(1320, -1450)
+    var direction := (b - a).normalized()
+    var normal := Vector2(-direction.y, direction.x)
+    var road := PackedVector2Array([
+        a + normal * 48, b + normal * 48, b - normal * 48, a - normal * 48
+    ])
+    _add_city_polygon(parent, road, Color("#3b4247"))
+    var dash_pos := a.lerp(b, 0.0)
+    for i in range(1, 22):
+        var t := float(i) / 22.0
+        dash_pos = a.lerp(b, t)
+        var dash := PackedVector2Array([
+            dash_pos + direction * 15 + normal * 2,
+            dash_pos + direction * 15 - normal * 2,
+            dash_pos - direction * 15 - normal * 2,
+            dash_pos - direction * 15 + normal * 2
+        ])
+        _add_city_polygon(parent, dash, Color("#e5bf4d"))
+
 
 func _draw_central_park(parent: Node2D) -> void:
     var park := Node2D.new()
     park.name = "CentralPark"
     park.z_index = -1
     parent.add_child(park)
-    _add_city_rect(park, Rect2(Vector2(190.0, -505.0), Vector2(260.0, 1010.0)), Color("#426b43"))
-    _add_city_rect(park, Rect2(Vector2(215.0, -480.0), Vector2(210.0, 960.0)), Color("#56814d"))
-    # Curving-looking paths and a reservoir.
-    _add_city_rect(park, Rect2(Vector2(305.0, -455.0), Vector2(22.0, 910.0)), Color("#c6b995"))
-    _add_city_rect(park, Rect2(Vector2(225.0, -8.0), Vector2(190.0, 18.0)), Color("#c6b995"))
-    _add_city_ellipse(park, Vector2(320.0, -285.0), Vector2(76.0, 118.0), Color("#4b91a2"))
-    _add_city_ellipse(park, Vector2(270.0, 285.0), Vector2(46.0, 62.0), Color("#4b91a2"))
-    # Tree canopies arranged in loose rows, leaving paths and lawns visible.
-    for row in range(9):
-        for col in range(3):
-            var p := Vector2(238.0 + float(col) * 82.0, -420.0 + float(row) * 105.0)
-            if absf(p.y) < 360.0 and (absf(p.x - 320.0) < 55.0):
-                continue
-            _add_city_ellipse(park, p, Vector2(22.0, 27.0), Color("#315c3c"))
-            _add_city_ellipse(park, p + Vector2(-5.0, -6.0), Vector2(14.0, 17.0), Color("#6c9957"))
+    var outline := PackedVector2Array([
+        Vector2(198, -645), Vector2(408, -645), Vector2(426, -590),
+        Vector2(416, -390), Vector2(432, -180), Vector2(420, 40),
+        Vector2(432, 260), Vector2(410, 480), Vector2(420, 620),
+        Vector2(190, 620), Vector2(176, 480), Vector2(190, 250),
+        Vector2(178, 20), Vector2(188, -220), Vector2(174, -440)
+    ])
+    _add_city_polygon(park, outline, Color("#315d3d"))
+    var lawn := PackedVector2Array([
+        Vector2(210, -610), Vector2(392, -610), Vector2(405, -560),
+        Vector2(396, -360), Vector2(410, -170), Vector2(400, 30),
+        Vector2(412, 250), Vector2(390, 585), Vector2(210, 585),
+        Vector2(198, 420), Vector2(208, 220), Vector2(194, 0),
+        Vector2(205, -220), Vector2(192, -430)
+    ])
+    _add_city_polygon(park, lawn, Color("#527d49"))
+
+    # Winding paths and the reservoir/lakes are deliberately uneven, not a plain rectangle.
+    _add_city_strip(park, Vector2(245, -580), Vector2(350, 565), 16, Color("#c3b58f"))
+    _add_city_strip(park, Vector2(210, -80), Vector2(400, -35), 12, Color("#c3b58f"))
+    _add_city_strip(park, Vector2(225, 270), Vector2(390, 300), 12, Color("#c3b58f"))
+    _add_city_ellipse(park, Vector2(320, -320), Vector2(64, 94), Color("#477f99"))
+    _add_city_ellipse(park, Vector2(270, 330), Vector2(36, 52), Color("#477f99"))
+
+    # Tree groves in irregular clusters leave lawns and paths visible.
+    var rng := RandomNumberGenerator.new()
+    rng.seed = GameState.world_seed + 7781
+    for i in 88:
+        var p := Vector2(rng.randf_range(205, 410), rng.randf_range(-590, 585))
+        if absf(p.x - 300.0) < 24.0 or (p.y < -240.0 and p.y > -420.0):
+            continue
+        _add_city_ellipse(park, p, Vector2(rng.randi_range(10, 16), rng.randi_range(12, 18)), Color("#315c3c"))
+        _add_city_ellipse(park, p + Vector2(-3, -4), Vector2(7, 9), Color("#6c9957"))
+
+
+func _draw_times_square(parent: Node2D) -> void:
+    var plaza := Node2D.new()
+    plaza.name = "TimesSquare"
+    plaza.z_index = -1
+    parent.add_child(plaza)
+    _add_city_rect(plaza, Rect2(Vector2(-230, -215), Vector2(160, 130)), Color("#5a5550"))
+    # Bright rooftop-sign blocks evoke the dense billboards around Times Square.
+    var sign_colors: Array[Color] = [
+        Color("#d64e45"), Color("#e4b94c"), Color("#4c9fb0"),
+        Color("#a45c9d"), Color("#e6e0c8"), Color("#5b9b65")
+    ]
+    for i in 12:
+        var x := -220.0 + float(i % 4) * 37.0
+        var y := -205.0 + float(i / 4) * 39.0
+        _add_city_rect(plaza, Rect2(Vector2(x, y), Vector2(23, 26)), sign_colors[i % sign_colors.size()])
+        _add_city_rect(plaza, Rect2(Vector2(x + 4, y + 5), Vector2(15, 3)), Color("#f5e9ca"))
+
 
 func _add_city_rect(parent: Node2D, rect: Rect2, color: Color) -> void:
     var polygon := Polygon2D.new()
@@ -201,15 +298,32 @@ func _add_city_rect(parent: Node2D, rect: Rect2, color: Color) -> void:
     polygon.color = color
     parent.add_child(polygon)
 
+
+func _add_city_polygon(parent: Node2D, points: PackedVector2Array, color: Color) -> void:
+    var polygon := Polygon2D.new()
+    polygon.polygon = points
+    polygon.color = color
+    parent.add_child(polygon)
+
+
+func _add_city_strip(parent: Node2D, from: Vector2, to: Vector2, width: float, color: Color) -> void:
+    var direction := (to - from).normalized()
+    var normal := Vector2(-direction.y, direction.x) * width * 0.5
+    _add_city_polygon(parent, PackedVector2Array([
+        from + normal, to + normal, to - normal, from - normal
+    ]), color)
+
+
 func _add_city_ellipse(parent: Node2D, center: Vector2, radius: Vector2, color: Color) -> void:
     var points := PackedVector2Array()
-    for i in 24:
-        var angle := TAU * float(i) / 24.0
+    for i in 16:
+        var angle := TAU * float(i) / 16.0
         points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
     var shape := Polygon2D.new()
     shape.polygon = points
     shape.color = color
     parent.add_child(shape)
+
 
 func _try_interact() -> void:
     if _interact_cooldown > 0.0:
