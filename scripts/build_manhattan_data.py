@@ -111,7 +111,7 @@ def main():
     south, west, north, east = BBOX
     box = f"within_box(the_geom,{south},{west},{north},{east})"
     print("Downloading Manhattan borough outline...", flush=True)
-    boundary = fetch_all("gthc-hcne", "borocode = 1")
+    boundary = fetch_all("yqww-f9f3", "borocode = 1")
     print("Downloading Manhattan building footprints...", flush=True)
     buildings = fetch_all("5zhs-2jue", "bin >= 1000000 AND bin < 2000000")
     print("Downloading Manhattan street geometry...", flush=True)
