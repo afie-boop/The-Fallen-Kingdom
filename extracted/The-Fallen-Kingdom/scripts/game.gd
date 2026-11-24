@@ -76,61 +76,140 @@ func _spawn_player() -> void:
 func _spawn_modern_city() -> Array:
     var center: Vector2 = GameState.island.center_pos
     var road := Node2D.new()
-    road.name = "ModernCityRoad"
+    road.name = "ManhattanCity"
     road.position = center
-    road.z_index = -1
+    road.z_index = -2
     _world.add_child(road)
     _draw_city_roads(road)
+    _draw_central_park(road)
 
-    var specs := [
-        {"name": "RUMAH", "type": "house", "x": -440.0},
-        {"name": "KAFE", "type": "cafe", "x": -220.0},
-        {"name": "KEDAI", "type": "market", "x": 0.0},
-        {"name": "KLINIK", "type": "clinic", "x": 220.0},
-        {"name": "PEJABAT", "type": "office", "x": 440.0}
-    ]
-    var avoid: Array = []
-    for spec in specs:
-        var b := BUILDING_SCRIPT.new() as ModernBuilding
-        b.building_name = str(spec["name"])
-        b.building_type = str(spec["type"])
-        b.position = center + Vector2(float(spec["x"]), -245.0)
-        _world.add_child(b)
-        GameState.island.add_dirt_spot(b.position, 115.0)
-        avoid.append({"pos": b.position, "r": 125.0})
-    GameState.island.add_dirt_spot(center + Vector2(0, -90), 700.0)
+    # Manhattan-style grid: dense blocks, varied building footprints and rooflines.
+    var rng := RandomNumberGenerator.new()
+    rng.seed = GameState.world_seed + 192837
+    var x_blocks: Array[float] = [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]
+    var y_blocks: Array[float] = [-800.0, -480.0, -160.0, 160.0, 480.0, 800.0]
+    var styles: Array[String] = ["glass_tower", "art_deco", "brick_apartment", "office", "brownstone", "hotel"]
+    var names: Array[String] = ["MIDTOWN", "HUDSON", "LEXINGTON", "BROADWAY", "PARK VIEW", "METRO", "GRAND", "EMPIRE"]
+    var avoid: Array = [{"pos": center, "r": 1510.0}]
+
+    for x in x_blocks:
+        for y in y_blocks:
+            # A long rectangular green space forms a Central Park-inspired landmark.
+            if absf(x - 320.0) < 1.0 and absf(y) <= 480.0:
+                continue
+            var b := BUILDING_SCRIPT.new() as ModernBuilding
+            var roll := rng.randf()
+            if roll < 0.25:
+                b.building_type = "office"
+                b.building_name = names[rng.randi_range(0, names.size() - 1)]
+                b.building_style = "glass_tower"
+                b.footprint = Vector2(220.0, 238.0)
+            elif roll < 0.43:
+                b.building_type = "apartment"
+                b.building_name = "APARTMENTS"
+                b.building_style = "brick_apartment"
+                b.footprint = Vector2(210.0, 224.0)
+            elif roll < 0.59:
+                b.building_type = "office"
+                b.building_name = "FINANCIAL"
+                b.building_style = "art_deco"
+                b.footprint = Vector2(202.0, 232.0)
+            elif roll < 0.73:
+                b.building_type = "market"
+                b.building_name = "DELI & MARKET"
+                b.building_style = "store"
+                b.footprint = Vector2(188.0, 205.0)
+            elif roll < 0.86:
+                b.building_type = "cafe"
+                b.building_name = "CITY CAFE"
+                b.building_style = "brownstone"
+                b.footprint = Vector2(180.0, 205.0)
+            else:
+                b.building_type = "clinic"
+                b.building_name = "MEDICAL"
+                b.building_style = "modern"
+                b.footprint = Vector2(196.0, 218.0)
+            b.position = center + Vector2(x, y)
+            _world.add_child(b)
+            GameState.island.add_dirt_spot(b.position, 145.0)
+    GameState.island.add_dirt_spot(center, 1510.0)
     return avoid
 
-func _draw_city_roads(road: Node2D) -> void:
-    var asphalt := Color("#454d52")
-    var sidewalk := Color("#b8b8ad")
-    var paint := Color("#eee7c8")
-    var road_poly := Polygon2D.new()
-    road_poly.polygon = PackedVector2Array([
-        Vector2(-680, -105), Vector2(680, -105),
-        Vector2(680, 5), Vector2(-680, 5)
+func _draw_city_roads(parent: Node2D) -> void:
+    var city_extent := 1190.0
+    var asphalt := Color("#343b42")
+    var sidewalk := Color("#aeb3b4")
+    var concrete := Color("#d2d0c8")
+    var lane_yellow := Color("#f1c84b")
+    var lane_white := Color("#e9e9e3")
+
+    # Broad avenues running north-south.
+    for x in [-1120.0, -800.0, -480.0, -160.0, 160.0, 480.0, 800.0, 1120.0]:
+        _add_city_rect(parent, Rect2(Vector2(x - 58.0, -city_extent), Vector2(116.0, city_extent * 2.0)), sidewalk)
+        _add_city_rect(parent, Rect2(Vector2(x - 46.0, -city_extent), Vector2(92.0, city_extent * 2.0)), asphalt)
+        _add_city_rect(parent, Rect2(Vector2(x - 1.5, -city_extent), Vector2(3.0, city_extent * 2.0)), lane_yellow)
+        for y in range(-960, 961, 320):
+            for stripe in range(6):
+                _add_city_rect(parent, Rect2(Vector2(x - 43.0 + float(stripe) * 14.0, float(y) - 62.0), Vector2(7.0, 28.0)), lane_white)
+
+    # Cross streets and zebra crossings.
+    for y in [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]:
+        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 54.0), Vector2(city_extent * 2.0, 108.0)), sidewalk)
+        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 42.0), Vector2(city_extent * 2.0, 84.0)), asphalt)
+        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 1.5), Vector2(city_extent * 2.0, 3.0)), lane_yellow)
+        for x in range(-1120, 1121, 320):
+            for stripe in range(6):
+                _add_city_rect(parent, Rect2(Vector2(float(x) - 62.0, y - 39.0 + float(stripe) * 13.0), Vector2(28.0, 6.0)), lane_white)
+
+    # Smaller curb and sidewalk details give the grid a recognisable city scale.
+    for x in [-1120.0, -800.0, -480.0, -160.0, 160.0, 480.0, 800.0, 1120.0]:
+        _add_city_rect(parent, Rect2(Vector2(x - 58.0, -city_extent), Vector2(4.0, city_extent * 2.0)), concrete)
+        _add_city_rect(parent, Rect2(Vector2(x + 54.0, -city_extent), Vector2(4.0, city_extent * 2.0)), concrete)
+    for y in [-960.0, -640.0, -320.0, 0.0, 320.0, 640.0, 960.0]:
+        _add_city_rect(parent, Rect2(Vector2(-city_extent, y - 54.0), Vector2(city_extent * 2.0, 4.0)), concrete)
+        _add_city_rect(parent, Rect2(Vector2(-city_extent, y + 50.0), Vector2(city_extent * 2.0, 4.0)), concrete)
+
+func _draw_central_park(parent: Node2D) -> void:
+    var park := Node2D.new()
+    park.name = "CentralPark"
+    park.z_index = -1
+    parent.add_child(park)
+    _add_city_rect(park, Rect2(Vector2(190.0, -505.0), Vector2(260.0, 1010.0)), Color("#426b43"))
+    _add_city_rect(park, Rect2(Vector2(215.0, -480.0), Vector2(210.0, 960.0)), Color("#56814d"))
+    # Curving-looking paths and a reservoir.
+    _add_city_rect(park, Rect2(Vector2(305.0, -455.0), Vector2(22.0, 910.0)), Color("#c6b995"))
+    _add_city_rect(park, Rect2(Vector2(225.0, -8.0), Vector2(190.0, 18.0)), Color("#c6b995"))
+    _add_city_ellipse(park, Vector2(320.0, -285.0), Vector2(76.0, 118.0), Color("#4b91a2"))
+    _add_city_ellipse(park, Vector2(270.0, 285.0), Vector2(46.0, 62.0), Color("#4b91a2"))
+    # Tree canopies arranged in loose rows, leaving paths and lawns visible.
+    for row in range(9):
+        for col in range(3):
+            var p := Vector2(238.0 + float(col) * 82.0, -420.0 + float(row) * 105.0)
+            if absf(p.y) < 360.0 and (absf(p.x - 320.0) < 55.0):
+                continue
+            _add_city_ellipse(park, p, Vector2(22.0, 27.0), Color("#315c3c"))
+            _add_city_ellipse(park, p + Vector2(-5.0, -6.0), Vector2(14.0, 17.0), Color("#6c9957"))
+
+func _add_city_rect(parent: Node2D, rect: Rect2, color: Color) -> void:
+    var polygon := Polygon2D.new()
+    polygon.polygon = PackedVector2Array([
+        rect.position,
+        rect.position + Vector2(rect.size.x, 0.0),
+        rect.position + rect.size,
+        rect.position + Vector2(0.0, rect.size.y)
     ])
-    road_poly.color = sidewalk
-    road.add_child(road_poly)
-    var asphalt_poly := Polygon2D.new()
-    asphalt_poly.polygon = PackedVector2Array([
-        Vector2(-680, -91), Vector2(680, -91),
-        Vector2(680, -9), Vector2(-680, -9)
-    ])
-    asphalt_poly.color = asphalt
-    road.add_child(asphalt_poly)
-    for x in range(-640, 641, 100):
-        var dash := ColorRect.new()
-        dash.color = paint
-        dash.size = Vector2(42, 3)
-        dash.position = Vector2(float(x), -52)
-        road.add_child(dash)
-    for x in [-550.0, -330.0, -110.0, 110.0, 330.0, 550.0]:
-        var curb := ColorRect.new()
-        curb.color = Color("#d7d4c8")
-        curb.size = Vector2(4, 16)
-        curb.position = Vector2(x, -8)
-        road.add_child(curb)
+    polygon.color = color
+    parent.add_child(polygon)
+
+func _add_city_ellipse(parent: Node2D, center: Vector2, radius: Vector2, color: Color) -> void:
+    var points := PackedVector2Array()
+    for i in 24:
+        var angle := TAU * float(i) / 24.0
+        points.append(center + Vector2(cos(angle) * radius.x, sin(angle) * radius.y))
+    var shape := Polygon2D.new()
+    shape.polygon = points
+    shape.color = color
+    parent.add_child(shape)
 
 func _try_interact() -> void:
     if _interact_cooldown > 0.0:
