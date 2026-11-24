@@ -23,7 +23,7 @@ var spawn_timer := 0.0
 var intermission := 4.0
 var spawning_left := 0
 var wave_active := false
-var firing := true
+var firing := false
 var wave_label: Label
 var hp_label: Label
 var coin_label: Label
@@ -204,14 +204,15 @@ func _build_hud() -> void:
     upgrade_button = _make_button(layer, "UPGRADE  100", Vector2(740, 118), Vector2(200, 42), _buy_upgrade)
     turret_button = _make_button(layer, "TURRET  5", Vector2(740, 166), Vector2(200, 42), _buy_turret)
 
-    fire_button = _make_button(layer, "FIRE", Vector2(812, 390), Vector2(128, 112), _set_fire)
-    fire_button.text = "AUTO FIRE: ON"
-    fire_button.add_theme_font_size_override("font_size", 17)
+    fire_button = _make_button(layer, "FIRE", Vector2(812, 390), Vector2(128, 112), Callable())
+    fire_button.add_theme_font_size_override("font_size", 22)
+    fire_button.button_down.connect(_begin_fire)
+    fire_button.button_up.connect(_end_fire)
     joystick = JOYSTICK_SCRIPT.new() as TouchJoystick
     joystick.name = "TouchJoystick"
     layer.add_child(joystick)
-    joystick.fit_to(get_viewport_rect().size)
-    get_viewport().size_changed.connect(func(): joystick.fit_to(get_viewport_rect().size))
+    _layout_hud()
+    get_viewport().size_changed.connect(_layout_hud)
 
 func _make_label(parent: Node, at: Vector2, dimensions: Vector2, font_size: int) -> Label:
     var label := Label.new()
@@ -231,13 +232,36 @@ func _make_button(parent: Node, caption: String, at: Vector2, dimensions: Vector
     button.position = at
     button.size = dimensions
     button.add_theme_font_size_override("font_size", 14)
-    button.pressed.connect(callback)
+    if callback.is_valid():
+        button.pressed.connect(callback)
     parent.add_child(button)
     return button
 
-func _set_fire() -> void:
-    firing = not firing
-    fire_button.text = "AUTO FIRE: ON" if firing else "AUTO FIRE: OFF"
+func _begin_fire() -> void:
+    firing = true
+    fire_button.text = "FIRING"
+
+func _end_fire() -> void:
+    firing = false
+    fire_button.text = "FIRE"
+
+func _layout_hud() -> void:
+    var view_size := get_viewport_rect().size
+    var right := view_size.x - 220.0
+    wave_label.position = Vector2(18, 10)
+    hp_label.position = Vector2(18, 48)
+    coin_label.position = Vector2(18, 78)
+    diamond_label.position = Vector2(18, 105)
+    kill_label.position = Vector2(18, 132)
+    status_label.position = Vector2((view_size.x - 460.0) * 0.5, 12)
+    map_label.position = Vector2(right, 12)
+    class_label.position = Vector2(right, 40)
+    map_button.position = Vector2(right, 72)
+    class_button.position = Vector2(right + 100.0, 72)
+    upgrade_button.position = Vector2(right, 118)
+    turret_button.position = Vector2(right, 166)
+    fire_button.position = Vector2(view_size.x - 148.0, view_size.y - 150.0)
+    joystick.fit_to(view_size)
 
 func _start_wave() -> void:
     wave += 1
