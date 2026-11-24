@@ -6,9 +6,9 @@ config_version=5
 
 [application]
 
-config/name="The Fallen Kingdom"
-config/description="Island world with forests and passive wildlife."
-run/main_scene="res://scenes/game.tscn"
+config/name="DEADZONE"
+config/description="Pixel-art zombie arena survival. Survive increasingly dangerous waves."
+run/main_scene="res://scenes/deadzone.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/quit_on_go_back=false
 config/icon="res://icon.svg"
@@ -34,4 +34,4 @@ window/handheld/orientation=0
 textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0.05, 0.1, 0.2, 1)
+environment/defaults/default_clear_color=Color(0.10, 0.16, 0.12, 1)
