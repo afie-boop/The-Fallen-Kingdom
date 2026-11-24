@@ -11,6 +11,7 @@ var attack_cooldown: float = 0.0
 var alive: bool = true
 var _sprite: Sprite2D
 var _anim_time: float = 0.0
+var _flash_time: float = 0.0
 
 func _ready() -> void:
     collision_layer = 0
@@ -19,7 +20,7 @@ func _ready() -> void:
     add_to_group("zombies")
     _sprite = PixelArt.make_sprite_tex(PixelArt.zombie_tex(randi_range(0, PixelArt.ZOMBIE_VARIANTS - 1)))
     _sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-    _sprite.scale = Vector2(1.6, 1.6)
+    _sprite.scale = Vector2(1.65, 1.65)
     add_child(_sprite)
 
 func configure(player: Node2D, wave: int) -> void:
@@ -34,6 +35,7 @@ func _physics_process(delta: float) -> void:
         velocity = Vector2.ZERO
         return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
+    _flash_time = maxf(0.0, _flash_time - delta)
     var to_player := target.global_position - global_position
     var distance := to_player.length()
     if distance > 19.0:
@@ -47,14 +49,15 @@ func _physics_process(delta: float) -> void:
         if attack_cooldown <= 0.0 and target.has_method("take_damage"):
             target.call("take_damage", attack_damage)
             attack_cooldown = 1.0
+    if _flash_time <= 0.0:
+        _sprite.modulate = Color.WHITE
 
 func take_damage(amount: float) -> void:
     if not alive:
         return
     hp -= amount
+    _flash_time = 0.10
     _sprite.modulate = Color(1.0, 0.35, 0.35)
-    var tween := create_tween()
-    tween.tween_property(_sprite, "modulate", Color.WHITE, 0.12)
     if hp <= 0.0:
         alive = false
         killed.emit(self)
