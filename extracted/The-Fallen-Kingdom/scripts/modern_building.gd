@@ -45,88 +45,119 @@ func _add_wall(parent: StaticBody2D, at: Vector2, dimensions: Vector2) -> void:
     parent.add_child(collision)
 
 func _draw() -> void:
-    var w := footprint.x
-    var h := footprint.y
+    # Buildings are drawn on a four-pixel grid so the rooftops match the game's
+    # hand-made pixel sprites instead of looking like smooth vector boxes.
+    var w := floorf(footprint.x / 4.0) * 4.0
+    var h := floorf(footprint.y / 4.0) * 4.0
     var half_w := w * 0.5
     var half_h := h * 0.5
-    var roof := Color("#536a78")
-    var edge := Color("#293943")
-    var detail := Color("#9ab8c2")
+    var roof := Color("#596f7c")
+    var edge := Color("#26343c")
+    var light := Color("#a8c4ca")
+    var mid := Color("#78949a")
     match building_style:
         "glass_tower":
-            roof = Color("#536d7c")
-            edge = Color("#263b4b")
-            detail = Color("#a9d5df")
+            roof = Color("#476b7b")
+            edge = Color("#203b4b")
+            light = Color("#b1d9df")
+            mid = Color("#6f9eae")
         "art_deco":
-            roof = Color("#8b877f")
-            edge = Color("#49413a")
-            detail = Color("#c8b99a")
+            roof = Color("#918a7c")
+            edge = Color("#49443e")
+            light = Color("#d2c19a")
+            mid = Color("#b0a184")
         "brick_apartment":
-            roof = Color("#8b5145")
-            edge = Color("#4c302d")
-            detail = Color("#d7a28a")
+            roof = Color("#874d43")
+            edge = Color("#432d2b")
+            light = Color("#d7a18a")
+            mid = Color("#a96b59")
         "brownstone":
-            roof = Color("#9b604b")
-            edge = Color("#50372f")
-            detail = Color("#d5a77f")
+            roof = Color("#99634c")
+            edge = Color("#4b332b")
+            light = Color("#dfb48b")
+            mid = Color("#bd8161")
         "store":
-            roof = Color("#497d78")
-            edge = Color("#294e50")
-            detail = Color("#b7d8d2")
+            roof = Color("#477d78")
+            edge = Color("#244b4b")
+            light = Color("#c4dfcf")
+            mid = Color("#78aaa0")
         "modern":
-            roof = Color("#b8c7ca")
-            edge = Color("#536b75")
-            detail = Color("#d9edf0")
+            roof = Color("#aabfc0")
+            edge = Color("#50636a")
+            light = Color("#e1eeee")
+            mid = Color("#819da2")
 
-    # Deep shadow, pavement, exterior wall and roof slab.
-    draw_rect(Rect2(-half_w - 12, -half_h - 8, w + 24, h + 24), Color(0.04, 0.06, 0.08, 0.30))
-    draw_rect(Rect2(-half_w - 7, -half_h - 6, w + 14, h + 14), Color("#a7aaa7"))
+    # Sidewalk pad, hard pixel shadow, dark outline and rooftop surface.
+    draw_rect(Rect2(-half_w - 8, -half_h - 4, w + 16, h + 16), Color("#777b78"))
+    draw_rect(Rect2(-half_w - 4, -half_h - 4, w + 8, h + 8), Color(0.035, 0.045, 0.05, 0.42))
     draw_rect(Rect2(-half_w, -half_h, w, h), edge)
-    draw_rect(Rect2(-half_w + 8, -half_h + 8, w - 16, h - 16), roof)
-    draw_rect(Rect2(-half_w + 14, -half_h + 14, w - 28, h - 28), roof.lightened(0.10))
+    draw_rect(Rect2(-half_w + 4, -half_h + 4, w - 8, h - 8), roof)
+    draw_rect(Rect2(-half_w + 8, -half_h + 8, w - 16, 4), light.darkened(0.18))
+    draw_rect(Rect2(-half_w + 8, half_h - 12, w - 16, 4), edge)
 
-    # Rooftop grid and equipment distinguish skyscrapers from small houses.
-    for x in range(-int(half_w) + 24, int(half_w) - 12, 28):
-        draw_line(Vector2(float(x), -half_h + 18), Vector2(float(x), half_h - 18), detail.darkened(0.12), 2.0)
-    for y in range(-int(half_h) + 24, int(half_h) - 12, 30):
-        draw_line(Vector2(-half_w + 18, float(y)), Vector2(half_w - 18, float(y)), detail.darkened(0.12), 2.0)
+    # Small roof panels and vents use hard-edged 4/8-pixel blocks.
+    for x in range(int(-half_w + 16), int(half_w - 12), 16):
+        for y in range(int(-half_h + 20), int(half_h - 16), 20):
+            draw_rect(Rect2(float(x), float(y), 8, 8), mid.darkened(0.28))
+            draw_rect(Rect2(float(x) + 4, float(y) + 4, 4, 4), mid.lightened(0.18))
 
     if building_style == "glass_tower":
-        draw_rect(Rect2(-w * 0.22, -h * 0.25, w * 0.44, h * 0.50), Color("#294b60"))
-        draw_rect(Rect2(-w * 0.18, -h * 0.21, w * 0.36, h * 0.42), Color("#80b5c6"))
-        draw_line(Vector2(0, -h * 0.21), Vector2(0, h * 0.21), Color("#d6edf2"), 3.0)
-        draw_line(Vector2(-w * 0.18, 0), Vector2(w * 0.18, 0), Color("#d6edf2"), 3.0)
-        # Rooftop helipad marking.
-        draw_arc(Vector2(0, 0), minf(w, h) * 0.18, 0.0, TAU, 32, Color("#e2e8e8"), 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(-8, 5), "H", HORIZONTAL_ALIGNMENT_CENTER, 16, 16, Color.WHITE)
+        # Blue rooftop core and bright window/roof strips.
+        draw_rect(Rect2(-w * 0.22, -h * 0.26, w * 0.44, h * 0.52), edge)
+        draw_rect(Rect2(-w * 0.22 + 4, -h * 0.26 + 4, w * 0.44 - 8, h * 0.52 - 8), mid)
+        for x in [-w * 0.14, -w * 0.02, w * 0.10]:
+            draw_rect(Rect2(x, -h * 0.22, 4, h * 0.44), light)
+        draw_rect(Rect2(-8, -8, 16, 16), Color("#dce9df"))
+        draw_rect(Rect2(-4, -4, 8, 8), Color("#456f80"))
+        draw_rect(Rect2(-4, -h * 0.42, 8, 12), edge)
     elif building_style == "art_deco":
-        draw_rect(Rect2(-w * 0.30, -h * 0.30, w * 0.60, h * 0.60), roof.darkened(0.16))
-        draw_rect(Rect2(-w * 0.24, -h * 0.24, w * 0.48, h * 0.48), detail.darkened(0.25))
-        draw_rect(Rect2(-w * 0.10, -h * 0.43, w * 0.20, h * 0.18), Color("#c9b58c"))
-        draw_line(Vector2(-w * 0.34, -h * 0.34), Vector2(w * 0.34, h * 0.34), detail, 3.0)
-        draw_line(Vector2(w * 0.34, -h * 0.34), Vector2(-w * 0.34, h * 0.34), detail, 3.0)
-    elif building_style == "brick_apartment" or building_style == "brownstone":
-        for row in range(4):
-            for col in range(3):
-                var p := Vector2(-w * 0.28 + float(col) * w * 0.28, -h * 0.30 + float(row) * h * 0.20)
-                draw_rect(Rect2(p, Vector2(24, 16)), Color("#3c4548"))
-                draw_rect(Rect2(p + Vector2(3, 3), Vector2(18, 10)), detail)
-        draw_rect(Rect2(-w * 0.18, h * 0.23, w * 0.36, h * 0.12), edge)
-        draw_rect(Rect2(-w * 0.13, h * 0.26, w * 0.26, h * 0.06), Color("#b7a18b"))
+        # Stepped crown and a central spire, inspired by the Chrysler/Empire skyline.
+        draw_rect(Rect2(-w * 0.34, -h * 0.30, w * 0.68, h * 0.60), mid)
+        draw_rect(Rect2(-w * 0.26, -h * 0.38, w * 0.52, h * 0.16), light)
+        draw_rect(Rect2(-w * 0.18, -h * 0.46, w * 0.36, h * 0.12), roof.darkened(0.12))
+        draw_rect(Rect2(-8, -h * 0.50, 16, h * 0.18), edge)
+        draw_rect(Rect2(-4, -h * 0.56, 8, 12), light)
+        for x in [-w * 0.22, -w * 0.10, w * 0.10, w * 0.22]:
+            draw_rect(Rect2(x, -h * 0.22, 4, h * 0.42), light.darkened(0.12))
+    elif building_style == "brick_apartment":
+        # Dense red roof, water tank, chimney and small rooftop access.
+        draw_rect(Rect2(-w * 0.30, -h * 0.30, w * 0.60, h * 0.58), roof.darkened(0.12))
+        draw_rect(Rect2(-w * 0.24, -h * 0.24, w * 0.48, 4), light.darkened(0.25))
+        draw_rect(Rect2(-w * 0.20, h * 0.10, 24, 20), edge)
+        draw_rect(Rect2(-w * 0.20 + 4, h * 0.10 + 4, 16, 12), mid)
+        draw_rect(Rect2(w * 0.20, -h * 0.30, 12, 12), Color("#59433b"))
+        draw_rect(Rect2(w * 0.20 + 4, -h * 0.30 - 4, 4, 4), light)
+    elif building_style == "brownstone":
+        # Narrow row-house roof with rear fire-escape landing and skylights.
+        draw_rect(Rect2(-w * 0.34, -h * 0.34, w * 0.68, h * 0.68), roof.darkened(0.08))
+        for y in [-h * 0.22, -h * 0.02, h * 0.18]:
+            draw_rect(Rect2(-w * 0.26, y, w * 0.52, 4), edge)
+        draw_rect(Rect2(-w * 0.12, -h * 0.24, 20, 16), light.darkened(0.2))
+        draw_rect(Rect2(w * 0.12, -h * 0.24, 20, 16), light.darkened(0.2))
+        draw_rect(Rect2(-8, h * 0.18, 16, 20), mid)
+        draw_rect(Rect2(-4, h * 0.18 + 4, 8, 12), edge)
     elif building_style == "store":
-        draw_rect(Rect2(-w * 0.38, -h * 0.22, w * 0.76, h * 0.42), roof.darkened(0.20))
-        draw_rect(Rect2(-w * 0.32, -h * 0.16, w * 0.64, h * 0.30), detail)
-        for x in [-w * 0.20, 0.0, w * 0.20]:
-            draw_rect(Rect2(x - 13, h * 0.22, 26, 20), Color("#f4d17a"))
+        # Flat commercial roof and striped awning at the street-facing edge.
+        draw_rect(Rect2(-w * 0.40, -h * 0.28, w * 0.80, h * 0.56), mid)
+        draw_rect(Rect2(-w * 0.36, -h * 0.24, w * 0.72, h * 0.48), roof)
+        for x in range(int(-w * 0.32), int(w * 0.32), 16):
+            draw_rect(Rect2(float(x), h * 0.22, 8, 8), light)
+            draw_rect(Rect2(float(x) + 8, h * 0.22, 8, 8), Color("#d96c50"))
+        draw_rect(Rect2(-w * 0.12, -h * 0.12, w * 0.24, 20), edge)
     else:
-        # HVAC units, skylights and rooftop service structures.
-        for p in [Vector2(-w * 0.28, -h * 0.26), Vector2(w * 0.12, -h * 0.26), Vector2(-w * 0.28, h * 0.14), Vector2(w * 0.12, h * 0.14)]:
-            draw_rect(Rect2(p, Vector2(38, 30)), Color("#45545a"))
-            draw_rect(Rect2(p + Vector2(5, 5), Vector2(28, 20)), Color("#a9b9bc"))
+        # Modern office roof with chunky HVAC units and skylights.
+        for p in [
+            Vector2(-w * 0.28, -h * 0.26), Vector2(w * 0.12, -h * 0.26),
+            Vector2(-w * 0.28, h * 0.14), Vector2(w * 0.12, h * 0.14)
+        ]:
+            draw_rect(Rect2(p, Vector2(28, 24)), edge)
+            draw_rect(Rect2(p + Vector2(4, 4), Vector2(20, 12)), light)
+            draw_rect(Rect2(p + Vector2(8, 16), Vector2(12, 4)), mid)
 
-    # Entrance apron and a clear south-facing door.
-    draw_rect(Rect2(-30, half_h - 2, 60, 18), Color("#c3c2b8"))
-    draw_rect(Rect2(-20, half_h - 5, 40, 9), Color("#293c46"))
-    draw_rect(Rect2(-half_w + 8, -half_h + 8, w - 16, 5), detail.lightened(0.15))
-    draw_string(ThemeDB.fallback_font, Vector2(0, -half_h - 12), building_name.to_upper(),
-        HORIZONTAL_ALIGNMENT_CENTER, w + 30, 11, Color("#f5f3e9"))
+    # A clear entrance notch and pixel-stepped doorway face south.
+    draw_rect(Rect2(-28, half_h - 4, 56, 12), Color("#b8b4a7"))
+    draw_rect(Rect2(-20, half_h - 8, 40, 8), edge)
+    draw_rect(Rect2(-12, half_h - 8, 24, 4), light)
+    if building_name not in ["OFFICE", "APARTMENTS", "DELI", "CAFE"]:
+        draw_string(ThemeDB.fallback_font, Vector2(0, -half_h - 10), building_name.to_upper(),
+            HORIZONTAL_ALIGNMENT_CENTER, w + 32, 9, Color("#f5f0df"))
