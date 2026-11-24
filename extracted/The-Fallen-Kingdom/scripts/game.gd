@@ -53,8 +53,8 @@ func _process(delta: float) -> void:
     if _player == null:
         return
     _player.touch_move = Vector2(
-        float(_touch_right) - float(_touch_left),
-        float(_touch_down) - float(_touch_up)
+        (1.0 if _touch_right else 0.0) - (1.0 if _touch_left else 0.0),
+        (1.0 if _touch_down else 0.0) - (1.0 if _touch_up else 0.0)
     ).limit_length(1.0)
     var interact_down := Input.is_physical_key_pressed(KEY_E) or Input.is_physical_key_pressed(KEY_ENTER)
     if interact_down and not _interact_key_was_down and _interact_cooldown <= 0.0:
@@ -78,7 +78,6 @@ func _spawn_modern_city() -> Array:
     road.name = "ModernCityRoad"
     road.position = center
     road.z_index = -1
-    road.draw.connect(func(): pass)
     _world.add_child(road)
     _draw_city_roads(road)
 
