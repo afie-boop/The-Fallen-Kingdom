@@ -237,7 +237,7 @@ func _make_button(parent: Node, caption: String, at: Vector2, dimensions: Vector
 
 func _set_fire() -> void:
     firing = not firing
-    fire_button.text = "AUTO FIRE: ON" if firing else "FIRE"
+    fire_button.text = "AUTO FIRE: ON" if firing else "AUTO FIRE: OFF"
 
 func _start_wave() -> void:
     wave += 1
