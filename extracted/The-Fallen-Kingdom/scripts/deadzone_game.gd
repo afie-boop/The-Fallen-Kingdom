@@ -205,9 +205,8 @@ func _build_hud() -> void:
     turret_button = _make_button(layer, "TURRET  5", Vector2(740, 166), Vector2(200, 42), _buy_turret)
 
     fire_button = _make_button(layer, "FIRE", Vector2(812, 390), Vector2(128, 112), _set_fire)
-    fire_button.add_theme_font_size_override("font_size", 23)
-    fire_button.button_down.connect(func(): firing = true)
-    fire_button.button_up.connect(func(): firing = false)
+    fire_button.text = "AUTO FIRE: ON"
+    fire_button.add_theme_font_size_override("font_size", 17)
     joystick = JOYSTICK_SCRIPT.new() as TouchJoystick
     joystick.name = "TouchJoystick"
     layer.add_child(joystick)
