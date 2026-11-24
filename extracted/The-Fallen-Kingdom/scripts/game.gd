@@ -117,9 +117,9 @@ func _spawn_modern_city() -> Array:
 
             var highrise_zone := (bx >= -600.0 and bx <= 300.0 and by >= -450.0 and by <= 450.0)
             var residential_zone := (by < -450.0 or bx < -900.0 or bx > 900.0)
-            var count := rng.randi_range(2, 3)
+            var count := 2
             if highrise_zone:
-                count = rng.randi_range(1, 2)
+                count = 1
             var offsets: Array[Vector2] = [
                 Vector2(-54, -42), Vector2(54, -42), Vector2(0, 54)
             ]
