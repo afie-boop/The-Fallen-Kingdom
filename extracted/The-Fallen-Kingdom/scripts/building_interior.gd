@@ -4,6 +4,9 @@ class_name BuildingInterior
 var building_type: String = "house"
 var building_name: String = "Bangunan"
 
+func _ready() -> void:
+    queue_redraw()
+
 func _draw() -> void:
     # A simple furnished top-down interior, kept lightweight for web/mobile.
     draw_rect(Rect2(-360, -250, 720, 500), Color("#26343b"))
