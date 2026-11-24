@@ -12,6 +12,7 @@ var door_position: Vector2:
 func _ready() -> void:
     z_index = 2
     _add_collision()
+    queue_redraw()
 
 func _add_collision() -> void:
     var body := StaticBody2D.new()
