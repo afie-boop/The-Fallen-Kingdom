@@ -4,16 +4,15 @@ const PLAYER_SCRIPT = preload("res://scripts/deadzone_player.gd")
 const ZOMBIE_SCRIPT = preload("res://scripts/deadzone_zombie.gd")
 const BULLET_SCRIPT = preload("res://scripts/deadzone_bullet.gd")
 const TURRET_SCRIPT = preload("res://scripts/deadzone_turret.gd")
-const PICKUP_SCRIPT = preload("res://scripts/deadzone_pickup.gd")
 const JOYSTICK_SCRIPT = preload("res://scripts/touch_joystick.gd")
 
 const MAPS := ["ROOFTOPS", "CARGO SHIP", "SUBWAY"]
 const CLASSES := ["MARKSMAN", "ASSAULT", "TITAN"]
+const WEAPONS := ["PISTOL", "SHOTGUN", "RIFLE", "MINIGUN"]
 const MAP_RADIUS := 680.0
 
 var player: DeadzonePlayer
 var wave := 0
-var coins := 0
 var diamonds := 0
 var kills := 0
 var damage := 18.0
@@ -26,7 +25,6 @@ var wave_active := false
 var firing := false
 var wave_label: Label
 var hp_label: Label
-var coin_label: Label
 var kill_label: Label
 var diamond_label: Label
 var status_label: Label
@@ -36,6 +34,9 @@ var fire_button: Button
 var upgrade_button: Button
 var turret_button: Button
 var class_button: Button
+var weapon_button: Button
+var weapon_label: Label
+var _weapon_index := 0
 var map_button: Button
 var joystick: TouchJoystick
 var _game_over := false
@@ -70,10 +71,9 @@ func _process(delta: float) -> void:
         elif get_tree().get_nodes_in_group("zombies").is_empty():
             wave_active = false
             intermission = 5.0
-            var reward := 20 + wave * 5
-            coins += reward
-            diamonds += 2 + int(wave / 3)
-            status_label.text = "WAVE CLEARED  +%d COINS  +%d DIAMONDS" % [reward, 2 + int(wave / 3)]
+            var reward := 2 + int(wave / 3)
+            diamonds += reward
+            status_label.text = "WAVE CLEARED  +%d DIAMONDS" % reward
             _update_hud()
     else:
         intermission -= delta
@@ -191,18 +191,18 @@ func _build_hud() -> void:
     add_child(layer)
     wave_label = _make_label(layer, Vector2(18, 10), Vector2(220, 40), 25)
     hp_label = _make_label(layer, Vector2(18, 48), Vector2(220, 28), 17)
-    coin_label = _make_label(layer, Vector2(18, 78), Vector2(170, 26), 16)
-    diamond_label = _make_label(layer, Vector2(18, 105), Vector2(180, 26), 16)
-    kill_label = _make_label(layer, Vector2(18, 132), Vector2(180, 26), 16)
+    kill_label = _make_label(layer, Vector2(18, 105), Vector2(180, 26), 16)
     status_label = _make_label(layer, Vector2(250, 12), Vector2(460, 36), 18)
     status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     map_label = _make_label(layer, Vector2(740, 12), Vector2(205, 26), 14)
     class_label = _make_label(layer, Vector2(740, 40), Vector2(205, 26), 14)
+    weapon_label = _make_label(layer, Vector2(740, 68), Vector2(205, 26), 14)
 
-    map_button = _make_button(layer, "MAP", Vector2(740, 72), Vector2(90, 38), _cycle_map)
-    class_button = _make_button(layer, "CLASS", Vector2(840, 72), Vector2(100, 38), _cycle_class)
-    upgrade_button = _make_button(layer, "UPGRADE  100", Vector2(740, 118), Vector2(200, 42), _buy_upgrade)
-    turret_button = _make_button(layer, "TURRET  5", Vector2(740, 166), Vector2(200, 42), _buy_turret)
+    map_button = _make_button(layer, "MAP", Vector2(740, 98), Vector2(90, 38), _cycle_map)
+    class_button = _make_button(layer, "CLASS", Vector2(840, 98), Vector2(100, 38), _cycle_class)
+    weapon_button = _make_button(layer, "WEAPON", Vector2(740, 142), Vector2(200, 38), _cycle_weapon)
+    upgrade_button = _make_button(layer, "UPGRADE  20♦", Vector2(740, 186), Vector2(200, 42), _buy_upgrade)
+    turret_button = _make_button(layer, "TURRET  5♦", Vector2(740, 234), Vector2(200, 42), _buy_turret)
 
     fire_button = _make_button(layer, "FIRE", Vector2(812, 390), Vector2(128, 112), Callable())
     fire_button.add_theme_font_size_override("font_size", 22)
@@ -250,16 +250,17 @@ func _layout_hud() -> void:
     var right := view_size.x - 220.0
     wave_label.position = Vector2(18, 10)
     hp_label.position = Vector2(18, 48)
-    coin_label.position = Vector2(18, 78)
-    diamond_label.position = Vector2(18, 105)
-    kill_label.position = Vector2(18, 132)
+    diamond_label.position = Vector2(18, 78)
+    kill_label.position = Vector2(18, 105)
     status_label.position = Vector2((view_size.x - 460.0) * 0.5, 12)
     map_label.position = Vector2(right, 12)
     class_label.position = Vector2(right, 40)
-    map_button.position = Vector2(right, 72)
-    class_button.position = Vector2(right + 100.0, 72)
-    upgrade_button.position = Vector2(right, 118)
-    turret_button.position = Vector2(right, 166)
+    weapon_label.position = Vector2(right, 68)
+    map_button.position = Vector2(right, 98)
+    class_button.position = Vector2(right + 100.0, 98)
+    weapon_button.position = Vector2(right, 142)
+    upgrade_button.position = Vector2(right, 186)
+    turret_button.position = Vector2(right, 234)
     fire_button.position = Vector2(view_size.x - 148.0, view_size.y - 150.0)
     joystick.fit_to(view_size)
 
@@ -295,35 +296,45 @@ func _shoot() -> void:
         return
     var direction := (target.global_position - player.global_position).normalized()
     player.face_toward(direction)
-    var bullet := BULLET_SCRIPT.new() as DeadzoneBullet
-    bullet.global_position = player.global_position + direction * 18.0
-    bullet.direction = direction
-    bullet.damage = damage
-    add_child(bullet)
-    fire_timer = fire_rate
+    match _weapon_index:
+        0: # Pistol
+            _spawn_bullet(direction, damage * 0.9, 1)
+            fire_timer = 0.38
+        1: # Shotgun: five pellets in a spread.
+            _spawn_bullet(direction, damage * 0.48, 5, 0.24)
+            fire_timer = 0.82
+        2: # Rifle
+            _spawn_bullet(direction, damage * 1.25, 1)
+            fire_timer = 0.24
+        3: # Minigun
+            _spawn_bullet(direction, damage * 0.52, 1)
+            fire_timer = 0.085
+
+func _spawn_bullet(direction: Vector2, bullet_damage: float, pellet_count: int, spread: float = 0.0) -> void:
+    for i in range(pellet_count):
+        var angle_offset := 0.0
+        if pellet_count > 1:
+            angle_offset = lerpf(-spread * 0.5, spread * 0.5, float(i) / float(pellet_count - 1))
+        var shot_direction := direction.rotated(angle_offset)
+        var bullet := BULLET_SCRIPT.new() as DeadzoneBullet
+        bullet.global_position = player.global_position + shot_direction * 18.0
+        bullet.direction = shot_direction
+        bullet.damage = bullet_damage
+        add_child(bullet)
 
 func _on_zombie_killed(zombie: DeadzoneZombie) -> void:
     kills += 1
-    coins += 8
-    if randf() < 0.28:
-        var drop: DeadzonePickup = PICKUP_SCRIPT.new() as DeadzonePickup
-        drop.position = zombie.global_position
-        drop.value = 1
-        drop.collected.connect(_on_diamond_collected)
-        add_child(drop)
-    _update_hud()
-
-func _on_diamond_collected(amount: int) -> void:
-    diamonds += amount
+    # Kill reward goes straight into the player's diamond wallet.
+    diamonds += 1
     _update_hud()
 
 func _buy_upgrade() -> void:
-    if coins < 100:
-        status_label.text = "NOT ENOUGH COINS"
+    if diamonds < 20:
+        status_label.text = "NOT ENOUGH DIAMONDS"
         return
-    coins -= 100
+    diamonds -= 20
     damage += 7.0
-    fire_rate = maxf(0.12, fire_rate - 0.025)
+    fire_rate = maxf(0.08, fire_rate - 0.025)
     status_label.text = "WEAPON UPGRADED!"
     _update_hud()
 
@@ -347,6 +358,11 @@ func _cycle_class() -> void:
     _apply_class()
     status_label.text = CLASSES[_class_index] + " CLASS SELECTED"
 
+func _cycle_weapon() -> void:
+    _weapon_index = (_weapon_index + 1) % WEAPONS.size()
+    weapon_label.text = "WEAPON  " + WEAPONS[_weapon_index]
+    status_label.text = WEAPONS[_weapon_index] + " EQUIPPED"
+
 func _cycle_map() -> void:
     _map_index = (_map_index + 1) % MAPS.size()
     map_label.text = "MAP  " + MAPS[_map_index]
@@ -357,11 +373,13 @@ func _update_hud() -> void:
     if wave_label == null:
         return
     wave_label.text = "WAVE  %d" % wave
-    coin_label.text = "COINS  %d" % coins
     diamond_label.text = "DIAMONDS  %d" % diamonds
     kill_label.text = "KILLS  %d" % kills
     map_label.text = "MAP  " + MAPS[_map_index]
     class_label.text = "CLASS  " + CLASSES[_class_index]
+    weapon_label.text = "WEAPON  " + WEAPONS[_weapon_index]
+    upgrade_button.text = "UPGRADE  20♦"
+    turret_button.text = "TURRET  5♦"
     if player != null:
         hp_label.text = "HP  %d / %d" % [roundi(player.hp), roundi(player.max_hp)]
 
@@ -384,6 +402,7 @@ func _show_game_over() -> void:
     turret_button.disabled = true
     class_button.disabled = true
     map_button.disabled = true
+    weapon_button.disabled = true
     var restart := _make_button($HUD, "PLAY AGAIN", Vector2(390, 285), Vector2(180, 54), _restart_game)
     restart.add_theme_font_size_override("font_size", 20)
 
