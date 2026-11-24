@@ -12,7 +12,6 @@ var move_speed: float = 145.0
 var dead: bool = false
 var _sprite: Sprite2D
 var _invulnerability: float = 0.0
-var _class_texture_index := 1
 
 func _ready() -> void:
     collision_layer = 2
@@ -29,7 +28,7 @@ func _ready() -> void:
 func _set_character_sprite() -> void:
     if _sprite != null:
         _sprite.queue_free()
-    _sprite = PixelArt.make_sprite_tex(PixelArt.char_tex(_class_texture_index))
+    _sprite = PixelArt.make_sprite_tex(PixelArt.survivor_tex())
     _sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _sprite.scale = Vector2(1.55, 1.55)
     add_child(_sprite)
