@@ -65,6 +65,7 @@ func _process(delta: float) -> void:
 func _spawn_player() -> void:
     _player = PLAYER_SCENE.instantiate() as Player
     _player.position = GameState.island.center_pos + Vector2(0, 110)
+    _player.z_index = 3
     add_child(_player)
     var camera := Camera2D.new()
     camera.zoom = Vector2(0.8, 0.8)
@@ -158,6 +159,7 @@ func _enter_building(building: ModernBuilding) -> void:
     _interior = INTERIOR_SCRIPT.new() as BuildingInterior
     _interior.building_type = building.building_type
     _interior.building_name = building.building_name
+    _interior.z_index = -1
     _interior.position = _player.global_position - Vector2(0, 125)
     add_child(_interior)
     _player.global_position = _interior.global_position + Vector2(0, 125)
